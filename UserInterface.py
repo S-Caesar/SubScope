@@ -50,36 +50,22 @@ while True:
             if event == 'Flip' and side == 'Front':
                 event = 'Back'
                 side = 'Back'
-                erc.setCardDetails(windowDeckMenu, deck, event, x)
+                erc.setCardDetails(windowDeckMenu, event, deck, x)
                 erc.setButtons(windowDeckMenu, False)
-                
-                
-            response = pd.DataFrame({'Response':  ['Again', 'Hard', 'Good', 'Easy'],
-                                     'Keystroke': ['1',     '2',    '3',    '4'   ],
-                                     'q':         [ 0,       1,      2,      3    ]
-                                    })
-                
-            for item in ['Response', 'Keystroke']:
-                if len(response.loc[response[item] == event]) > 0: # If there is a row in the df that is valid, then true
-                    row = response.loc[response[item] == event]
-                    q = int(row['q'])
-                    erc.setButtons(windowDeckMenu, True)
-                    x+=1
-                    event = 'Front'
-
+            
+            q, event, x = erc.userResponse(windowDeckMenu, event, x)
+            
             if event == 'Front':
                 # Show front of first card
                 side = 'Front'
                 if x >= len(deck['card1']):
                     event = 'Done'
+                    erc.setCardDetails(windowDeckMenu, event, deck, 0)
+                    erc.setButtons(windowDeckMenu, True)
+                    erc.setFlip(windowDeckMenu, True)
                 else:
-                    erc.setCardDetails(windowDeckMenu, deck, event, x)
+                    erc.setCardDetails(windowDeckMenu, event, deck, x)
             
-            if event == 'Done':
-                erc.setCardDetails(windowDeckMenu, deck, event, x)
-                erc.setButtons(windowDeckMenu, True)
-                erc.setFlip(windowDeckMenu, True)
-
         windowDeckMenu.close()
         windowSplash.UnHide()
         

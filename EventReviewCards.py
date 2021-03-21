@@ -2,6 +2,7 @@
 # Essentailly the main SRS component of the program
 
 import os
+import pandas as pd
 import PySimpleGUI as sg
 
 def deckScreen(deckList):
@@ -62,21 +63,35 @@ def getDecks(folderPath):
     
     return deckList, deckKeys
 
-def setCardDetails(window, deck, cardState, x):
+def setCardDetails(window, cardState, deck, x):
     # Select the information to display on the card screen
-    states = ['Front', 'Back', 'Done']
-    if cardState == states[0]:
-        window.Element('-FIELD1-').Update(deck['card1'][x]) # TODO Replace strings with DataFrame values
-        window.Element('-FIELD2-').Update('')
-        window.Element('-FIELD3-').Update('')
-        window.Element('-FIELD4-').Update('')
-    elif cardState == states[1]:
-        window.Element('-FIELD1-').Update(deck['card1'][x])
-        window.Element('-FIELD2-').Update(deck['card2'][x])
-        window.Element('-FIELD3-').Update(deck['card3'][x])
-        window.Element('-FIELD4-').Update(deck['card4'][x])
-    elif cardState == states[2]:
-        window.Element('-FIELD1-').Update('Deck Finished') # TODO Replace strings with DataFrame values
-        window.Element('-FIELD2-').Update('')
-        window.Element('-FIELD3-').Update('')
-        window.Element('-FIELD4-').Update('')
+    
+    states = pd.DataFrame({'State':  ['Front',         'Back',            'Done'         ],
+                           'FIELD1': [deck['card1'][x], deck['card1'][x], 'Deck Finished'],
+                           'FIELD2': ['',               deck['card2'][x], ''             ],
+                           'FIELD3': ['',               deck['card3'][x], ''             ],
+                           'FIELD4': ['',               deck['card4'][x], ''             ]
+                        })
+    
+    if len(states.loc[states['State'] == cardState]) > 0:
+        row = states.loc[states['State'] == cardState].index[0]
+        window.Element('-FIELD1-').Update(states.iloc[row]['FIELD1'])
+        window.Element('-FIELD2-').Update(states.iloc[row]['FIELD2'])
+        window.Element('-FIELD3-').Update(states.iloc[row]['FIELD3'])
+        window.Element('-FIELD4-').Update(states.iloc[row]['FIELD4'])
+        
+def userResponse(window, event, x):
+    response = pd.DataFrame({'Response':  ['Again', 'Hard', 'Good', 'Easy'], # Move to the ERC file
+                             'Keystroke': ['1',     '2',    '3',    '4'   ],
+                             'q':         [ 0,       1,      2,      3    ]
+                             })
+    
+    q = None
+    for item in ['Response', 'Keystroke']:
+        if len(response.loc[response[item] == event]) > 0: # If there is a row in the df that is valid, then true
+            row = response.loc[response[item] == event]
+            q = int(row['q']) # TODO update method to be inline with the bit above
+            setButtons(window, True)
+            x+=1
+            event = 'Front'
+    return q, event, x
