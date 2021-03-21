@@ -10,8 +10,7 @@ import PySimpleGUI as sg
 import SubsAnalysisFunction as saf
 import SubsAnalysisClasses as sac
 import UIScreens as uis
-
-#splashScreen = uis.splashScreen()
+import EventReviewCards as erc
 
 windowSplash = sg.Window('Main Menu', layout=uis.splashScreen())
 
@@ -22,85 +21,64 @@ while True:
         break
     
     if event == 'Review Cards':
-        # Go to SRS deck selection
-        deckList = ['Deck1.xlsx', 'Deck 2', 'Deck 3'] # TODO update this to be the actual decks
+        # Go to SRS deck selection        
+        folderPath = os.getcwd() + '\\Decks' # TODO default of Decks - have an option for the user to select a different folder
+        deckList, deckKeys = erc.getDecks(folderPath)
         
-        deckNo = None
-        deckKeys = []
-        for i in range(len(deckList)):
-            deckKeys.append(f'-DECKS {i}-')
-        
-        windowDeckMenu = sg.Window('Deck Menu', layout=uis.deckScreen(deckList), return_keyboard_events=True)
+        windowDeckMenu = sg.Window('Deck Menu', layout=erc.deckScreen(deckList), return_keyboard_events=True)
         windowSplash.Hide()
         
         while True:
             event, values = windowDeckMenu.Read()
-            print('event: ', event)
+            print('event: ', event) # for debugging the state of the cards
             
             if event is None or event == 'Exit' or event == 'Back':
                 break
             
             if event in deckKeys:
+                # TODO
+                # Add the algorithm for updating the ease value
+                # Track how many of each type of card has been reviewed against the user limits
+                # Update review dates in the deck file
                 x = 0
                 deckNo = deckKeys.index(event)
-                deck = pd.read_excel(deckList[deckNo], sheet_name='Sheet1')
+                deck = pd.read_excel(folderPath + '\\' + deckList[deckNo], sheet_name='Sheet1')
                 windowDeckMenu.Element('-DECK-').Update(deckList[deckNo])
+                erc.setFlip(windowDeckMenu, False)
                 event = 'Front'
-
-                side = 'Front'
-                windowDeckMenu.Element('-FIELD1-').Update(deck['card1'][x])
-                windowDeckMenu.Element('-FIELD2-').Update('')
-                windowDeckMenu.Element('-FIELD3-').Update('')
-                windowDeckMenu.Element('-FIELD4-').Update('')
             
-            if event == 'Flip' and side == 'Front': # TODO if flip is pressed when there are no cards, there is an error
-                windowDeckMenu.Element('-FIELD2-').Update(deck['card2'][x])
-                windowDeckMenu.Element('-FIELD3-').Update(deck['card3'][x])
-                windowDeckMenu.Element('-FIELD4-').Update(deck['card4'][x])
-                side = 'Back'
+            if event == 'Flip' and side == 'Front':
                 event = 'Back'
-
-            if event == 'Again' and side == 'Back' or event == '1' and side == 'Back': # TODO error if pressed before starting a deck
-                q = 0
-                x+=1
-                event = 'Front'
+                side = 'Back'
+                erc.setCardDetails(windowDeckMenu, deck, event, x)
+                erc.setButtons(windowDeckMenu, False)
                 
-            if event == 'Hard' and side == 'Back' or event == '2' and side == 'Back':
-                q = 1
-                x+=1
-                event = 'Front'
                 
-            if event == 'Good' and side == 'Back' or event == '3' and side == 'Back':
-                q = 2
-                x+=1
-                event = 'Front'
-            
-            if event == 'Easy' and side == 'Back' or event == '4' and side == 'Back':
-                q = 3
-                x+=1
-                event = 'Front'
+            response = pd.DataFrame({'Response':  ['Again', 'Hard', 'Good', 'Easy'],
+                                     'Keystroke': ['1',     '2',    '3',    '4'   ],
+                                     'q':         [ 0,       1,      2,      3    ]
+                                    })
+                
+            for item in ['Response', 'Keystroke']:
+                if len(response.loc[response[item] == event]) > 0: # If there is a row in the df that is valid, then true
+                    row = response.loc[response[item] == event]
+                    q = int(row['q'])
+                    erc.setButtons(windowDeckMenu, True)
+                    x+=1
+                    event = 'Front'
 
             if event == 'Front':
                 # Show front of first card
                 side = 'Front'
                 if x >= len(deck['card1']):
-                    print('Done')
                     event = 'Done'
                 else:
-                    windowDeckMenu.Element('-FIELD1-').Update(deck['card1'][x])
-                    windowDeckMenu.Element('-FIELD2-').Update('')
-                    windowDeckMenu.Element('-FIELD3-').Update('')
-                    windowDeckMenu.Element('-FIELD4-').Update('')    
+                    erc.setCardDetails(windowDeckMenu, deck, event, x)
             
             if event == 'Done':
-                windowDeckMenu.Element('-FIELD1-').Update('Deck finished!')
-                windowDeckMenu.Element('-FIELD2-').Update('')
-                windowDeckMenu.Element('-FIELD3-').Update('')
-                windowDeckMenu.Element('-FIELD4-').Update('')
-                x = 0
-            
-                # TODO Current issue is that the loop needs to be running here, with pauses for user input,
-                # instead of in the other script, as that just goes straight through the list...
+                erc.setCardDetails(windowDeckMenu, deck, event, x)
+                erc.setButtons(windowDeckMenu, True)
+                erc.setFlip(windowDeckMenu, True)
 
         windowDeckMenu.close()
         windowSplash.UnHide()
