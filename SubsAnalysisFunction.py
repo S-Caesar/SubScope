@@ -27,9 +27,9 @@ blacklist = '!' + '?' + '？' + '！' + '…' + ' ' + '(' + ')' + '」' + '「' 
 def trimExcess(inputList, fileType): # check all lines in the file and remove any unnecessary lines
     '''''' # shows the inputs when using the fuction
     if fileType == 'srt':
-        inputList = [x for x in inputList if x not in blacklist] # TODO have a look at regex
+        inputList = [x for x in inputList if x not in blacklist] # TODO have a look at regex # Note, some of the blacklist punctuation is English and some is Japanese
         for x in range(len(inputList)): 
-            if type(inputList[x]) == int or '0' in inputList[x]: # Note, some of this punctuation is English and some is Japanese
+            if type(inputList[x]) == int or '0' in inputList[x]: 
                 inputList[x] = 0 # if I delete a row here it causes an error because the length of the list has changed - there's probably an elegant way around it, but this'll do for now
             else:
                 inputList[x] = re.sub('（.*?）', '', inputList[x]) # bracketed sections usually just inidcate a speaker, so take this bit out - from: https://stackoverflow.com/questions/8784396/how-to-delete-the-words-between-two-delimiters
