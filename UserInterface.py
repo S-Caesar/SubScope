@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # create a user interface
 # button to bring up selection of the subtitle files
 # output panel with subtitle analysis for the selected files
@@ -22,11 +23,13 @@ while True:
     
     if event == 'Review Cards':
         # Go to SRS deck selection        
-        folderPath = os.getcwd() + '\\Decks' # TODO default of Decks - have an option for the user to select a different folder
+        folderPath = os.getcwd() + '\\Decks' # TODO default location of 'Decks' - have an option for the user to select a different folder
         deckList, deckKeys = erc.getDecks(folderPath)
         
         windowDeckMenu = sg.Window('Deck Menu', layout=erc.deckScreen(deckList), return_keyboard_events=True)
         windowSplash.Hide()
+        
+        x = 0
         
         while True:
             event, values = windowDeckMenu.Read()
@@ -35,36 +38,55 @@ while True:
             if event is None or event == 'Exit' or event == 'Back':
                 break
             
+            # TODO
+            # Add the algorithm for updating the ease value
+            # Track how many of each type of card has been reviewed against the user limits
+            # Update review dates in the deck file
             if event in deckKeys:
-                # TODO
-                # Add the algorithm for updating the ease value
-                # Track how many of each type of card has been reviewed against the user limits
-                # Update review dates in the deck file
-                x = 0
+                # If a deck is selected, load up the cards for that deck
                 deckNo = deckKeys.index(event)
-                deck = pd.read_excel(folderPath + '\\' + deckList[deckNo], sheet_name='Sheet1')
                 windowDeckMenu.Element('-DECK-').Update(deckList[deckNo])
+                deck = pd.read_excel(folderPath + '\\' + deckList[deckNo], sheet_name='Sheet1')
+                
+                reviewLimit = 5 # Add input boxes for this beside the decks
+                today = erc.getDate()
+                reviewDeck = deck[deck['nextReview'] != 0]  
+                reviewDeck = reviewDeck[reviewDeck['nextReview'] <= today]
+                reviewDeck = reviewDeck[:reviewLimit]
+                
+                newLimit = 2
+                newDeck = deck[deck['nextReview'] == 0]
+                newDeck = newDeck[:newLimit]
+
+                deck = reviewDeck.append(newDeck)
+                deck = deck.sample(frac=1).reset_index(drop=True) # Used to randomise the order of the cards
+
                 erc.setFlip(windowDeckMenu, False)
+                            
                 event = 'Front'
             
-            if event == 'Flip' and side == 'Front':
-                event = 'Back'
-                side = 'Back'
-                erc.setCardDetails(windowDeckMenu, event, deck, x)
+            # Show the back of the card when the button is pressed, disable the flip button, and enable the response buttons
+            if event == 'Flip':
+                state = 'Rear'
+                erc.setCardDetails(windowDeckMenu, state, deck, x)
+                erc.setFlip(windowDeckMenu, True)
                 erc.setButtons(windowDeckMenu, False)
             
+            # Check if the user has pressed a key/button and return values
             q, event, x = erc.userResponse(windowDeckMenu, event, x)
             
+            # Must be after the flip and back display - loop only runs where the UI is interacted with
             if event == 'Front':
                 # Show front of first card
-                side = 'Front'
                 if x >= len(deck['card1']):
-                    event = 'Done'
-                    erc.setCardDetails(windowDeckMenu, event, deck, 0)
-                    erc.setButtons(windowDeckMenu, True)
-                    erc.setFlip(windowDeckMenu, True)
+                    state = 'Done'
+                    erc.setCardDetails(windowDeckMenu, state, deck, 0) # update cards to 'Done' state
+                    erc.setButtons(windowDeckMenu, True) # Disable response buttons
+                    erc.setFlip(windowDeckMenu, True) # Disable flip button
                 else:
-                    erc.setCardDetails(windowDeckMenu, event, deck, x)
+                    state = event
+                    erc.setCardDetails(windowDeckMenu, state, deck, x)
+                    erc.setFlip(windowDeckMenu, False)
             
         windowDeckMenu.close()
         windowSplash.UnHide()
@@ -119,8 +141,8 @@ while True:
         
     if event == "-FOLDER-":
         folder = values["-FOLDER-"]
+        # Get a list of files in folder
         try:
-            # Get list of files in folder
             file_list = os.listdir(folder)
         except:
             file_list = []
@@ -155,8 +177,9 @@ while True:
             if event == 'Update Statistics':
                 # TODO add prgress readout like in the 'Update Database' section
                 if values["-COMP-"] == '': # set a default for the comprehension score if the user doesn't input one
-                    window2.Element("-COMP-").Update(value=70)
                     comprehension = 70
+                    window2.Element("-COMP-").Update(value=comprehension)
+                    
                 # Only analyse files if they are selected
                 fnamesSelect = []
                 for i in range(len(fnames)):
