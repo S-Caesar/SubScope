@@ -10,7 +10,6 @@ import subprocess
 import json
 import pandas as pd
 import re
-import os
 
 # Take the list of files, remove any that have been analysed already, then write the analysis files for the rest
 def parseFiles(folder, fnames, allFiles):
@@ -69,7 +68,7 @@ def parseFiles(folder, fnames, allFiles):
             # Disable and Enable the 'chained assignment' warning for this sections - it's a false positive
             pd.set_option('mode.chained_assignment', None)
             fullTable = fullTable.append(flattenIchiran(jsonOutput), ignore_index=True)
-            pd.reset_option("mode.chained_assignment")
+            pd.reset_option('mode.chained_assignment')
             
         # Check if there's a 'conj' (or 'compound' / 'components') column, and remove it if there is (unlikly to not exist, but can occur in rare cases where just particles are parsed)
         if 'conj' in fullTable:
@@ -93,8 +92,9 @@ def parseFiles(folder, fnames, allFiles):
 # Takes a list of strings and removes any blacklisted characters, or indications of speaker, from each string, then returns the list of strings
 def prepParseInput(parseInput):
     ''''''
+    # Replace with whitelist of kanji characters
     blacklist = '!?.\\/-(),<>[]:;"~ ' + \
-                '！？。…．･（）、，＜＞《》〈〉「」『』：；”““”〝〞～♪〝％→・－　' + \
+                '！？。…．･（）、，＜＞《》〈〉「」『』：；”““”〝〞～♪〝％→・－―　' + \
                 '\u3000' + '\ufeff1'\
                 '０１２３４５６７８９' + '0123456789' + \
                 'ＡＢＣＤＥＦＧＨＩＪＫＬⅯＮＯＰＱＲＳＴＵＶＷＸＹＺ' + \
@@ -214,11 +214,14 @@ def flattenIchiran(jsonOutput):
     outputTable = outputTable.reset_index(drop=True) # reset the index, as otherwise every entry will be row index 0
     outputTable = outputTable.fillna(0) # replace all the 'nan' with '0' to avoid any issues later
 
-    return outputTable
+    return outputTable  
+
 
 '----------------------------------------------------------------------------'
+'''
+import os
 
-folder = 'C:/Users/Steph/OneDrive/App/Subtitles/Toradora Subs' # will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
+folder = 'C:/Users/Steph/OneDrive/App/Subtitles/SteinsGate Subs' # will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
 file_list = os.listdir(folder)
 fnames = [f for f in file_list
           if os.path.isfile(os.path.join(folder, f))
@@ -228,4 +231,4 @@ fnames = [f for f in file_list
 
 allFiles = [f for f in file_list] # get the names of all files in the folder to see if the analysis has already been completed
 
-output = parseFiles(folder, fnames, allFiles)
+output = parseFiles(folder, fnames, allFiles)'''

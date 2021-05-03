@@ -2,7 +2,7 @@
 
 # Analyse the output table from IchiranParse and return stats
 # > prepStats (take the full list of words and return stats)
-    # > dataframeDifference
+    # > dataframeDifference (compare two DataFrames, and return one with words only appearing in one of the DataFrames, or that only appear in both)
 
 import pandas as pd
 
@@ -43,20 +43,20 @@ def prepStats(fullTable, freqCheck, sign, compCheck):
 
     noWords = len(fullTable) # count the total number of words
     
-    unqiueTable = fullTable.groupby(['text']).size().reset_index() # group any dupicate rows, counting the number of occurances
-    unqiueTable.rename(columns = {0: 'freq.'}, inplace=True)
-    unqiueTable.sort_values(by=['freq.'], ascending=False, inplace=True) # sort by word frequency, in decending order
-    unqiueTable = unqiueTable.reset_index(drop=True)
-    noUnique = len(unqiueTable) # count the number of unique words
+    uniqueTable = fullTable.groupby(['text']).size().reset_index() # group any dupicate rows, counting the number of occurances
+    uniqueTable.rename(columns = {0: 'freq.'}, inplace=True)
+    uniqueTable.sort_values(by=['freq.'], ascending=False, inplace=True) # sort by word frequency, in decending order
+    uniqueTable = uniqueTable.reset_index(drop=True)
+    noUnique = len(uniqueTable) # count the number of unique words
     
     knownTable = pd.read_excel('C:/Users/steph/OneDrive/App/Japanese App/Top2k-2.xlsx')
     unknownTable = dataframeDifference(fullTable, knownTable, 'left_only').reset_index(drop=True)
     unknownTable.drop(columns=['_merge'], inplace=True)
-    noUnknown = len(unknownTable)
+    noUnknown = len(unknownTable) # count the total number of unknown words
     
-    unknownFreq = dataframeDifference(unqiueTable, knownTable, 'left_only').reset_index(drop=True)
+    unknownFreq = dataframeDifference(uniqueTable, knownTable, 'left_only').reset_index(drop=True)
     unknownFreq.drop(columns=['_merge'], inplace=True)
-    noUniqueUnk = len(unknownFreq)
+    noUniqueUnk = len(unknownFreq) # count the number of unique unknown words
     
     dictTable = fullTable.copy(deep=True)
     for x in range(len(fullTable)):
@@ -66,7 +66,7 @@ def prepStats(fullTable, freqCheck, sign, compCheck):
             dictTable['reading'][x] = fullTable['dict-reading'][x]
             dictTable['text'][x] = fullTable['dict-text'][x]
             dictTable['kana'][x] = fullTable['dict-kana'][x]
-            pd.reset_option("mode.chained_assignment")
+            pd.reset_option('mode.chained_assignment')
     # These columns are now integrated in the main columns, so just delete them
     del dictTable['dict-reading']
     del dictTable['dict-text']
@@ -103,8 +103,8 @@ def prepStats(fullTable, freqCheck, sign, compCheck):
     # Detemine the number of unique words required to achieve an input comprehension
     noReqComp = round(noWords * compCheck / 100) # calculate the number of words required for input comprehension
     cumTotal = 0
-    for x in range(len(unqiueTable)):
-        cumTotal += unqiueTable['freq.'][x]
+    for x in range(len(uniqueTable)):
+        cumTotal += uniqueTable['freq.'][x]
         if cumTotal >= noReqComp:
             noInputComp = x+1 # +1 to account for the index starting at zero
             break
@@ -117,22 +117,23 @@ def prepStats(fullTable, freqCheck, sign, compCheck):
             noInputCompUnk = x+1 # +1 to account for the index starting at zero
             break
     
-    stats = {'0 noWords': noWords,
-             '1 noUnknown': noUnknown,
-             '2 noUnique': noUnique,
-             '3 noUniqueUnk': noUniqueUnk,
-             '4 noUniqueDict': noUniqueDict,
-             '5 noUniqueDictUnk': noUniqueDictUnk,
-             '6 noSpecFreq': noSpecFreq,
-             '7 Comprehension': comprehension,
-             '8 noInputComp': noInputComp,
-             '9 noInputCompUnk': noInputCompUnk}
+    stats = [noWords,
+             noUnknown,
+             noUnique,
+             noUniqueUnk,
+             noUniqueDict,
+             noUniqueDictUnk,
+             noSpecFreq,
+             comprehension,
+             noInputComp,
+             noInputCompUnk]
 
     return stats
 
+'''
 # TODO have a list of analysed content, and have the user select the folder - then cycle through the files and analyse
 fullTable = pd.read_csv('C:/Users/steph/OneDrive/App/Subtitles/SteinsGate Subs/STEINS;GATE.S01E01.JA_full.txt', sep='\t')
-stats = prepStats(fullTable, 1, '==',  70)
+stats = prepStats(fullTable, 1, '==',  70)'''
     
     
 '''
