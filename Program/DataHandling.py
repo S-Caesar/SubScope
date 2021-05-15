@@ -91,7 +91,7 @@ def clearDatabase(database, clearType):
     return database
 
 
-folder = 'C:/Users/Steph/OneDrive/App/Japanese App/Subtitles/SteinsGate'
+folder = 'C:/Users/Steph/OneDrive/App/Japanese App/Subtitles/Toradora'
 file_list = os.listdir(folder)
 fnames = [f for f in file_list
           if os.path.isfile(os.path.join(folder, f))
@@ -103,8 +103,11 @@ knownList = 'C:/Users/steph/OneDrive/App/Japanese App/Top2k-2.xlsx' # TODO This 
 
 pd.set_option('mode.chained_assignment', None) # Disable the warning, otherwise Pandas complains
 
+# Create a blank database file if one does not exist
+# TODO
+
 # Read in the database file
-database = pd.read_csv(folder + '/' + databaseFile, sep='\t')
+#database = pd.read_csv(folder + '/' + databaseFile, sep='\t')
 
 # Update the database with the specified files
 #database = updateDatabase(folder, fnames, database, 0)

@@ -37,32 +37,7 @@ def databaseScreen():
     
     return databaseScreen
 
-
-'------------------------------------------------------------------------'
-statsKeys = [['Total Number of Words:',
-              'Total Number of Unknown Words:',
-              'Number of Unique Words:',
-              'Number of Unique Unknown Words:',
-              'Number of Unique Words in Dictionary Form:',
-              'Number of Unique Unknown Words in Dictionary Form:',
-              'The Number of Words of the Frequency Specified:',
-              'Comprehension (%):',
-              'Total Words for Specified Comprehension:',
-              'Total Unknown Words for Specified Comprehension:'],
-         
-             ['-noWords-',
-              '-noUnknown-',
-              '-noUnique-',
-              '-noUniqueUnk-',
-              '-noUniqueDict-',
-              '-noUniqueDictUnk-',
-              '-noSpecFreq-',
-              '-comprehension-',
-              '-noInputComp-',
-              '-noInputCompUnk-']]
-'------------------------------------------------------------------------'
-
-def subAnalysisWindow(fnames): 
+def subAnalysisWindow(fnames):
     # set up the subtitle analysis window
     subtitleListColumn = [[sg.Text('Subtitle Files')],
                           *[[sg.Checkbox(fnames[i], default=True, key=f"-SUBTITLES- {i}")] for i in range(len(fnames))]]
@@ -75,8 +50,30 @@ def subAnalysisWindow(fnames):
                          sg.Text('%'),
                          sg.Button('Update Statistics')],
                         
-                        *[[sg.Text(statsKeys[0][i]), 
-                           sg.Text(size=(10,1), key=statsKeys[1][i])] for i in range(len(statsKeys[0]))]]
+                        [sg.Text('Number of Unique Words: '),
+                         sg.Text(size=(6,1), key='-NoUniqueWords-')],
+
+                        [sg.Text('Number of Words Appearing Only Once: '),
+                         sg.Text(size=(6,1), key='-NoOnlyOnce-')],
+                        
+                        [sg.Text('Number of Words Appearing Specified Times: '),
+                         sg.Text(size=(6,1), key='-NoOnlyX-')],
+                        
+                        [sg.Text('Total Number of Words: '),
+                         sg.Text(size=(6,1), key='-TotalWords-')],
+                        
+                        [sg.Text('Total Number of Unknown Words: '),
+                         sg.Text(size=(6,1), key='-TotalUnknown-')],
+                        
+                        [sg.Text('Comprehension Score: '),
+                         sg.Text(size=(6,1), key='-CompScore-'),
+                         sg.Text('%')],
+                        
+                        [sg.Text('Words Required for Specified Comprehension: '),
+                         sg.Text(size=(6,1), key='-CompWords-')],
+                        
+                        [sg.Text('Unknown Words Required for Specified Comprehension: '),
+                         sg.Text(size=(6,1), key='-CompUnk-')]]
     
     databaseColumn = [[sg.Text('Database')],
                       [sg.Text('Record subtitle information to the database')],
@@ -110,10 +107,3 @@ def subAnalysisWindow(fnames):
                          [sg.Column(subtitleButtons)]]
     
     return subAnalysisWindow
-
-def displayStats(window, stats):
-    # Update each of the stats lines in the UI                
-    for x in range(len(statsKeys[0])):
-        window.Element(statsKeys[1][x]).Update(value=stats[x])
-        
-    return

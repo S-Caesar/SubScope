@@ -13,9 +13,6 @@ import SubsAnalysisClasses as sac
 import UIScreens as uis
 import EventReviewCards as erc
 
-import IchiranParse as ip
-import ParsedAnalysis as pa
-
 windowSplash = sg.Window('Main Menu', layout=uis.splashScreen())
 
 # Start UI loop
@@ -158,19 +155,19 @@ while True:
                   and f.lower().endswith(('.ass'))]
 
         # initialise the subtitle analysis window
-        windowAnalysis = sg.Window('File Analysis').Layout(uis.subAnalysisWindow(fnames))
+        window2 = sg.Window('Second Window').Layout(uis.subAnalysisWindow(fnames))
         windowSplash.Hide()
     
         while True:
-            event, values = windowAnalysis.Read()
+            event, values = window2.Read()
             if event is None or event == 'Exit' or event == 'Back':
                 break
             if event == 'Select All':
                 for i in range(len(fnames)):
-                    windowAnalysis.Element(f"-SUBTITLES- {i}").Update(value=True)
+                    window2.Element(f"-SUBTITLES- {i}").Update(value=True)
             if event == 'Deselect All':
                 for i in range(len(fnames)):
-                    windowAnalysis.Element(f"-SUBTITLES- {i}").Update(value=False)
+                    window2.Element(f"-SUBTITLES- {i}").Update(value=False)
             if event == "-COMP-":
                 if values["-COMP-"] == '': # to avoid an error with trying to divide by zero when deleting input
                     continue
@@ -181,7 +178,7 @@ while True:
                 # TODO add prgress readout like in the 'Update Database' section
                 if values["-COMP-"] == '': # set a default for the comprehension score if the user doesn't input one
                     comprehension = 70
-                    windowAnalysis.Element("-COMP-").Update(value=comprehension)
+                    window2.Element("-COMP-").Update(value=comprehension)
                     
                 # Only analyse files if they are selected
                 fnamesSelect = []
@@ -195,27 +192,19 @@ while True:
                     # TODO add message to tell user they need to select something (maybe another window?)
                     continue
                 else:
-                    output = ip.parseFiles(folder, fnamesSelect, file_list)
+                    output = saf.prepWords(folder, fnamesSelect, 'Top2k.xlsx')
+                    saf.writeData(output, 'test1.xlsx', 'sheet1', False)
                     
-                    # For every specified file, create a list containing the names of the analysed text files
-                    dataFiles = []
-                    for x in range(len(fnamesSelect)):
-                        fnamesSelect[x] = fnamesSelect[x].split('.')
-                        del fnamesSelect[x][-1]
-                        fnamesSelect[x] = '.'.join(fnamesSelect[x])
-                        fnamesSelect[x] = fnamesSelect[x] + '_full.txt'
-                        dataFiles.append(fnamesSelect[x])
-                    
-                    # Read each of the files to be analysed and combine into a single table
-                    outputTable = pd.DataFrame()
-                    for x in range(len(fnamesSelect)):
-                        fullTable = pd.read_csv(folder + '/' +  fnamesSelect[x], sep='\t')
-                        outputTable = outputTable.append(fullTable)
-                    outputTable = outputTable.reset_index(drop=True)
-                    
-                    # Analyse the combined table and return the stats, then update the UI to display the results
-                    stats = pa.prepStats(outputTable, 1, '==',  comprehension)
-                    uis.displayStats(windowAnalysis, stats)
+                    # run the stats analysis, and assign the values to the UI keys
+                    stats = saf.subStats(output, 'All Words', 'AW Freq', 'Unknown', 'Unk Freq', '>=', 10, comprehension)
+                    window2.Element('-NoUniqueWords-').Update(value=stats[0][0])
+                    window2.Element('-NoOnlyOnce-').Update(value=stats[0][1])
+                    window2.Element('-NoOnlyX-').Update(value=stats[0][2])
+                    window2.Element('-TotalWords-').Update(value=stats[0][3])
+                    window2.Element('-TotalUnknown-').Update(value=stats[0][4])
+                    window2.Element('-CompScore-').Update(value=stats[0][5])
+                    window2.Element('-CompWords-').Update(value=stats[0][6])
+                    window2.Element('-CompUnk-').Update(value=stats[0][7])
         
             if event == 'Add To Database':
                 # Check which files have been marked for adding to the database
@@ -280,6 +269,6 @@ while True:
                 # TODO Once the data is read in, order the database
                 print('Done!')
                 
-        windowAnalysis.Close()
+        window2.Close()
         windowSplash.UnHide()
 windowSplash.Close()
