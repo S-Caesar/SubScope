@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
-# Send a phrase to ichiran for parsing, and put the data into a DataFrame for easy reference (incl. the base and conjugated word where relevent)
-# > parseFiles (check files for parsing)
+# Take the list of files, remove any that have been analysed already,
+# Then write the output files ('_justText', '_full') for the rest
+
+# parseWrapper (wrapper for parsing a file into output files)
+# > renameFiles (return list with modified names with '_justText.txt')
+# > checkFiles (find and remove any existing '_justText.txt' from the list)
+# > stripText (extract the text lines from the file, and write '_justText.txt')
+
+# > renameFiles (return list with modified names with '_full.txt')
+# > checkFiles (find and remove any existing '_full.txt' from the list)
+# > parseFiles (parse the text in the _justText.txt', and output '_full.txt')
    # > prepParseInput (remove blacklist characters)
    # > ichiranParse (parse each line of a file and store in DataFrame)
-   # > flattenIchiran (normalise any elements (excl. gloss) which are lists by adding rows/columns)
-# > parseFiles (write the output DataFrames to .txt files)
+   # > flattenIchiran (normalise any elements (excl. gloss) which are lists)
+
 
 import subprocess
 import json
@@ -12,20 +21,27 @@ import pandas as pd
 import re
 
 # Take the list of files, remove any that have been analysed already,
-# Then write the analysis files for the rest
-def parseFiles(folder, fnames, allFiles):
+# Then write the output files ('_justText', '_full') for the rest
+def parseWrapper(folder, files, allFiles):
     # TODO: test other file types (e.g. .txt files are probably fine)
-    # TODO: if the input is longer than 'x' lines, split it into multiple temp files to avoid risk of losing progress in a crash/error
+    # TODO: if the input is longer than 'x' lines, split it into multiple 
+    #       temp files to avoid risk of losing progress in a crash/error
 
+    # Create a list of '_justText' files
+    justTextFiles = renameFiles(files.copy(), '_justText.txt')
+    # Check which '_justText' files exist, and remove from the list if they do
+    justText = checkFiles(folder, files.copy(), justTextFiles, allFiles)
+    # Get the text lines from the files, and write to '_justText.txt' files
+    stripText(folder, justText, '_justText.txt')
     
-    # Parse the input, one file (a single line in the list) at a time
+    # Create a list of '_justText' files
+    fullFiles = renameFiles(files.copy(), '_full.txt')
+    # Check which '_justText' files exist, and remove from the list if they do
+    full = checkFiles(folder, files.copy(), fullFiles, allFiles)
+    # Parse the text, and write to 'full.txt' files
+    parseFiles(folder, full)
     
     return 
-
-# Take a list of selected files
-# Check if the output files already exist, and remove the file from the list if they do
-# Send each file to prepParseInput to remove unwanted content
-# Write the list to a .txt file for use later
 
 
 def renameFiles(files, append):
@@ -115,114 +131,120 @@ def prepParseInput(parseInput):
     return parseInput
 
 
-# TODO review
-
 def ichiranParse(parseInput):
     ''''''
-    # Send a string to the command prompt for passing with ichiran-cli and returns a json file
+    # Parse a string with ichiran-cli and return a json format list
     print(parseInput)
-    loc = 'C:/Users/Steph/quicklisp/local-projects/ichiran' # path to the location of Ichiran
     
-    # Note: if there are gaps, or full stops in the console input, then the json will split into additional nested levels
-    consoleOutput = subprocess.check_output('ichiran-cli -f ' + parseInput, shell=True, cwd=loc) # run ichiran through the console, and return the parsed json
-    jsonOutput = json.loads(consoleOutput) # full json output in list format
+    # Path to the location of Ichiran
+    loc = 'C:/Users/Steph/quicklisp/local-projects/ichiran' 
+    
+    # Run ichiran through the console, and return the parsed json
+    consoleOutput = subprocess.check_output('ichiran-cli -f ' + parseInput, shell=True, cwd=loc) 
+    
+    # Full json output in list format
+    jsonOutput = json.loads(consoleOutput) 
     
     return jsonOutput
 
 
-# TODO review
 def flattenIchiran(jsonOutput):
-    mainJson = jsonOutput[0][0][0] # main list where each element is [word, information]
-    compData = pd.DataFrame(columns=['reading', 'text', 'kana', 'score', 'seq', 'conj'])
+    # Main list where each element is [word, information]
+    mainJson = jsonOutput[0][0][0] 
     
-    # First, check if there are any words with multiple versions, and update the entry to only deal with the first one
-    for x in range(len(mainJson)):
-        # The parsed content has multiple readings. Just take all of the data for the first reading, and use this as if it was a normal word        
-        try:
-            mainJson[x][1] = mainJson[x][1]['alternative'][0]
-        except:
-            continue
-            
-        # The parsed content might be a compound word. Need to flatten the first level, then check for a 'compound' column
-        if len(mainJson[x][1]) == 6:
-            baseData = pd.json_normalize(mainJson[x][1]) # flatten to: 'reading', 'text', 'kana', 'score', 'seq', 'conj' OR 'reading', 'text', 'kana', 'score', 'compound', 'components'
-            # If there is a compound column, split the words into separate rows
-            if 'compound' in baseData:
-                compData = compData.append(pd.json_normalize(mainJson[x][1]['components']))
-                mainJson[x] = '' # Set the existing row to blank (will be removed when the loop finishes)          
-    mainJson = [x for x in mainJson if x != ''] # remove any balnk rows (these have been converted from compounds to single words)
-
     mainTable = pd.DataFrame(columns=['reading', 'text', 'kana', 'score', 'seq', 'gloss', 'conj'])
-    # Flatten all the normal entries (incl. first versions from 'alternative'), then append the split up and flattened compound entries
     for x in range(len(mainJson)):
-        mainTable = mainTable.append(pd.json_normalize(mainJson[x][1])) # flatten to: 'reading', 'text', 'kana', 'score', 'seq', 'conj'
-    mainTable = mainTable.append(compData).reset_index(drop=True)
+        # If the parsed content has multiple readings, just take the first one  
+        if 'alternative' in mainJson[x][1]:
+            mainJson[x][1] = mainJson[x][1]['alternative'][0]
+        
+        # If there are multiple components, take 'components' for normalising
+        if 'components' in mainJson[x][1]:
+            mainJson[x][1] = mainJson[x][1]['components']
+            
+        mainTable = mainTable.append(pd.json_normalize(mainJson[x][1])).reset_index(drop=True)
     
     outputTable = pd.DataFrame(columns=['reading', 'text', 'kana', 'score', 'seq', 'gloss', 'conj-prop', 'conj-type', 'neg', 'dict-reading', 'dict-text', 'dict-kana'])
     for x in range(len(mainTable)):
-        # The parsed content is just a simple word, with no conjugation, or alternative meanings. It can be appended straight onto the main table
-        if mainTable['conj'][x] == list(): # If the 'conj' value is an empty list, then it's a normal word
-            outputTable = outputTable.append(mainTable[x:x+1]) # just append the row to the output table; no other processing required
+        # If 'conj' is an empty list, then it's a normal word, just append it
+        if mainTable['conj'][x] == list():
+            outputTable = outputTable.append(mainTable[x:x+1]) 
             
-        # The parsed content is a conjugated word. The conjugation information must be extracted, and the glossary information relocated to the main 'gloss' column
-        else: # There is data for the 'conj' column which needs to be normalised first
-            baseData = mainTable[x:x+1]
+        # If there is Nan in the 'conj' column then skip it (probably a name)
+        elif mainTable[x:x+1]['conj'].isnull().values.any():
+            continue
+        
+        # Else, there is data for the 'conj' column; extract and reformat
+        else:
+            # Copy the 'mainTable' row, or Pandas throws 'SettingWithCopyWarning'
+            baseData = mainTable[x:x+1].copy()
             
-            # Check whether there is anything in the 'conj' column. If there isn't, the input is likely a person/place name - just skip it and go to the next value of x
-            if baseData['conj'].isnull().values.any():
-                continue
+            # Flatten to: 'prop', 'via', 'readok'
+            # Or: 'prop', 'reading', 'gloss', 'readok'
+            conjData = pd.json_normalize(mainTable['conj'][x]) 
             
-            conjData = pd.json_normalize(mainTable['conj'][x]) # flatten to: 'prop', 'via', 'readok' OR 'prop', 'reading', 'gloss', 'readok'
-            posData = pd.json_normalize(conjData['prop'][0]) # flatten to: 'pos', 'type', 'neg' (if conj is negative)
+            # Flatten to: 'pos', 'type', 'neg' (if conj is negative)
+            posData = pd.json_normalize(conjData['prop'][0]) 
 
-            # if the conjugation is via a previous conjugation (e.g. Past form of Potential form), then the 'via' component must be flattened to get the same data as in posData
+            # If conj. is 'via' a previous conj. (e.g. Past form of Potential form),
+            # then 'via' must be flattened to get the same data as in posData
             if len(conjData.columns) == 3:
-                viaConjData = pd.json_normalize(conjData['via'][0]) # flatten to: 'prop', 'reading', 'gloss', 'readok'
-                viaPosData = pd.json_normalize(viaConjData['prop'][0]) # flatten to: 'pos', 'type', 'neg' (if conj is negative)
+                # Flatten to: 'prop', 'reading', 'gloss', 'readok'
+                conjData = pd.json_normalize(conjData['via'][0])
                 
-                # Append the normal posData conjugation data to the individual elements of viaPosData
+                # Flatten to: 'pos', 'type', 'neg' (if conj is negative)
+                viaPosData = pd.json_normalize(conjData['prop'][0]) 
+                
+                # Append the posData conjugation to each element of viaPosData
                 posData['pos'][0] = posData['pos'][0] + ' [via] ' + viaPosData['pos'][0]
                 posData['type'][0] = posData['type'][0] + ' [via] ' + viaPosData['type'][0]
-                
-                conjData = viaConjData # to make sure the following section always takes the proper format of: 'prop', 'reading', 'gloss', 'readok'
             
-            posData = posData.rename(columns={'pos': 'conj-prop', 'type': 'conj-type'}) # rename columns to match main DataFrame
+            # Rename the columns to match main DataFrame
+            posData = posData.rename(columns={'pos': 'conj-prop', 'type': 'conj-type'}) 
             
-            # Get the dictionary form of the word, and then create columns to store the same data as for the main word ('reading', 'text', 'kana')  
-            dictSplit = conjData['reading'][0].split(' ') # split the 'reading' information for the dictionary form to get the kanji and kana
+            # Get the dictionary form of the word, and create columns to store
+            # the same data as for the main word ('reading', 'text', 'kana')
+            # Split the 'reading' info for the dict form to get the kanji and kana
+            dictSplit = conjData['reading'][0].split(' ') 
             
-            # If the word doesn't have kanji, then there will be no kanji/reading to split, and the result is a single element which will need to fill all three spaces
+            # If the word doesn't have kanji, then there will be no kanji
+            # /reading to split, and the result is a single element which 
+            # will need to fill all three spaces
             if len(dictSplit) == 1:
                 dictText = dictSplit[0]
                 dictKana = dictSplit[0]
-            # If the word does have kanji, it will be split into the kanji, and a reading surrounded by brackets
+                
+            # If the word does have kanji, it will be split into the kanji, 
+            # and a reading surrounded by brackets
             else:
-                dictText = dictSplit[0] # get the kanji text
-                dictKana = dictSplit[1].replace('【', '').replace('】', '') # get the kana reading (with brackets removed)
+                dictText = dictSplit[0]
+                dictKana = dictSplit[1].replace('【', '').replace('】', '') 
             
-            dictData = pd.DataFrame({'dict-reading': conjData['reading'], 'dict-text': dictText, 'dict-kana': dictKana}) # put all the dictionary data into a table
+            # Put all the dictionary data into a table
+            dictData = pd.DataFrame({'dict-reading': conjData['reading'], 'dict-text': dictText, 'dict-kana': dictKana}) 
             
-            # If there was a 'via' conjugation, there will be different nesting; there will be 4 columns if it wasn't a 'via' conjugation
+            # Nest level for 'gloss' depends on whether there was a 'via'
             if len(baseData['conj'][x][0]) == 4:
                 baseData['gloss'][x] = baseData['conj'][x][0]['gloss']
-            # If there was a 'via' conjugation, then an additional nest must be navigated to find the glossary info
             else:
                 baseData['gloss'][x] = baseData['conj'][x][0]['via'][0]['gloss']
-    
-            baseData = baseData.drop(columns=['conj']) # 'conj' column should now be empty, so just get rid of it
-            baseData = baseData.reset_index(drop=True) # need to make sure the index is reset so the posData and dictData will join properly
+
+            # 'conj' column should now be empty, so just get rid of it
+            baseData = baseData.drop(columns=['conj'])
+            baseData = baseData.reset_index(drop=True) 
             
             outputData = baseData.join(posData).join(dictData)
             outputTable = outputTable.append(outputData)
-    
-    outputTable = outputTable.reset_index(drop=True) # reset the index, as otherwise every entry will be row index 0
-    outputTable = outputTable.fillna(0) # replace all the 'nan' with '0' to avoid any issues later
+            
+    # Reset the index, as otherwise every entry will be row index 0
+    # Then replace all the 'nan' with '0' to avoid any issues later
+    outputTable = outputTable.reset_index(drop=True)
+    outputTable = outputTable.fillna(0) 
 
-    return outputTable  
+    return outputTable
 
 
-# TODO finish review (basically done I think)
-def parseFile(folder, files):
+def parseFiles(folder, files):
     ''''''
     # Read in and parse each of the files in the list
     # Output a file with a table of parsed words, and the glossary info
@@ -250,25 +272,13 @@ def parseFile(folder, files):
             
             # Send each element for parsing, then append onto the main table
             jsonOutput = ichiranParse(parseInput['sentence'][y])
-            
-            # Disable and Enable the 'chained assignment' warning for this sections - it's a false positive
-            # TODO - maybe I should making a copy it and then updating the copy?
-            
-            
-            
-            #pd.set_option('mode.chained_assignment', None)
-            fullTable = fullTable.append(flattenIchiran(jsonOutput), ignore_index=True)
-            #pd.reset_option('mode.chained_assignment')
-            
-            
-            
+            fullTable = fullTable.append(flattenIchiran(jsonOutput),ignore_index=True)
+
             # Add the line number for all added words
-            # This can be used to track back to the sentence from the word
+            # This can be used to locate a sentence in '_justText' files
             fullTable['line'] = fullTable['line'].fillna(y)
             
-        # Check for 'conj' / 'compound' / 'components' columns
-        # Then remove them if they exist (unlikly to not exist,
-        # but can occur in rare cases where just particles are parsed)
+        # Remove 'conj' / 'compound' / 'components' columns if existing
         delColumns = ['conj', 'compound', 'components']
         for item in delColumns:
             if item in fullTable:
@@ -283,6 +293,8 @@ def parseFile(folder, files):
     return
 
 
+'----------------------------------------------------------------------------'
+'''
 import os
 
 folder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles/SteinsGate' # will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
@@ -295,40 +307,6 @@ files = [f for f in file_list
 
 allFiles = [f for f in file_list] # get the names of all files in the folder to see if the analysis has already been completed
 
-# Prepare lists to check which types of output file have already been created
-justTextFiles = renameFiles(files.copy(), '_justText.txt')
-justText = checkFiles(folder, files.copy(), justTextFiles, allFiles)
-stripText(folder, justText, '_justText.txt')
-
-fullFiles = renameFiles(files.copy(), '_full.txt')
-full = checkFiles(folder, files.copy(), fullFiles, allFiles)
-
-parseFile(folder, full)
-    
-
-
-
-
-
-
-
-
-
-
-
-
-'----------------------------------------------------------------------------'
+parseWrapper(folder, files, allFiles)
 '''
-import os
-
-folder = 'C:/Users/Steph/OneDrive/App/Subtitles/SteinsGate Subs' # will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
-file_list = os.listdir(folder)
-fnames = [f for f in file_list
-          if os.path.isfile(os.path.join(folder, f))
-          and f.lower().endswith(('.srt'))
-          or os.path.isfile(os.path.join(folder, f))
-          and f.lower().endswith(('.ass'))]
-
-allFiles = [f for f in file_list] # get the names of all files in the folder to see if the analysis has already been completed
-
-output = parseFiles(folder, fnames, allFiles)'''
+'----------------------------------------------------------------------------'
