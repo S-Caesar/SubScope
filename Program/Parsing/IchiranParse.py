@@ -80,7 +80,7 @@ def stripText(folder, files, append):
     
     # Remove any blacklisted characters, or indications of who is speaking
     for x in range(len(parseInput)):
-        parseInput[x] = prepParseInput(parseInput[x]) 
+        parseInput[x] = prepParseInput(parseInput[x])
     
     # Write the parseInput list to a text file for use later
     for x in range(len(files)):
@@ -123,11 +123,12 @@ def prepParseInput(parseInput):
         
         for y in range(len(parseInput[x])): 
             if not whitelist.search(parseInput[x][y]):
-                parseInput[x] = parseInput[x].replace(parseInput[x][y], ' ')   
+                parseInput[x] = parseInput[x].replace(parseInput[x][y], ' ')
         
         parseInput[x] = parseInput[x].replace(' ','')
-    parseInput = [x for x in parseInput if x != '']
-
+    # Leave the blank lines in for now so that when writing to '_justText.txt'
+    # The line number will match with the origina subtitle file
+    
     return parseInput
 
 
@@ -261,6 +262,8 @@ def parseFiles(folder, files):
         # Read in the appropriate '_justText' file for parsing
         parseInput = pd.read_csv(folder + '/' + justText[x], delimiter = "\t")
         del parseInput['line no']
+        parseInput.dropna(inplace=True)
+        parseInput = parseInput.reset_index()
 
         i=0
         for y in range(len(parseInput['sentence'])):
@@ -276,7 +279,7 @@ def parseFiles(folder, files):
 
             # Add the line number for all added words
             # This can be used to locate a sentence in '_justText' files
-            fullTable['line'] = fullTable['line'].fillna(y)
+            fullTable['line'] = fullTable['line'].fillna(parseInput['index'][y])
             
         # Remove 'conj' / 'compound' / 'components' columns if existing
         delColumns = ['conj', 'compound', 'components']
@@ -292,12 +295,12 @@ def parseFiles(folder, files):
 
     return
 
-
-'----------------------------------------------------------------------------'
 '''
+'----------------------------------------------------------------------------'
 import os
 
-folder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles/SteinsGate' # will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
+# will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
+folder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles/SteinsGate' 
 file_list = os.listdir(folder)
 files = [f for f in file_list
              if os.path.isfile(os.path.join(folder, f))
@@ -305,8 +308,9 @@ files = [f for f in file_list
              or os.path.isfile(os.path.join(folder, f))
              and f.lower().endswith(('.ass'))]
 
-allFiles = [f for f in file_list] # get the names of all files in the folder to see if the analysis has already been completed
+# get the names of all files in the folder to see if the analysis has already been completed
+allFiles = [f for f in file_list] 
 
 parseWrapper(folder, files, allFiles)
-'''
 '----------------------------------------------------------------------------'
+'''
