@@ -97,7 +97,7 @@ def findSentences(folder, database, targetWord):
         
     return wordLoc
 
-'''
+
 '----------------------------------------------------------------------------'
 folder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles'
 databaseFile = 'mainDatabase.txt'
@@ -108,4 +108,3 @@ targetWord = 'あのね'
 
 wordLoc = findSentences(folder, database, targetWord)
 '----------------------------------------------------------------------------'
-'''

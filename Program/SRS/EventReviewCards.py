@@ -2,9 +2,11 @@
 # Essentailly the main SRS component of the program
 
 import os
+import io
 import datetime
 import pandas as pd
 import PySimpleGUI as sg
+from PIL import Image
 
 buttons = pd.DataFrame({'Response':     ['Flip',   'Again',  'Hard',        'Good',   'Easy'        ],
                         'Keystroke':    ['',       '1',      '2',           '3',      '4'           ],
@@ -13,19 +15,32 @@ buttons = pd.DataFrame({'Response':     ['Flip',   'Again',  'Hard',        'Goo
                         'ButtonColour': ['grey30', 'red2',   'dark orange', 'green3', 'DeepSkyBlue3']
                          })
 
+cardDetails = pd.DataFrame(
+    {'heading': ['wordJapanese', 'partOfSpeech', 'definition', 'info',   'sentence'],
+     'width':   [34,             53,             39,           43,       34        ],
+     'height':  [1,              1,              2,            2,        3         ],
+     'justif':  ['centre',       'centre',       'centre',     'centre', 'centre'  ],
+     'font':    ['Any 18',       'Any 12',       'Any 16',     'Any 14', 'Any 18'  ]})
+
 
 def deckScreen(deckList):
     # Show the list of decks, and the template for displaying card details
     deckCol = [[sg.Text('Select a desk to review:')],
              *[[sg.Text(deckList[i], enable_events=True, size=(200,1), key=f'-DECKS {i}-')] for i in range(len(deckList))]]
                
-    # TODO the text element size needs to be changed if the font changes otherwise they end up off centre - must be a way to link them so the user can then select font sizes
-    deckCard = [[sg.Text(size=(60,2), justification='center', key='-DECK-')], # TODO: properly format the card information
-                [sg.Text(size=(34,1), justification='center', font='Any 18', key='-FIELD1-')],
-                [sg.Text(size=(40,2), justification='center', font='Any 16', key='-FIELD2-')],
-                [sg.Text(size=(40,4), justification='center', font='Any 16', key='-FIELD3-')],
-                [sg.Text(size=(60,12), justification='center', key='-FIELD4-')],
-                [sg.Button(buttons['Response'][0], size=(10,2), disabled=True, button_color=(buttons['TextColour'][0], buttons['ButtonColour'][0])), # TODO There must be a way to loop these, but I can't work it out - the *[ method puts them in a column not a row
+    # TODO: the text element size needs to be changed if the font changes
+    #       otherwise they end up off centre - must be a way to link them so the
+    #       user can then select font sizes
+    deckCard = [[sg.Text(size=(60,2), justification='center', key='-DECK-')],
+               *[[sg.Text(size=(cardDetails['width'][i], cardDetails['height'][i]),
+                          justification=cardDetails['justif'][i],
+                          font=cardDetails['font'][i],
+                          key=f'-FIELD{i}-')] for i in range(len(cardDetails))],
+               
+                [sg.Image(key='-IMAGE-', visible=False)],
+                
+                # TODO There must be a way to loop these, but I can't work it out - the *[ method puts them in a column not a row  
+                [sg.Button(buttons['Response'][0], size=(10,2), disabled=True, button_color=(buttons['TextColour'][0], buttons['ButtonColour'][0])), 
                  sg.Button(buttons['Response'][1], size=(10,2), disabled=True, button_color=(buttons['TextColour'][1], buttons['ButtonColour'][1])),
                  sg.Button(buttons['Response'][2], size=(10,2), disabled=True, button_color=(buttons['TextColour'][2], buttons['ButtonColour'][2])),
                  sg.Button(buttons['Response'][3], size=(10,2), disabled=True, button_color=(buttons['TextColour'][3], buttons['ButtonColour'][3])),
@@ -35,13 +50,12 @@ def deckScreen(deckList):
     
     mainButtons = [[sg.Button('Back')]]
     
-    deckScreen = [[sg.Column(deckCol, size=(200,500)),
+    deckScreen = [[sg.Column(deckCol, size=(200,700)),
                    sg.VSeparator(),
-                   sg.Column(deckCard, size=(500,500)),
+                   sg.Column(deckCard, size=(500,700)),
                    sg.VSeparator(),
-                   sg.Column(wordDetails, size=(200,500))],
-                   [sg.Column(mainButtons)
-                   ]]
+                   sg.Column(wordDetails, size=(200,700))],
+                   [sg.Column(mainButtons)]]
     
     return deckScreen
 
@@ -90,23 +104,34 @@ def getDecks(folderPath):
     return deckList, deckKeys
 
 
-def setCardDetails(window, cardState, deck, x):
+def setCardDetails(window, sourceFolder, cardState, deck, x):
     # Select the information to display on the card screen
-    # TODO need to add an additional line for the 'words' column - I fogot to add this
-    states = pd.DataFrame({'State':  ['Front',                  'Rear',                  'Done'         ],
-                           'FIELD1': [deck['wordJapanese'][x],  deck['wordJapanese'][x], 'Deck Finished'],
-                           'FIELD2': [deck['partOfSpeech'][x],  deck['partOfSpeech'][x], ''             ],
-                           'FIELD3': ['',                       deck['definition'][x],   ''             ],
-                           'FIELD4': ['',                       deck['info'][x],         ''             ]
-                        })
+    states = pd.DataFrame({'State' : ['Front',                 'Rear',                  'Done'         ],
+                           'FIELD0': [deck['wordJapanese'][x], deck['wordJapanese'][x], 'Deck Finished'],
+                           'FIELD1': [deck['partOfSpeech'][x], deck['partOfSpeech'][x], ''             ],
+                           'FIELD2': ['',                      deck['definition'][x],   ''             ],
+                           'FIELD3': ['',                      deck['info'][x],         ''             ],
+                           'FIELD4': ['',                      deck['sentence'][x],     ''             ],
+                           'IMAGE' : [deck['screenshot'][x],   deck['screenshot'][x],   ''             ]})
     
     if len(states.loc[states['State'] == cardState]) > 0:
         row = states.loc[states['State'] == cardState].index[0]
+        window.Element('-FIELD0-').Update(states.iloc[row]['FIELD0'])
         window.Element('-FIELD1-').Update(states.iloc[row]['FIELD1'])
         window.Element('-FIELD2-').Update(states.iloc[row]['FIELD2'])
         window.Element('-FIELD3-').Update(states.iloc[row]['FIELD3'])
         window.Element('-FIELD4-').Update(states.iloc[row]['FIELD4'])
-    
+        
+        if cardState != 'Done':
+            image = Image.open(sourceFolder + '/' + deck['source'][x] + '/' + states.iloc[row]['IMAGE'])
+            image.thumbnail((500, 500))
+            bio = io.BytesIO()
+            image.save(bio, format='PNG')
+            window.Element('-IMAGE-').Update(data=bio.getvalue(), visible=True)
+        
+        if cardState != 'Rear':
+            window.Element('-IMAGE-').Update(visible=False)
+            
     return
         
 

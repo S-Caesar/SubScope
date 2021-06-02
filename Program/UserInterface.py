@@ -32,6 +32,8 @@ while True:
         folderPath = 'C:/Users/steph/OneDrive/App/Japanese App/User Data/SRS/Decks' 
         deckList, deckKeys = erc.getDecks(folderPath)
         
+        sourceFolder = 'C:/Users/steph/OneDrive/App/Japanese App/User Data/Subtitles'
+        
         windowDeckMenu = sg.Window('Deck Menu', layout=erc.deckScreen(deckList), return_keyboard_events=True)
         windowSplash.Hide()
         
@@ -54,6 +56,7 @@ while True:
                 deckNo = deckKeys.index(event)
                 windowDeckMenu.Element('-DECK-').Update(deckList[deckNo])
                 deck = pd.read_csv(folderPath + '/' + deckList[deckNo], sep='\t')
+                deck = deck.fillna('')
                 
                 reviewLimit = 5 # Add input boxes for this beside the decks
                 today = erc.getDate()
@@ -75,7 +78,7 @@ while True:
             # Show the back of the card when the button is pressed, disable the flip button, and enable the response buttons
             if event == 'Flip':
                 state = 'Rear'
-                erc.setCardDetails(windowDeckMenu, state, deck, x)
+                erc.setCardDetails(windowDeckMenu, sourceFolder, state, deck, x)
                 erc.setFlip(windowDeckMenu, True)
                 erc.setButtons(windowDeckMenu, False)
             
@@ -91,13 +94,13 @@ while True:
                     
                 elif x >= len(deck['wordJapanese']):
                     state = 'Done'
-                    erc.setCardDetails(windowDeckMenu, state, deck, 0) # update cards to 'Done' state
+                    erc.setCardDetails(windowDeckMenu, sourceFolder, state, deck, 0) # update cards to 'Done' state
                     erc.setButtons(windowDeckMenu, True) # Disable response buttons
                     erc.setFlip(windowDeckMenu, True) # Disable flip button
                     
                 else:
                     state = event
-                    erc.setCardDetails(windowDeckMenu, state, deck, x)
+                    erc.setCardDetails(windowDeckMenu, sourceFolder, state, deck, x)
                     erc.setFlip(windowDeckMenu, False)
             
         windowDeckMenu.close()

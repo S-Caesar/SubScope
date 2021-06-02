@@ -25,7 +25,8 @@ def createDeck(deckFolder, deckName, deckFormat):
     # Create a blank deck
     if deckName not in os.listdir(deckFolder):
         # TODO: add different deckFormat options - currently just default
-        blankDeck = pd.DataFrame(columns=['wordJapanese',
+        blankDeck = pd.DataFrame(columns=['source',
+                                          'wordJapanese',
                                           'partOfSpeech',
                                           'definition',
                                           'info',
@@ -60,8 +61,14 @@ def getCardInfo(targetWord, database, sourceFolder):
 
     wordLoc = fs.findSentences(sourceFolder, database, targetWord)
     
+    
+    
     # TODO: for now, just grab the first sentence, but eventually find the one with the fewest unknown words
     senNo = 0
+    
+    source = wordLoc['source'][senNo]
+    print(source)
+    
     sentence = wordLoc['sentence'][senNo]
     
     lineNo = str(int(wordLoc['line no'][senNo]))
@@ -71,7 +78,7 @@ def getCardInfo(targetWord, database, sourceFolder):
     startEF = 1
     today = getDate()
     
-    cardInfo = [targetWord, pos, gloss, info, sentence, audio, screenshot, startEF, 0, today, 'new']
+    cardInfo = [source, targetWord, pos, gloss, info, sentence, audio, screenshot, startEF, 0, today, 'new']
     
     # Return just the selected line, for use in making media files
     wordLoc = wordLoc[:][senNo:senNo+1].reset_index(drop=True)
