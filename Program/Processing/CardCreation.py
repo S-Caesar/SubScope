@@ -61,13 +61,11 @@ def getCardInfo(targetWord, database, sourceFolder):
 
     wordLoc = fs.findSentences(sourceFolder, database, targetWord)
     
-    
-    
+
     # TODO: for now, just grab the first sentence, but eventually find the one with the fewest unknown words
     senNo = 0
     
     source = wordLoc['source'][senNo]
-    print(source)
     
     sentence = wordLoc['sentence'][senNo]
     

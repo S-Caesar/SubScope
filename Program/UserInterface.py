@@ -11,12 +11,23 @@ import PySimpleGUI as sg
 import SubsAnalysisFunction as saf
 import SubsAnalysisClasses as sac
 import UIScreens as uis
-from SRS import EventReviewCards as erc
 
-from Parsing import IchiranParse as ip
-from Processing import ParsedAnalysis as pa
+from Program.Parsing import IchiranParse as ip
+from Program.Processing import ParsedAnalysis as pa
+
+from SRS import ReviewUI as ru
 
 sg.theme('BlueMono')
+
+# Read in the user settings
+pathSettings = {}
+settingsPath = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Settings/pathSettings.txt'
+with open(settingsPath) as settings:
+    for line in settings:
+        (key, val) = line.strip('\n').split('\t')
+        pathSettings[key] = val
+
+deckSettings = pd.read_csv('C:/Users/Steph/OneDrive/App/Japanese App/User Data/Settings/deckSettings.txt', sep='\t').set_index('deckName')
 
 windowSplash = sg.Window('Main Menu', layout=uis.splashScreen())
 
@@ -27,91 +38,16 @@ while True:
         break
     
     if event == 'Review Cards':
-        # Go to SRS deck selection
-        # TODO default location of 'Decks' - have an option for the user to select a different folder
-        folderPath = 'C:/Users/steph/OneDrive/App/Japanese App/User Data/SRS/Decks' 
-        deckList, deckKeys = erc.getDecks(folderPath)
-        
-        sourceFolder = 'C:/Users/steph/OneDrive/App/Japanese App/User Data/Subtitles'
-        
-        windowDeckMenu = sg.Window('Deck Menu', layout=erc.deckScreen(deckList), return_keyboard_events=True)
-        windowSplash.Hide()
-        
-        # Initialise variables outside of the loop
-        x = 0
-        state = 'Front'
-        while True:
-            event, values = windowDeckMenu.Read()
-            print('event: ', event) # for debugging the state of the cards
-            
-            if event is None or event == 'Exit' or event == 'Back':
-                break
-            
-            # TODO
-            # Add the algorithm for updating the ease value
-            # Track how many of each type of card has been reviewed against the user limits
-            # Update review dates in the deck file
-            if event in deckKeys:
-                # If a deck is selected, load up the cards for that deck
-                deckNo = deckKeys.index(event)
-                windowDeckMenu.Element('-DECK-').Update(deckList[deckNo])
-                deck = pd.read_csv(folderPath + '/' + deckList[deckNo], sep='\t')
-                deck = deck.fillna('')
-                
-                reviewLimit = 5 # Add input boxes for this beside the decks
-                today = erc.getDate()
-                reviewDeck = deck[deck['nextReview'] != 0]  
-                reviewDeck = reviewDeck[reviewDeck['nextReview'] <= today]
-                reviewDeck = reviewDeck[:reviewLimit]
-                
-                newLimit = 2
-                newDeck = deck[deck['nextReview'] == 0]
-                newDeck = newDeck[:newLimit]
-
-                deck = reviewDeck.append(newDeck)
-                deck = deck.sample(frac=1).reset_index(drop=True) # Used to randomise the order of the cards
-
-                erc.setFlip(windowDeckMenu, False)
-         
-                event = 'Front'
-            
-            # Show the back of the card when the button is pressed, disable the flip button, and enable the response buttons
-            if event == 'Flip':
-                state = 'Rear'
-                erc.setCardDetails(windowDeckMenu, sourceFolder, state, deck, x)
-                erc.setFlip(windowDeckMenu, True)
-                erc.setButtons(windowDeckMenu, False)
-            
-            # Check if the user has pressed a key/button and return values
-            q, event, x = erc.userResponse(windowDeckMenu, event, state, x)
-            
-            # Must be after the flip and back display - loop only runs when the UI is interacted with
-            if event == 'Front':
-                # Show front of first card
-                if len(deck['wordJapanese']) == 0:
-                    print('No new cards, or reviews in this deck')
-                    erc.setFlip(windowDeckMenu, True) # Disable flip button
-                    
-                elif x >= len(deck['wordJapanese']):
-                    state = 'Done'
-                    erc.setCardDetails(windowDeckMenu, sourceFolder, state, deck, 0) # update cards to 'Done' state
-                    erc.setButtons(windowDeckMenu, True) # Disable response buttons
-                    erc.setFlip(windowDeckMenu, True) # Disable flip button
-                    
-                else:
-                    state = event
-                    erc.setCardDetails(windowDeckMenu, sourceFolder, state, deck, x)
-                    erc.setFlip(windowDeckMenu, False)
-            
-        windowDeckMenu.close()
+        # Go to SRS deck selection and card review
+        ru.reviewCards(pathSettings, deckSettings)
         windowSplash.UnHide()
         
     if event == 'Change Settings':
         # TODO update all of the options heading names
         mainOptions = ['Option Group 1', 'Option Group 2', 'Option Group 3']
-        subOptions  = ['', '', '', ''] # empty elements to make sure the keys get updated in the menus
-        subOptions1 = ['a', 'b', 'c', ''] 
-        subOptions2 = ['d', '',  '',  '']
+        subOptions  = ['',  '',  '',  '' ] # empty elements to make sure the keys get updated in the menus
+        subOptions1 = ['a', 'b', 'c', '' ] 
+        subOptions2 = ['d', '',  '',  '' ]
         subOptions3 = ['e', 'f', 'g', 'h']
         
         allOptions = pd.DataFrame()
