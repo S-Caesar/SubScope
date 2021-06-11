@@ -205,9 +205,9 @@ def writeDatabase(folder, overwrite, knownList):
 
 '----------------------------------------------------------------------------'
 # TODO This can be a file selected by the user (e.g. from Anki) to update the database if they've been using other resources
-knownList = 'C:/Users/steph/OneDrive/App/Japanese App/User Data/SRS/Known Words/Top2k-2.xlsx' 
+knownList = 'C:/Users/steph/OneDrive/App/SubScope/User Data/SRS/Known Words/Top2k-2.xlsx' 
 
-showFoldersPath = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles'
+showFoldersPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles'
 consolidateDatabase(showFoldersPath, knownList, overwrite=False, create=True)
 
 # Remove all lines ('lines'), columns ('columns'), or both ('both') from the database

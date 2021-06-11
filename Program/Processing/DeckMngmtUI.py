@@ -150,13 +150,13 @@ def deleteDeck(deckName):
 
 sg.theme('BlueMono')
 
-deckFolder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/SRS/Decks'
+deckFolder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/SRS/Decks'
 deckList = os.listdir(deckFolder)
 
 cardFormats = ['Default', 'Alt 1', 'Alt 2']
 sortOptions = ['Hiragana', 'Alphabet', 'Part of Speech', 'Frequency', 'Fewest Unknown']
 
-sourceFolder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles'
+sourceFolder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles'
 wordSources = os.listdir(sourceFolder)
 for x in range(len(wordSources)):
     path = sourceFolder + '/' + wordSources[x]
@@ -164,7 +164,7 @@ for x in range(len(wordSources)):
         wordSources[x] = ''
 wordSources = [x for x in wordSources if x != '']
 
-databaseFile = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles/mainDatabase.txt'
+databaseFile = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles/mainDatabase.txt'
 database = pd.read_csv(databaseFile, sep='\t')
 
 

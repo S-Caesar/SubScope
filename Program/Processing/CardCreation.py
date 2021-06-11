@@ -25,7 +25,10 @@ def createDeck(deckFolder, deckName, deckFormat):
     # Create a blank deck
     if deckName not in os.listdir(deckFolder):
         # TODO: add different deckFormat options - currently just default
-        blankDeck = pd.DataFrame(columns=['source',
+        blankDeck = pd.DataFrame(columns=['state', # '1' if reviewed, and not 'again', otherwise '0'
+                                          'source',
+                                          'fullFile',
+                                          'line no',
                                           'wordJapanese',
                                           'partOfSpeech',
                                           'definition',
@@ -66,6 +69,8 @@ def getCardInfo(targetWord, database, sourceFolder):
     senNo = 0
     
     source = wordLoc['source'][senNo]
+    fullFile = wordLoc['episode'][senNo]
+    lineNo = wordLoc['line no'][senNo]
     
     sentence = wordLoc['sentence'][senNo]
     
@@ -73,10 +78,10 @@ def getCardInfo(targetWord, database, sourceFolder):
     audio = wordLoc['episode'][senNo].replace('full.txt', lineNo + '.mp3')
     screenshot = wordLoc['episode'][senNo].replace('full.txt', lineNo + '.jpg')
     
-    startEF = 1
+    startEF = 2.5
     today = getDate()
     
-    cardInfo = [source, targetWord, pos, gloss, info, sentence, audio, screenshot, startEF, 0, today, 'new']
+    cardInfo = [0, source, fullFile, lineNo, targetWord, pos, gloss, info, sentence, audio, screenshot, startEF, 0, today, 'new']
     
     # Return just the selected line, for use in making media files
     wordLoc = wordLoc[:][senNo:senNo+1].reset_index(drop=True)
@@ -140,14 +145,14 @@ def deleteDeck(deckFolder, deckName):
 '''
 '----------------------------------------------------------------------------'
 # Create a new deck
-deckFolder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/SRS/Decks'
+deckFolder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/SRS/Decks'
 deckName = 'Deck1.txt'
 deckFormat = 'default'
 
 createDeck(deckFolder, deckName, deckFormat)
 
 # Add a card to a deck
-sourceFolder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles'
+sourceFolder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles'
 databaseFile = 'mainDatabase.txt'
 database = pd.read_csv(sourceFolder + '/' + databaseFile, sep='\t')
 

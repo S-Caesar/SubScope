@@ -98,8 +98,9 @@ def findSentences(folder, database, targetWord):
     return wordLoc
 
 
+'''
 '----------------------------------------------------------------------------'
-folder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles'
+folder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles'
 databaseFile = 'mainDatabase.txt'
 
 database = pd.read_csv(folder + '/' + databaseFile, sep='\t')
@@ -108,3 +109,4 @@ targetWord = 'あのね'
 
 wordLoc = findSentences(folder, database, targetWord)
 '----------------------------------------------------------------------------'
+'''

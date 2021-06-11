@@ -106,7 +106,7 @@ endStamp = '00:00:40.677'
 
 lineNo = '69'
 
-folder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles/SteinsGate'
+folder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles/SteinsGate'
 video = 'STEINS;GATE.S01E02.JA'
 
 mainPath = folder + '/' + video

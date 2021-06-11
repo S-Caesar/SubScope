@@ -21,13 +21,13 @@ sg.theme('BlueMono')
 
 # Read in the user settings
 pathSettings = {}
-settingsPath = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Settings/pathSettings.txt'
+settingsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/pathSettings.txt'
 with open(settingsPath) as settings:
     for line in settings:
         (key, val) = line.strip('\n').split('\t')
         pathSettings[key] = val
 
-deckSettings = pd.read_csv('C:/Users/Steph/OneDrive/App/Japanese App/User Data/Settings/deckSettings.txt', sep='\t').set_index('deckName')
+deckSettings = pd.read_csv('C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/deckSettings.txt', sep='\t').set_index('deckName')
 
 windowSplash = sg.Window('Main Menu', layout=uis.splashScreen())
 

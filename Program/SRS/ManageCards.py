@@ -13,12 +13,20 @@ import vlc
 
 
 cardDetails = pd.DataFrame({
-    'Heading': ['wordJapanese', 'partOfSpeech', 'definition', 'info',   'sentence'],
-    'Width':   [34,             53,             39,           43,       34        ],
-    'Height':  [1,              1,              2,            2,        3         ],
-    'Justif':  ['centre',       'centre',       'centre',     'centre', 'centre'  ],
-    'Font':    ['Any 18',       'Any 12',       'Any 16',     'Any 14', 'Any 18'  ]})
+    'Heading': ['wordJapanese', 'partOfSpeech', 'definition', 'info'  ],
+    'Width':   [34,             53,             39,           43      ],
+    'Height':  [1,              1,              2,            2,      ],
+    'Justif':  ['centre',       'centre',       'centre',     'centre'],
+    'Font':    ['Any 18',       'Any 12',       'Any 16',     'Any 14']})
 
+'''
+cardDetails = pd.DataFrame({
+    'Heading': ['sentence'],
+    'Width':   [34        ],
+    'Height':  [3         ],
+    'Justif':  ['centre'  ],
+    'Font':    ['Any 18'  ]})
+'''
 
 buttons = pd.DataFrame({
     'Response':     ['Flip',   'Again',  'Hard',        'Good',   'Easy'        ],
@@ -37,7 +45,13 @@ for x in range(len(buttons)):
                                               buttons['ButtonColour'][x])))
 
 
-def deckScreen(deckList):
+def deckScreen(deckList, parts, gloss):
+    # Calculate the length of each line for sizing of the elements
+    senLen = [0, 0]
+    for x in range(len(parts)):
+        for y in range(len(parts[x])):
+            senLen[0] = senLen[0] + len(parts[0][y])
+    
     # Show the list of decks, and the template for displaying card details
     deckCol = [[sg.Text('Select a desk to review:')],
              *[[sg.Text(deckList[i], enable_events=True, size=(200,1))] for i in range(len(deckList))]]
@@ -47,6 +61,10 @@ def deckScreen(deckList):
                           justification=cardDetails['Justif'][i],
                           font=cardDetails['Font'][i],
                           key=f'-FIELD{i}-')] for i in range(len(cardDetails))],
+
+               *[[sg.Text(parts[0][i], enable_events=True, pad=(0,0), size=(senLen[0],1), font='Any 18', key=f'partA{i}') for i in range(len(parts[0]))]],
+               
+               *[[sg.Text(parts[1][i], enable_events=True, pad=(0,0), size=(senLen[1],1), font='Any 18', key=f'partB{i}') for i in range(len(parts[1]))]],
                
                 [sg.Image(key='-IMAGE-', size=(269,269), visible=True)],
                 
@@ -54,7 +72,10 @@ def deckScreen(deckList):
                 
                 [sg.Button('Audio', size=(10,2), disabled=True)]]
 
-    wordDetails = [[sg.Text(text='Click on a word in the example sentence to display the glossary information here:', size=(25,4))]]
+    wordDetails = [[sg.Text(text='Click on a word in the example sentence to display the glossary information below', size=(25,3))],
+                   [sg.Text(text='_'*27)],
+                   [sg.Text(gloss, enable_events=True, pad=(0,0), size=(18,2), font='Any 16', key='-WORD-')],
+                   [sg.Text(gloss, enable_events=True, pad=(0,0), size=(21,40), font='Any 12', key='-GLOSS-')]]
     
     mainButtons = [[sg.Button('Back')]]
     
@@ -89,7 +110,8 @@ def setButtons(window, state):
     
 
 def setFlip(window, state):
-    # Set 'Flip' button as active / inactive (used to prevent an error where the buttons are pressed before a deck is selected)
+    # Set 'Flip' button as active / inactive (used to prevent an error
+    # where the buttons are pressed before a deck is selected)
     window.Element(buttons['Response'][0]).Update(disabled=state)
     return
 
@@ -126,7 +148,6 @@ def prepDeck(deck, reviewLimit, newLimit):
     return deck
 
 
-
 def playAudio(audioFile, play):
     playAudio = vlc.MediaPlayer(audioFile)
     playAudio.play()
@@ -138,14 +159,13 @@ def stopAudio(playAudio):
     return
 
 
-def setCardDetails(window, sourceFolder, cardState, deck, x):
+def setCardDetails(window, sourceFolder, cardState, deck, x, parts=''):
     # Select the information to display on the card screen
     states = pd.DataFrame({'State' : ['Front',                 'Rear',                  'Done'         ],
                            'FIELD0': [deck['wordJapanese'][x], deck['wordJapanese'][x], 'Deck Finished'],
                            'FIELD1': [deck['partOfSpeech'][x], deck['partOfSpeech'][x], ''             ],
                            'FIELD2': ['',                      deck['definition'][x],   ''             ],
                            'FIELD3': ['',                      deck['info'][x],         ''             ],
-                           'FIELD4': ['',                      deck['sentence'][x],     ''             ],
                            'IMAGE' : [deck['screenshot'][x],   deck['screenshot'][x],   ''             ]})
     
     if len(states.loc[states['State'] == cardState]) > 0:
@@ -154,7 +174,11 @@ def setCardDetails(window, sourceFolder, cardState, deck, x):
         window.Element('-FIELD1-').Update(states.iloc[row]['FIELD1'])
         window.Element('-FIELD2-').Update(states.iloc[row]['FIELD2'])
         window.Element('-FIELD3-').Update(states.iloc[row]['FIELD3'])
-        window.Element('-FIELD4-').Update(states.iloc[row]['FIELD4'])
+        
+        if cardState == 'Rear':
+            for y in range(len(parts[0])):
+                window.Element(f'partA{y}').Update(parts[0][y])
+                window.Element(f'partB{y}').Update(parts[1][y])
         
         if cardState != 'Done':
             image = Image.open(sourceFolder + '/' + deck['source'][x] + '/' + states.iloc[row]['IMAGE'])
@@ -166,14 +190,65 @@ def setCardDetails(window, sourceFolder, cardState, deck, x):
         if cardState != 'Rear':
             window.Element('-IMAGE-').Update(visible=False)
             
+            parts = [['', '', '', '', '', '', '', '', '', ''],
+                     ['', '', '', '', '', '', '', '', '', '']]
+            
+            for y in range(len(parts[0])):
+                window.Element(f'partA{y}').Update(parts[0][y])
+                window.Element(f'partB{y}').Update(parts[1][y])    
+            
     return
-        
 
-def userResponse(window, event, state, x):
+
+def getParts(sourceFolder, deck, x):
+    # Get the parsed parts of the sentence, along with the glossary info
+    parts = [['', '', '', '', '', '', '', '', '', ''],
+             ['', '', '', '', '', '', '', '', '', '']]
+    
+    reading = [['', '', '', '', '', '', '', '', '', ''],
+               ['', '', '', '', '', '', '', '', '', '']]
+    
+    gloss = [['', '', '', '', '', '', '', '', '', ''],
+             ['', '', '', '', '', '', '', '', '', '']]
+    
+    file = pd.read_csv(sourceFolder + '/' + deck['source'][x] + '/' + deck['fullFile'][x], sep='\t')
+    
+    # Some timestamps will have multiple spoke lines - need to collect all of them
+    parts1 = file[file['line']+1 == deck['line no'][x]].reset_index(drop=True)
+    parts2 = file[file['line'] == deck['line no'][x]].reset_index(drop=True)
+    parts3 = file[file['line']-1 == deck['line no'][x]].reset_index(drop=True)
+    
+    # Check whether the 'parts' above contain entries
+    n = 0
+    line = [[],[]]
+    for item in [parts1, parts2, parts3]:
+        if len(item) != 0 and n == 0:
+            line[0] = item
+            n = 1
+        elif len(item) != 0 and n == 1:
+            line[1] = item
+    
+    # Centre the sentence for each line
+    for y in range(len(line)):    
+        fullLen = len(parts[y])
+        partsLen = len(line[y])
+        whitespace = fullLen - partsLen
+        startPad = round(whitespace/2)
+        
+        for z in range(len(line[y])):
+            parts[y][z+startPad] = line[y]['text'][z]
+            reading[y][z+startPad] = line[y]['reading'][z]
+            gloss[y][z+startPad] = line[y]['gloss'][z]
+
+    return parts, reading, gloss
+
+
+def userResponse(window, event, state):
     # Check user response, and record the q value
     q = None
     for item in ['Response', 'Keystroke']:
-        if len(buttons.loc[buttons[item] == event]) > 0: # If there is a row in the df that is valid, then true
+        # Check if the event is in the 'buttons' table
+        if len(buttons.loc[buttons[item] == event]) > 0:
             if event == 'Flip' or state == 'Front':
                 # The flip button changes the card state, so no need to update the ease values
                 # Or
@@ -183,11 +258,38 @@ def userResponse(window, event, state, x):
                 row = buttons.loc[buttons[item] == event].index[0]
                 q = buttons.iloc[row]['q']
                 setButtons(window, True)
-                x+=1
-                event = 'Front'
-    return q, event, x
+                event = 'Update'
+    return q, event
     
 
-def mainSRS(window, deck):
-    print('yep')
-    return
+def updateCard(EF, q, oldInterval):
+    # Update card stats
+    newEF = EF+(0.1-(3-q)*(0.1+(3-q)*0.06))
+    if newEF < 1.3:
+        newEF = 1.3
+    
+    if q == 0:
+        newInterval = 1
+    else:
+        newInterval = round(oldInterval*newEF)
+        
+    return newEF, newInterval
+
+
+def mainSRS(window, deck, q, x):
+    if deck['lastReview'][x] == 0:
+        # Card is new, so just set the interval to 1
+        oldInterval = 1
+    else:
+        # TODO: consider making the interval the current date, rather than the original planned review date
+        oldInterval = deck['nextReview'][x] - deck['lastReview'][x]
+    
+    newEF, newInterval = updateCard(deck['EF'][x], q, oldInterval)
+    
+    today = getDate()
+    deck.loc[deck.index[x], 'lastReview'] = today
+    deck.loc[deck.index[x], 'nextReview'] = today + newInterval
+    deck.loc[deck.index[x], 'EF'] = newEF
+    deck.loc[deck.index[x], 'status'] = 'learning'
+    
+    return deck

@@ -300,7 +300,7 @@ def parseFiles(folder, files):
 import os
 
 # will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
-folder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles/SteinsGate' 
+folder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles/SteinsGate' 
 file_list = os.listdir(folder)
 files = [f for f in file_list
              if os.path.isfile(os.path.join(folder, f))

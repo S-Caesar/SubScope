@@ -9,7 +9,7 @@ import pandas as pd
 
 
 '----------------------------------------------------------------------------'
-folder = 'C:/Users/Steph/OneDrive/App/Japanese App/User Data/Subtitles/SteinsGate'
+folder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles/SteinsGate'
 databaseFile = 'database.txt'
 
 database = pd.read_csv(folder + '/' + databaseFile, sep='\t')

@@ -49,7 +49,7 @@ def prepStats(fullTable, freqCheck, sign, compCheck):
     uniqueTable = uniqueTable.reset_index(drop=True)
     noUnique = len(uniqueTable) # count the number of unique words
     
-    knownTable = pd.read_excel('C:/Users/steph/OneDrive/App/Japanese App/Top2k-2.xlsx')
+    knownTable = pd.read_excel('C:/Users/Steph/OneDrive/App/SubScope/User Data/SRS/Known Words/Top2k-2.xlsx')
     unknownTable = dataframeDifference(fullTable, knownTable, 'left_only').reset_index(drop=True)
     unknownTable.drop(columns=['_merge'], inplace=True)
     noUnknown = len(unknownTable) # count the total number of unknown words
@@ -141,7 +141,7 @@ stats = prepStats(fullTable, 1, '==',  70)'''
 import pandas as pd
 import ast
 
-a = pd.read_csv('C:/Users/Steph/OneDrive/App/Japanese App/test.txt', sep='\t') # read in the file
+a = pd.read_csv('C:/Users/Steph/OneDrive/App/SubScope/test.txt', sep='\t') # read in the file
 
 b = ast.literal_eval(a['gloss'][8]) # convert an element to a list/dictionary format
 
