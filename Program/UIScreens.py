@@ -8,7 +8,7 @@ def splashScreen():
     splashScreen = [[sg.Text('Review / Modify SRS Cards')],
                     [sg.Button('Review Cards'),
                      sg.Button('Change Settings'),
-                     sg.Button('Browse Database')],
+                     sg.Button('Retime Subtitles')],
                     [sg.Text("=" * 40)],
                    
                     [sg.Text('Select a folder containing subtitle files to be analysed.')],
@@ -72,7 +72,7 @@ def subAnalysisWindow(fnames):
                         [sg.Text('Select files in the left window to analyse')],
                         
                         [sg.Text('Comprehension:'),
-                         sg.In(size=(3, 1), enable_events=True, key="-COMP-"), # input for desired comprehension score
+                         sg.In(default_text=70, size=(3, 1), enable_events=True, key="-COMP-"), # input for desired comprehension score
                          sg.Text('%'),
                          sg.Button('Update Statistics')],
                         

@@ -145,7 +145,7 @@ def reviewCards(pathSettings, deckSettings):
     wDeckMenu.close()
     return
 
-
+'''
 '----------------------------------------------------------------------------'
 # Read in the user settings
 settingsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/pathSettings.txt'
@@ -158,3 +158,4 @@ with open(settingsPath) as settings:
 deckSettings = pd.read_csv('C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/deckSettings.txt', sep='\t').set_index('deckName')
 
 reviewCards(pathSettings, deckSettings)
+'''

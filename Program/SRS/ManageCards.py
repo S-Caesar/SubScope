@@ -19,14 +19,6 @@ cardDetails = pd.DataFrame({
     'Justif':  ['centre',       'centre',       'centre',     'centre'],
     'Font':    ['Any 18',       'Any 12',       'Any 16',     'Any 14']})
 
-'''
-cardDetails = pd.DataFrame({
-    'Heading': ['sentence'],
-    'Width':   [34        ],
-    'Height':  [3         ],
-    'Justif':  ['centre'  ],
-    'Font':    ['Any 18'  ]})
-'''
 
 buttons = pd.DataFrame({
     'Response':     ['Flip',   'Again',  'Hard',        'Good',   'Easy'        ],
@@ -35,17 +27,17 @@ buttons = pd.DataFrame({
     'TextColour':   ['grey99', 'grey99', 'grey99',      'grey99', 'grey99'      ],
     'ButtonColour': ['grey30', 'red2',   'dark orange', 'green3', 'DeepSkyBlue3']})
 
-# Can't unpack * method in a row, so have to do it like this
-buttonRow = []
-for x in range(len(buttons)):
-    buttonRow.append(sg.Button(buttons['Response'][x],
-                                size=(10,2),
-                                disabled=True,
-                                button_color=(buttons['TextColour'][x],
-                                              buttons['ButtonColour'][x])))
-
-
 def deckScreen(deckList, parts, gloss):
+    # Can't unpack * method in a row, so have to do it like this
+    buttonRow = []
+    for x in range(len(buttons)):
+        buttonRow.append(sg.Button(buttons['Response'][x],
+                                    size=(10,2),
+                                    disabled=True,
+                                    button_color=(buttons['TextColour'][x],
+                                                  buttons['ButtonColour'][x])))
+    
+
     # Calculate the length of each line for sizing of the elements
     senLen = [0, 0]
     for x in range(len(parts)):

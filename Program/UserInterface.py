@@ -8,12 +8,11 @@ import os
 import pandas as pd
 import PySimpleGUI as sg
 
-import SubsAnalysisFunction as saf
-import SubsAnalysisClasses as sac
 import UIScreens as uis
 
 from Program.Parsing import IchiranParse as ip
 from Program.Processing import ParsedAnalysis as pa
+import Program.Subtitles.SubRetimerUI as sru
 
 from SRS import ReviewUI as ru
 
@@ -74,20 +73,9 @@ while True:
         windowDeckSettings.close()
         windowSplash.UnHide()
             
-    if event == 'Browse Database':
-        # TODO currently just a placeholder window
-        windowDeckSettings = sg.Window('Database Menu', layout=uis.databaseScreen())
-        print('yep2')
-        
+    if event == 'Retime Subtitles':
         windowSplash.Hide()
-        windowDatabase = sg.Window('Database Menu', layout=uis.databaseScreen())
-        
-        while True:
-            event, values = windowDatabase.Read()
-            if event is None or event == 'Exit' or event == 'Back':
-                break
-            
-        windowDatabase.close()
+        sru.subRetime()
         windowSplash.UnHide()
         
     if event == "-FOLDER-":
@@ -98,8 +86,7 @@ while True:
         except:
             file_list = []
 
-        fnames = [f
-                  for f in file_list
+        fnames = [f for f in file_list
                   if os.path.isfile(os.path.join(folder, f))
                   and f.lower().endswith(('.srt'))
                   or os.path.isfile(os.path.join(folder, f))
@@ -113,35 +100,28 @@ while True:
             event, values = windowAnalysis.Read()
             if event is None or event == 'Exit' or event == 'Back':
                 break
+            
             if event == 'Select All':
                 for i in range(len(fnames)):
                     windowAnalysis.Element(f"-SUBTITLES- {i}").Update(value=True)
+                    
             if event == 'Deselect All':
                 for i in range(len(fnames)):
                     windowAnalysis.Element(f"-SUBTITLES- {i}").Update(value=False)
+                    
             if event == "-COMP-":
-                if values["-COMP-"] == '': # to avoid an error with trying to divide by zero when deleting input
-                    continue
-                else:
+                if values["-COMP-"] != '':
                     comprehension = int(values["-COMP-"])
                     
             if event == 'Update Statistics':
-                # TODO add prgress readout like in the 'Update Database' section
-                if values["-COMP-"] == '': # set a default for the comprehension score if the user doesn't input one
-                    comprehension = 70
-                    windowAnalysis.Element("-COMP-").Update(value=comprehension)
-                    
                 # Only analyse files if they are selected
                 fnamesSelect = []
                 for i in range(len(fnames)):
                     if values[f"-SUBTITLES- {i}"] == True:
                         fnamesSelect.append(fnames[i])
-                    else:
-                        continue
                 
                 if fnamesSelect == []:
-                    # TODO add message to tell user they need to select something (maybe another window?)
-                    continue
+                    print('No files have been selected.')
                 else:
                     ip.parseWrapper(folder, fnamesSelect, file_list)
                     
@@ -162,73 +142,16 @@ while True:
                     outputTable = outputTable.reset_index(drop=True)
                     
                     # Analyse the combined table and return the stats, then update the UI to display the results
+                    try:
+                        comprehension = int(values['-COMP-'])
+                    except:
+                        print('Invalid comprehension. Using default value of 70.')
+                        comprehension = 70
+                        windowAnalysis.Element('-COMP-').update(value=comprehension)
+                        
+                    
                     stats = pa.prepStats(outputTable, 1, '==',  comprehension)
                     uis.displayStats(windowAnalysis, stats)
-                    
-            # TODO: still uses the old SubsAnalysisFunction instead of IchiraParse - needs rewriting
-            # TODO: not sure the use of the SubAnalysisClasses class is the most appropriate way to do it - review
-            if event == 'Add To Database':
-                # Check which files have been marked for adding to the database
-                fnamesSelect = []
-                output = []
-                stats = []
-                metaData = []
-                wordDatabase = pd.DataFrame([])
-                statsDatabase = pd.DataFrame([])
-                for i in range(len(fnames)):
-                    if values[f"-SUBTITLES- {i}"] == True:
-                        fnamesSelect.append(fnames[i])
-                    else:
-                        continue
-                
-                if fnamesSelect == []:
-                    # TODO add message to tell user they need to select something (maybe another window?)
-                    continue
-                
-                for x in range(len(fnamesSelect)):
-                    print('Analysing:', x+1, '/', len(fnamesSelect))
-                    fileName = fnamesSelect[x]
-                    fname = [fnamesSelect[x]]
-                    showName = values['-showName-']
-                   
-                    # TODO there must be an easier way to do the epFormat and delimeter sections
-                    # epFormat
-                    if values['-epFormat_S00E00-'] == True: 
-                        epFormat = 'S00E00'
-                    elif values['-epFormat_000-'] == True:
-                        epFormat = '000'
-                        
-                    # delimeter
-                    if values['-delimeter_1-'] == True:
-                        delimeter = '.'
-                    elif values['-delimeter_2-'] == True:
-                        delimeter = ','
-                    elif values['-delimeter_3-'] == True:
-                        delimeter = '_'
-
-                    # analyse a single episode
-                    sNo, eNo = saf.setMetaData(fileName, epFormat, delimeter) # TODO parse this into the metaData class, and have that check whether it is valid
-
-                    # TODO returns values, but the words lists aren't lists, just the text summary
-                    output = saf.prepWords(folder, fname, 'Top2k.xlsx')
-                    stats = saf.subStats(output, 'All Words', 'AW Freq', 'Unknown', 'Unk Freq', '>=', 10, 70) # TODO comprehension just set to 70 for now
-
-                    metaData = sac.MetaData(showName, sNo, eNo, output['All Words'],
-                                            output['AW Freq'], stats[0][0], stats[0][1],
-                                            stats[0][2], stats[0][3], stats[0][4],
-                                            stats[0][5], stats[0][6], stats[0][7])
-                    wordData, statsData = metaData.prepData()
-                    
-                    wordDatabase = wordDatabase.append(wordData)
-                    statsDatabase = statsDatabase.append(statsData)
-
-                # TODO could read in the database, then append the new data (fine for small data, but probably horrific as size increases)
-                # TODO combine the two databases
-                print('Writing to Database')
-                saf.writeData(wordDatabase, 'wordDatabase.xlsx', 'Words', True)
-                saf.writeData(statsDatabase, 'statsDatabase.xlsx', 'Stats', True)
-                # TODO Once the data is read in, order the database
-                print('Done!')
                 
         windowAnalysis.Close()
         windowSplash.UnHide()
