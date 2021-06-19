@@ -8,16 +8,15 @@ import ast
 
 from Program.SRS import ManageCards as mc
 
-def reviewCards(pathSettings, deckSettings):
-    sg.theme('BlueMono')
-    
-    deckFolder = pathSettings['deckFolder']
+def reviewCards(mainOptions):
+    deckFolder = mainOptions['Default Paths']['Deck Folder']
     deckList = mc.getDecks(deckFolder)
     
-    sourceFolder = pathSettings['sourceFolder']
+    sourceFolder = mainOptions['Default Paths']['Source Folder']
     
+    # Placeholder - will be the sentence for each card
     parts = [['', '', '', '', '', '', '', '', '', ''],
-             ['', '', '', '', '', '', '', '', '', '']] # Placeholder - will be the sentence for each card
+             ['', '', '', '', '', '', '', '', '', '']]
     
     glossDisplay = ''
     
@@ -52,8 +51,8 @@ def reviewCards(pathSettings, deckSettings):
             
             wDeckMenu.Element('-DECK-').Update(deckName)
             
-            reviewLimit = deckSettings['reviewLimit'][deckName]
-            newLimit = deckSettings['newLimit'][deckName]
+            reviewLimit = int(mainOptions['Deck Settings']['reviewLimit'][deckName])
+            newLimit = int(mainOptions['Deck Settings']['newLimit'][deckName])
             deck = mc.prepDeck(deck, reviewLimit, newLimit)
 
             mc.setFlip(wDeckMenu, False) # Enable flip button

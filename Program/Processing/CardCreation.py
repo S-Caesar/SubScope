@@ -5,8 +5,8 @@ import ast
 import os
 import datetime
 
-import FindSentences as fs
-import ExtractAudio as ea
+from Program.Processing import FindSentences as fs
+from Program.Processing import ExtractAudio as ea
 
 
 def getDate():
