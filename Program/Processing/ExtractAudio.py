@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
-import moviepy.editor as mp
-
-from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
 import ffmpeg # Note: need to use 'conda install ffmpeg' in Anaconda console the first time uisng this package to get it to work properly
               # Note: also need to run: pip install ffmpeg-python
 import cv2 # Note: pip install opencv-python
+
 import imageio
 import math
 
@@ -19,12 +17,16 @@ import os
 
 def createAudio(mainPath):
     # Create an audio file from a video file
+    # TODO: Imported here, as it causes issues with the SRS audio once imported.
+    #       Need to restart to console to remove it - consider using a different package here
+    import moviepy.editor as mp
+    
     videoClip = mp.VideoFileClip(r'' + mainPath + '.mp4') 
     videoClip.audio.write_audiofile(r'' + mainPath + '.mp3')
     return
 
 def createAudioClip(mainPath, lineNo, startStamp, endStamp):
-     # from: https://stackoverflow.com/questions/31929538/how-to-subtract-datetimes-timestamps-in-python/31929686
+    # from: https://stackoverflow.com/questions/31929538/how-to-subtract-datetimes-timestamps-in-python/31929686
     startTime = datetime.strptime(startStamp, '%H:%M:%S.%f')
     endTime = datetime.strptime(endStamp, '%H:%M:%S.%f')
     duration = endTime - startTime
@@ -79,8 +81,12 @@ def createScreenshot(mainPath, lineNo, startStamp, endStamp):
             break
     return
 
-def trimVideo(startStamp, endStamp, mainPath, trimmedVideo):
-    # TODO: can be used to make a shorter clip to extract audio from - currently seems to start too early
+def trimVideo(startStamp, endStamp, mainPath, trimmedVideo):   
+    # TODO: Imported here, as it causes issues with the SRS audio once imported.
+    #       Need to restart to console to remove it - consider using a different package here
+    from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+    
+    # TODO: can be used to make a shorter clip to extract audio from - currently seems to start too early    
     startTime = convertTimestamp(startStamp, 's')
     endTime = convertTimestamp(endStamp, 's')
     ffmpeg_extract_subclip(r'' + mainPath + '.mp4', startTime, endTime, targetname=trimmedVideo)
@@ -98,7 +104,7 @@ def checkForFiles(folder, video, outputType):
         output = False
 
     return output
-    
+
 '''
 '----------------------------------------------------------------------------'
 startStamp = '00:00:39.092'

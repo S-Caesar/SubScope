@@ -98,7 +98,7 @@ def reviewCards(mainOptions):
             wDeckMenu.Element('-GLOSS-').update(glossOut)
         
         
-        if event in ['Again', 'Hard', 'Good', 'Easy']:
+        if event in ['Again', 'Hard', 'Good', 'Easy', '1', '2', '3', '4']:
             # Check if the user has pressed a key/button and return values
             q, event = mc.userResponse(wDeckMenu, event, state)
 
@@ -146,15 +146,11 @@ def reviewCards(mainOptions):
 
 '''
 '----------------------------------------------------------------------------'
-# Read in the user settings
-settingsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/pathSettings.txt'
-pathSettings = {}
-with open(settingsPath) as settings:
-    for line in settings:
-        (key, val) = line.strip('\n').split('\t')
-        pathSettings[key] = val
-        
-deckSettings = pd.read_csv('C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/deckSettings.txt', sep='\t').set_index('deckName')
+from Program.Options import ManageOptions as mo
 
-reviewCards(pathSettings, deckSettings)
+# Read in the user settings
+optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptions.txt'
+mainOptions = mo.readOptions(optionsPath)
+
+reviewCards(mainOptions)
 '''

@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 import os
 import pandas as pd
 
-from Program. Processing import CardCreation as cc
+from Program.Processing import CardCreation as cc
 from Program.Processing import DeckFunctions as df
 
 

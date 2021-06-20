@@ -142,3 +142,4 @@ def subsAnalysisUI(folder):
                 displayStats(wAnalysis, stats)
             
     wAnalysis.Close()
+    return
