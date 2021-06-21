@@ -2,6 +2,9 @@
 
 from datetime import datetime
 
+import moviepy.editor as mp
+from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+
 import ffmpeg # Note: need to use 'conda install ffmpeg' in Anaconda console the first time uisng this package to get it to work properly
               # Note: also need to run: pip install ffmpeg-python
 import cv2 # Note: pip install opencv-python
@@ -17,10 +20,6 @@ import os
 
 def createAudio(mainPath):
     # Create an audio file from a video file
-    # TODO: Imported here, as it causes issues with the SRS audio once imported.
-    #       Need to restart to console to remove it - consider using a different package here
-    import moviepy.editor as mp
-    
     videoClip = mp.VideoFileClip(r'' + mainPath + '.mp4') 
     videoClip.audio.write_audiofile(r'' + mainPath + '.mp3')
     return
@@ -32,7 +31,7 @@ def createAudioClip(mainPath, lineNo, startStamp, endStamp):
     duration = endTime - startTime
     
     audioClip = mainPath + '.mp3'
-    outputClip = mainPath + '_' + lineNo + '.mp3'
+    outputClip = mainPath + '_' + lineNo + '.wav'
 
     # from: https://stackoverflow.com/questions/65065501/trim-audio-file-using-python-ffmpeg
     audio_input = ffmpeg.input(audioClip, ss=startStamp)
@@ -82,10 +81,6 @@ def createScreenshot(mainPath, lineNo, startStamp, endStamp):
     return
 
 def trimVideo(startStamp, endStamp, mainPath, trimmedVideo):   
-    # TODO: Imported here, as it causes issues with the SRS audio once imported.
-    #       Need to restart to console to remove it - consider using a different package here
-    from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
-    
     # TODO: can be used to make a shorter clip to extract audio from - currently seems to start too early    
     startTime = convertTimestamp(startStamp, 's')
     endTime = convertTimestamp(endStamp, 's')

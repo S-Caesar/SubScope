@@ -9,7 +9,6 @@ import datetime
 import pandas as pd
 import PySimpleGUI as sg
 from PIL import Image
-import vlc
 
 
 cardDetails = pd.DataFrame({
@@ -141,8 +140,10 @@ def prepDeck(deck, reviewLimit, newLimit):
 
 
 def playAudio(audioFile, play):
-    playAudio = vlc.MediaPlayer(audioFile)
-    playAudio.play()
+    
+    import simpleaudio as sa
+    waveObj = sa.WaveObject.from_wave_file(audioFile)
+    playAudio = waveObj.play()
     return playAudio
 
 

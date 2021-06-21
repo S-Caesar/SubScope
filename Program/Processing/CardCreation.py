@@ -75,7 +75,7 @@ def getCardInfo(targetWord, database, sourceFolder):
     sentence = wordLoc['sentence'][senNo]
     
     lineNo = str(int(wordLoc['line no'][senNo]))
-    audio = wordLoc['episode'][senNo].replace('full.txt', lineNo + '.mp3')
+    audio = wordLoc['episode'][senNo].replace('full.txt', lineNo + '.wav')
     screenshot = wordLoc['episode'][senNo].replace('full.txt', lineNo + '.jpg')
     
     startEF = 2.5

@@ -32,11 +32,7 @@ def reviewCards(mainOptions):
     state = 'Front'
     playAudio = None
     
-    while True:
-        # Note: Order of if statements is important. Loop only runs once when
-        #       the UI is interacted with, and any changes to 'event' with a
-        #       script will not re-run the loop. This means, any 'event' calls
-        #       must be upstream of the if statement that checks for that call  
+    while True: 
         event, values = wDeckMenu.Read()
         if event is None or event == 'Exit' or event == 'Back':
             break
@@ -132,8 +128,8 @@ def reviewCards(mainOptions):
                 mc.setCardDetails(wDeckMenu, sourceFolder, state, deck, x)
                 mc.setFlip(wDeckMenu, False)
                 
-            # TODO: works fine, but sometimes hangs up for some reason
             if playAudio != None:
+                # If a response is given for the card, then stop the audio
                 mc.stopAudio(playAudio)
             
         
