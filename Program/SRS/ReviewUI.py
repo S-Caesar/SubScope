@@ -53,8 +53,9 @@ def reviewCards(mainOptions):
             reviewLimit = int(mainOptions['Deck Settings']['reviewLimit'][deckName])
             newLimit = int(mainOptions['Deck Settings']['newLimit'][deckName])
             deck = mc.prepDeck(deck, reviewLimit, newLimit)
-
-            mc.setFlip(wDeckMenu, False) # Enable flip button
+            
+            # Enable flip button
+            mc.setFlip(wDeckMenu, False)
      
             event = 'Front'
 
@@ -66,7 +67,6 @@ def reviewCards(mainOptions):
             
             # Get the parsed line for use with the 'hover' dictionary
             parts, pos, reading, gloss = mc.getParts(sourceFolder, deck, x)
-            print(mainOptions['UI Themes']['SRS Text Colouring'])
             if mainOptions['UI Themes']['SRS Text Colouring'] == 'Off':
                 pos = [['black']*10,
                        ['black']*10]
@@ -103,7 +103,25 @@ def reviewCards(mainOptions):
         
         if event in ['Again', 'Hard', 'Good', 'Easy', '1', '2', '3', '4']:
             # Check if the user has pressed a key/button and return values
-            q, event = mc.userResponse(wDeckMenu, event, state)
+            q = mc.userResponse(wDeckMenu, event, state)
+            
+            if event in ['Again', '1']:
+                # Update the q value of the card, but don't update the review
+                # interval so it will show again
+                deck.loc[deck.index[x], 'EF'] = q
+                
+                # Relocate the card to the end of the deck, unless it's 
+                # already the last card
+                if x != len(deck)-1:
+                    targetRow = deck.iloc[[x],:]
+                    deck = deck.shift(-1)
+                    deck.iloc[-1] = targetRow.squeeze()
+                
+                event = 'Front'
+                
+            else:
+                # Update the card to show as reviewed
+                event = 'Update'    
 
 
         if event == 'Update' and x < len(deck):

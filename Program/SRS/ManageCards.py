@@ -93,10 +93,11 @@ def getDate():
 
 
 def setButtons(window, state):
-    # Set buttons buttons as active / inactive (used to prevent an error where the buttons are pressed before a deck is selected)
+    # Set buttons buttons as active / inactive (used to prevent an error
+    # where the buttons are pressed before a deck is selected)
     for x in range(1, len(buttons)):
         window.Element(buttons['Response'][x]).Update(disabled=state)
-    
+
     window.Element('Audio').Update(disabled=state)
     return
     
@@ -286,8 +287,7 @@ def userResponse(window, event, state):
                 row = buttons.loc[buttons[item] == event].index[0]
                 q = buttons.iloc[row]['q']
                 setButtons(window, True)
-                event = 'Update'
-    return q, event
+    return q
     
 
 def updateCard(EF, q, oldInterval):
