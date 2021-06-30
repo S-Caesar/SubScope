@@ -51,11 +51,11 @@ def manageDecks(mainOptions):
     
     
     # Main UI Window
-    windowDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList))
+    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList))
     
     # Start UI loop
     while True:
-        event, values = windowDeckManagement.Read()
+        event, values = wDeckManagement.Read()
         if event is None or event == 'Exit':
             break
         
@@ -64,13 +64,13 @@ def manageDecks(mainOptions):
             
             buttons = ['add', 'remove', 'change', 'stats', 'delete']
             for item in buttons:
-                windowDeckManagement.Element(item).update(disabled=False)
+                wDeckManagement.Element(item).update(disabled=False)
         
         if event == 'create':
-            windowCreateDeck = sg.Window('Deck Creation', layout=df.createDeck(cardFormats))
-            windowDeckManagement.Hide()
+            wCreateDeck = sg.Window('Deck Creation', layout=df.createDeck(cardFormats))
+            wDeckManagement.Hide()
             while True:
-                event, values = windowCreateDeck.Read()
+                event, values = wCreateDeck.Read()
     
                 if event is None or event == 'Exit':
                     break
@@ -83,20 +83,22 @@ def manageDecks(mainOptions):
                     cc.createDeck(deckFolder, deckName, deckFormat)
                     
                     # Update the deck list to show the new deck
-                    # TODO: update the deck list to show the new deck
                     deckList = os.listdir(deckFolder)
+                    
+                    # Update the window to show the added deck
+                    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList), finalize=True)
     
                     break
                 
-            windowCreateDeck.Close()
-            windowDeckManagement.UnHide()
+            wCreateDeck.Close()
+            wDeckManagement.UnHide()
         
         if event == 'add':
             # Add cards to the selected deck. Show database, and allow selection.
-            windowAddCard = sg.Window('Add Cards', layout=df.addCard(deckName, sortOptions, wordSources, database))
-            windowDeckManagement.Hide()
+            wAddCard = sg.Window('Add Cards', layout=df.addCard(deckName, sortOptions, wordSources, database))
+            wDeckManagement.Hide()
             while True:
-                event, values = windowAddCard.Read()
+                event, values = wAddCard.Read()
     
                 if event is None or event == 'Exit':
                     break
@@ -105,6 +107,29 @@ def manageDecks(mainOptions):
                 for x in range(len(wordSources)):
                     if values[f'wordSources {x}'] == True:
                         sourceSelect.append(wordSources[x])
+                
+                
+                if event == 'Refresh':
+                    
+                    refine = values['-REFINE-']
+                    sort = values['-SORT-']
+                    
+                    # TODO: allow searching in Japanese as well
+                    databaseRefined = database[database['gloss'].str.contains(refine)] 
+                    
+                    # TODO: expand the sort options
+                    if sort in sortOptions:
+                        if sort == '':
+                            databaseRefined.sort_values(by=['text'], inplace=True, ignore_index=True)
+                        elif sort == 'Hiragana':
+                            databaseRefined.sort_values(by=['kana'], inplace=True, ignore_index=True)
+                        elif sort == 'Alphabet':
+                            databaseRefined.sort_values(by=['gloss'], inplace=True, ignore_index=True)
+                    
+                    # Update the database display based on user selections
+                    wAddCard.Close()
+                    wAddCard = sg.Window('Add Cards', layout=df.addCard(deckName, sortOptions, wordSources, databaseRefined))
+                    wAddCard.Read()
                 
                 if event == 'Add Cards':
                     # Add cards currently highlighted in the table
@@ -118,69 +143,76 @@ def manageDecks(mainOptions):
                     
                     print('Cards successfully added to deck.')
     
-            windowAddCard.close()
-            windowDeckManagement.UnHide()
+            wAddCard.close()
+            wDeckManagement.UnHide()
     
     
         if event == 'remove':
             # Remove cards from selected deck. Show cards, and allow removal
-            windowRemoveCard = sg.Window('Remove Cards', layout=df.removeCard(deckFolder, deckName))
-            windowDeckManagement.Hide()
+            wRemoveCard = sg.Window('Remove Cards', layout=df.removeCard(deckFolder, deckName))
+            wDeckManagement.Hide()
             while True:
-                event, values = windowRemoveCard.Read()
+                event, values = wRemoveCard.Read()
     
                 if event is None or event == 'Exit':
                     break
                 
                 # TODO: add logic for removing cards        
     
-            windowRemoveCard.close()
-            windowDeckManagement.UnHide()
+            wRemoveCard.close()
+            wDeckManagement.UnHide()
     
                 
         if event == 'change':
             # Change the format of all cards in the selected deck
             # TODO: all of this - will come later once the SRS side is fleshed out 
-            windowChangeFormat = sg.Window('Change Format', layout=df.changeFormat(deckName, cardFormats))
-            windowDeckManagement.Hide()
+            wChangeFormat = sg.Window('Change Format', layout=df.changeFormat(deckName, cardFormats))
+            wDeckManagement.Hide()
             while True:
-                event, values = windowChangeFormat.Read()
+                event, values = wChangeFormat.Read()
     
                 if event is None or event == 'Exit' or event == 'Cancel':
                     break
                 
-            windowChangeFormat.close()
-            windowDeckManagement.UnHide()    
+            wChangeFormat.close()
+            wDeckManagement.UnHide()    
         
         
         if event == 'stats':
             # Display deck stats
-            windowStats = sg.Window('Deck Stats', layout=df.stats(deckName))
-            windowDeckManagement.Hide()
+            wStats = sg.Window('Deck Stats', layout=df.stats(deckName))
+            wDeckManagement.Hide()
             while True:
-                event, values = windowStats.Read()
+                event, values = wStats.Read()
     
                 if event is None or event == 'Exit':
                     break
                 
-            windowStats.close()
-            windowDeckManagement.UnHide()
+            wStats.close()
+            wDeckManagement.UnHide()
         
         
         if event == 'delete':
             # Delete selected deck
-            windowDeleteDeck = sg.Window('Delete Deck', layout=df.deleteDeck(deckName))
-            windowDeckManagement.Hide()
+            wDeleteDeck = sg.Window('Delete Deck', layout=df.deleteDeck(deckName))
+            wDeckManagement.Hide()
             while True:
-                event, values = windowDeleteDeck.Read()
+                event, values = wDeleteDeck.Read()
     
                 if event is None or event == 'Exit' or event == 'Cancel':
                     break                        
                 
                 if event == 'Confirm':
                     cc.deleteDeck(deckFolder, deckName)
-                    windowDeleteDeck.close()
-                    windowDeckManagement.UnHide()
+                    wDeleteDeck.close()
+                    
+                    # Update the deck list to remove the deleted deck
+                    deckList = os.listdir(deckFolder)
+                    # Update the window so the deleted deck is no longer an option
+                    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList), finalize=True)
+                    
+                    wDeckManagement.UnHide()
     
-            windowDeleteDeck.close()
-            windowDeckManagement.UnHide()
+            wDeleteDeck.close()
+            wDeckManagement.UnHide()
+    return

@@ -32,10 +32,11 @@ def addCard(deckName, sortOptions, wordSources, database):
                  sg.Text(deckName)]]
     
     sorting = [[sg.Text('Sort words by:'),
-                sg.Combo(sortOptions, size=(20,4), enable_events=False, key='deckFormat')]]
+                sg.Combo(sortOptions, size=(20,4), enable_events=False, key='-SORT-')]]
     
     search = [[sg.Text('Start typing to find words in the database:'),
-               sg.In(size=(35,0))]]
+               sg.In(size=(35,0), key='-REFINE-'),
+               sg.Button('Refresh')]]
     
     sources = [[sg.Text('Select sources for cards:')],
               *[[sg.Checkbox(wordSources[i], key=f'wordSources {i}', enable_events=True, default=True)] for i in range(len(wordSources))]]

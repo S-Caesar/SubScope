@@ -15,8 +15,11 @@ def reviewCards(mainOptions):
     sourceFolder = mainOptions['Default Paths']['Source Folder']
     
     # Placeholder - will be the sentence for each card
-    parts = [['', '', '', '', '', '', '', '', '', ''],
-             ['', '', '', '', '', '', '', '', '', '']]
+    parts = [['']*10,
+             ['']*10]
+    
+    pos = [['']*10,
+           ['']*10]
     
     glossDisplay = ''
     
@@ -25,7 +28,7 @@ def reviewCards(mainOptions):
         glossEvents.append(f'partA{x}')
         glossEvents.append(f'partB{x}')
     
-    wDeckMenu = sg.Window('Deck Menu', layout=mc.deckScreen(deckList, parts, glossDisplay), return_keyboard_events=True)
+    wDeckMenu = sg.Window('Deck Menu', layout=mc.deckScreen(deckList, pos, parts, glossDisplay), return_keyboard_events=True)
     
     # Initialise variables outside of the loop
     x = 0
@@ -62,10 +65,14 @@ def reviewCards(mainOptions):
             state = 'Rear'
             
             # Get the parsed line for use with the 'hover' dictionary
-            parts, reading, gloss = mc.getParts(sourceFolder, deck, x)
+            parts, pos, reading, gloss = mc.getParts(sourceFolder, deck, x)
+            print(mainOptions['UI Themes']['SRS Text Colouring'])
+            if mainOptions['UI Themes']['SRS Text Colouring'] == 'Off':
+                pos = [['black']*10,
+                       ['black']*10]
             
             # Update the details in the window
-            mc.setCardDetails(wDeckMenu, sourceFolder, state, deck, x, parts)
+            mc.setCardDetails(wDeckMenu, sourceFolder, state, deck, x, parts, pos)
             mc.setFlip(wDeckMenu, True)
             mc.setButtons(wDeckMenu, False)
 
@@ -134,13 +141,17 @@ def reviewCards(mainOptions):
             
         
         if event == 'Audio':
+            # If the audio is replayed by pressing the button, stop it first if still playing
+            if playAudio != None:
+                mc.stopAudio(playAudio)
+
             audioFile = sourceFolder + '/' + deck['source'][x] + '/' + deck['audioClip'][x]
             playAudio = mc.playAudio(audioFile, True)
     
     wDeckMenu.close()
     return
 
-'''
+
 '----------------------------------------------------------------------------'
 from Program.Options import ManageOptions as mo
 
@@ -149,4 +160,3 @@ optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptio
 mainOptions = mo.readOptions(optionsPath)
 
 reviewCards(mainOptions)
-'''

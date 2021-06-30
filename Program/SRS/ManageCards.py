@@ -9,7 +9,8 @@ import datetime
 import pandas as pd
 import PySimpleGUI as sg
 from PIL import Image
-
+import simpleaudio as sa
+import ast
 
 cardDetails = pd.DataFrame({
     'Heading': ['wordJapanese', 'partOfSpeech', 'definition', 'info'  ],
@@ -26,7 +27,7 @@ buttons = pd.DataFrame({
     'TextColour':   ['grey99', 'grey99', 'grey99',      'grey99', 'grey99'      ],
     'ButtonColour': ['grey30', 'red2',   'dark orange', 'green3', 'DeepSkyBlue3']})
 
-def deckScreen(deckList, parts, gloss):
+def deckScreen(deckList, parts, pos, gloss):
     # Can't unpack * method in a row, so have to do it like this
     buttonRow = []
     for x in range(len(buttons)):
@@ -53,9 +54,9 @@ def deckScreen(deckList, parts, gloss):
                           font=cardDetails['Font'][i],
                           key=f'-FIELD{i}-')] for i in range(len(cardDetails))],
 
-               *[[sg.Text(parts[0][i], enable_events=True, pad=(0,0), size=(senLen[0],1), font='Any 18', key=f'partA{i}') for i in range(len(parts[0]))]],
+               *[[sg.Text(parts[0][i], enable_events=True, pad=(0,0), size=(senLen[0],1), text_color=pos[0][i], font='Any 18', key=f'partA{i}') for i in range(len(parts[0]))]],
                
-               *[[sg.Text(parts[1][i], enable_events=True, pad=(0,0), size=(senLen[1],1), font='Any 18', key=f'partB{i}') for i in range(len(parts[1]))]],
+               *[[sg.Text(parts[1][i], enable_events=True, pad=(0,0), size=(senLen[1],1), text_color=pos[1][i], font='Any 18', key=f'partB{i}') for i in range(len(parts[1]))]],
                
                 [sg.Image(key='-IMAGE-', size=(269,269), visible=True)],
                 
@@ -140,8 +141,6 @@ def prepDeck(deck, reviewLimit, newLimit):
 
 
 def playAudio(audioFile, play):
-    
-    import simpleaudio as sa
     waveObj = sa.WaveObject.from_wave_file(audioFile)
     playAudio = waveObj.play()
     return playAudio
@@ -152,7 +151,7 @@ def stopAudio(playAudio):
     return
 
 
-def setCardDetails(window, sourceFolder, cardState, deck, x, parts=''):
+def setCardDetails(window, sourceFolder, cardState, deck, x, parts='', pos=''):
     # Select the information to display on the card screen
     states = pd.DataFrame({'State' : ['Front',                 'Rear',                  'Done'         ],
                            'FIELD0': [deck['wordJapanese'][x], deck['wordJapanese'][x], 'Deck Finished'],
@@ -172,6 +171,9 @@ def setCardDetails(window, sourceFolder, cardState, deck, x, parts=''):
             for y in range(len(parts[0])):
                 window.Element(f'partA{y}').Update(parts[0][y])
                 window.Element(f'partB{y}').Update(parts[1][y])
+                
+                window.Element(f'partA{y}').Update(text_color=pos[0][y])
+                window.Element(f'partB{y}').Update(text_color=pos[1][y])
         
         if cardState != 'Done':
             image = Image.open(sourceFolder + '/' + deck['source'][x] + '/' + states.iloc[row]['IMAGE'])
@@ -183,26 +185,44 @@ def setCardDetails(window, sourceFolder, cardState, deck, x, parts=''):
         if cardState != 'Rear':
             window.Element('-IMAGE-').Update(visible=False)
             
-            parts = [['', '', '', '', '', '', '', '', '', ''],
-                     ['', '', '', '', '', '', '', '', '', '']]
+            parts = [['']*10,
+                     ['']*10]
+            
+            pos = [['black']*10,
+                   ['black']*10]
             
             for y in range(len(parts[0])):
                 window.Element(f'partA{y}').Update(parts[0][y])
-                window.Element(f'partB{y}').Update(parts[1][y])    
-            
+                window.Element(f'partB{y}').Update(parts[1][y])
+                
+                window.Element(f'partA{y}').Update(text_color=pos[0][y])
+                window.Element(f'partB{y}').Update(text_color=pos[1][y])
     return
 
 
 def getParts(sourceFolder, deck, x):
     # Get the parsed parts of the sentence, along with the glossary info
-    parts = [['', '', '', '', '', '', '', '', '', ''],
-             ['', '', '', '', '', '', '', '', '', '']]
+    parts = [['']*10,
+             ['']*10]
     
-    reading = [['', '', '', '', '', '', '', '', '', ''],
-               ['', '', '', '', '', '', '', '', '', '']]
+    pos = [['black']*10,
+           ['black']*10]
     
-    gloss = [['', '', '', '', '', '', '', '', '', ''],
-             ['', '', '', '', '', '', '', '', '', '']]
+    reading = [['']*10,
+               ['']*10]
+    
+    gloss = [['']*10,
+             ['']*10]
+    
+    posColours = {'[n]': 'green4',
+                  '[pn]': 'DarkOrange1',
+                  '[prt]': 'purple3',
+                  '[adv]': 'red3',
+                  '[v]': 'DarkGoldenrod4',
+                  '[int]': 'gray',
+                  '[cop]': 'maroon3',
+                  '[suf]': 'medium blue',
+                  '[conj]': 'OliveDrab4'}
     
     file = pd.read_csv(sourceFolder + '/' + deck['source'][x] + '/' + deck['fullFile'][x], sep='\t')
     
@@ -232,8 +252,23 @@ def getParts(sourceFolder, deck, x):
             parts[y][z+startPad] = line[y]['text'][z]
             reading[y][z+startPad] = line[y]['reading'][z]
             gloss[y][z+startPad] = line[y]['gloss'][z]
-
-    return parts, reading, gloss
+            
+            posDict = ast.literal_eval(line[y]['gloss'][z])
+            
+            if posDict != 0:
+                if ',' in posDict[0]['pos']:
+                    # If there are multiple categories, just use the first one
+                    temp = posDict[0]['pos'].split(',')
+                    posDict[0]['pos'] = temp[0] + ']'
+                    
+                if posDict[0]['pos'] in ['[v1]', '[v5r]', '[v5s]', '[v5k-s]', '[vi]', '[vt]', '[vs]', '[vs-i]', '[vk]']:
+                    # If it's a verb group, just make it a verb
+                    posDict[0]['pos'] = '[v]'
+                
+                if posDict[0]['pos'] in posColours:
+                    pos[y][z+startPad] = posColours[posDict[0]['pos']]
+            
+    return parts, pos, reading, gloss
 
 
 def userResponse(window, event, state):

@@ -10,12 +10,11 @@ from Program.Options import ManageOptions as mo
 from Program.Options import OptionsUI as ou
 
 def splashScreen(buttons, keys):
-    
+
     buttonRow = []
     for x in range(len(buttons)):
         buttonRow.append(sg.Button(buttons[x]))
     
-    # set up the subtitle selection window
     splashScreen = [[sg.Text('Review / Modify SRS Cards')],
                     
                     buttonRow,
@@ -48,6 +47,7 @@ while True:
     
     if event in buttons or event in keys:
         wSplash.Hide()
+        
         if event == buttons[0]:
             # Go to SRS deck selection and card review
             ru.reviewCards(mainOptions)
@@ -68,5 +68,6 @@ while True:
         elif event == keys[0]:
             # With the selected folder, go to subtitle analysis
             sau.subsAnalysisUI(values[keys[0]])
-    wSplash.UnHide()
+            
+        wSplash.UnHide()
 wSplash.Close()
