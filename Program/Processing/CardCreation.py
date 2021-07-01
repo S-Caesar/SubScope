@@ -121,7 +121,7 @@ def createMedia(sourceFolder, wordLoc):
         if ea.checkForFiles(folder, video, '.mp3') == False:
             ea.createAudio(mainPath)
         
-        if ea.checkForFiles(folder, video, '_' + lineNo + '.mp3') == False:
+        if ea.checkForFiles(folder, video, '_' + lineNo + '.wav') == False:
             ea.createAudioClip(mainPath, lineNo, startStamp, endStamp) 
         
         # The trimmed video is used to get the screenshot
@@ -131,7 +131,7 @@ def createMedia(sourceFolder, wordLoc):
         
         if ea.checkForFiles(folder, video, '_' + lineNo + '.jpg') == False:
             ea.createScreenshot(mainPath, lineNo, startStamp, endStamp)
-
+        
     return
 
 

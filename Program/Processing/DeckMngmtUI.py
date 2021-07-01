@@ -67,7 +67,7 @@ def manageDecks(mainOptions):
                 wDeckManagement.Element(item).update(disabled=False)
         
         if event == 'create':
-            wCreateDeck = sg.Window('Deck Creation', layout=df.createDeck(cardFormats))
+            wCreateDeck = sg.Window('Deck Creation', layout=df.createDeck(cardFormats, wordSources))
             wDeckManagement.Hide()
             while True:
                 event, values = wCreateDeck.Read()
@@ -81,6 +81,60 @@ def manageDecks(mainOptions):
                     
                     # Create a new deck
                     cc.createDeck(deckFolder, deckName, deckFormat)
+                    
+                    # Add the review and new limits to the deck options file
+                    optionsFolder = mainOptions['Main Options']['Options Folder']
+                    options = open(optionsFolder + '/' + 'mainOptions.txt').read()
+                    options = options.split('\n\n')
+                    
+                    for x in range(len(options)):
+                        splitOps = options[x].split('\n')
+                        if splitOps[0] == 'Deck Settings':
+                            # Set to defualt new/review limits
+                            # TODO: allow user to set limits when creating the deck
+                            options[x] = options[x] + '\n' + deckName + '\t' + '5' + '\t' + '100'
+
+                    options = '\n\n'.join(options)
+                    open(optionsFolder + '/' + 'mainOptions.txt', 'w').write(options)
+                    
+                    # If auto is ticked, then add cards based on user selection
+                    if values['-autoCheck-'] == True:
+                        source = values['-source-']
+                        
+                        path = sourceFolder + '/' + source + '/' + 'database.txt'
+                        sourceDatabase = pd.read_csv(path, sep='\t')
+                        
+                        # Go through the database (starting at the first episode column),
+                        # sort by frequency, then get words to achieve x% comprehension
+                        words = []
+                        for x in range(5, sourceDatabase.shape[1]):
+                            colName = sourceDatabase.columns[x]
+                            subDatabase = sourceDatabase[['reading', 'text', 'kana', 'gloss', 'status', colName]]
+                            subDatabase = subDatabase[subDatabase[colName] != 0.0]
+                            subDatabase = subDatabase.sort_values(by=[colName], ascending=False, ignore_index=True)
+
+                            totalWords = subDatabase[colName].sum()
+                            comprehension = int(values['-comp-'])/100
+                            targetWords = round(totalWords * comprehension)
+                            
+                            y = 0
+                            cumTotal = 0
+                            while cumTotal < targetWords:
+                                cumTotal += subDatabase[colName][y]
+                                y+=1
+                            
+                            subDatabase = subDatabase.head(y)
+                            for y in range(len(subDatabase)):
+                                targetWord = subDatabase['text'][y]
+                                
+                                # Check whether the word has already been added to the deck
+                                if targetWord not in words:
+                                    # Get card info, then create the media files
+                                    cardInfo, wordLoc = cc.getCardInfo(targetWord, database, sourceFolder)
+                                    cc.addCard(deckFolder, deckName, cardInfo)
+                                    cc.createMedia(sourceFolder, wordLoc)
+                                    
+                                    words.append(targetWord)
                     
                     # Update the deck list to show the new deck
                     deckList = os.listdir(deckFolder)
@@ -206,6 +260,33 @@ def manageDecks(mainOptions):
                     cc.deleteDeck(deckFolder, deckName)
                     wDeleteDeck.close()
                     
+                    # Remove the deck from the options file
+                    optionsFolder = mainOptions['Main Options']['Options Folder']
+                    options = open(optionsFolder + '/' + 'mainOptions.txt').read()
+                    options = options.split('\n\n')
+                    
+                    for x in range(len(options)):
+                        splitOps = options[x].split('\n')
+                        if splitOps[0] == 'Deck Settings':
+                            # Set to defualt new/review limits
+                            # TODO: allow user to set limits when creating the deck
+                            options[x] = options[x].split('\n')
+                            
+                            for y in range(len(options[x])):
+                                splitFile = options[x][y].split('\t')
+                                if deckName in splitFile:
+                                    index1 = x
+                                    index2 = y
+                                    
+                    del options[index1][index2]
+                                
+                    for x in range(len(options)):
+                        if type(options[x]) == list:
+                            options[x] = '\n'.join(options[x])
+                    
+                    options = '\n\n'.join(options)
+                    open(optionsFolder + '/' + 'mainOptions.txt', 'w').write(options)                    
+                    
                     # Update the deck list to remove the deleted deck
                     deckList = os.listdir(deckFolder)
                     # Update the window so the deleted deck is no longer an option
@@ -216,3 +297,15 @@ def manageDecks(mainOptions):
             wDeleteDeck.close()
             wDeckManagement.UnHide()
     return
+
+
+'''
+'----------------------------------------------------------------------------'
+from Program.Options import ManageOptions as mo
+
+# Read in the user settings
+optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptions.txt'
+mainOptions = mo.readOptions(optionsPath)
+
+manageDecks(mainOptions)
+'''

@@ -1,21 +1,30 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-import sys
-
 
 # Take a word to be learned, find the episodes it occurs in, and return a dataframe
 # containing the episode reference, line number, sentence, and timestamp
 
-def findSentences(folder, database, targetWord):    
-    try:
-        wordLoc = int(database[database['text']==targetWord].index.values)
-    except:
-        sys.exit('No matching words found')
-
+def findSentences(folder, database, targetWord): 
+    # Make sure only one row is selected
+    wordRow = database[database['text']==targetWord]
+    while len(wordRow) > 1:
+        wordRow = wordRow[:-1]
+        
+    wordLoc = int(wordRow.index.values)
+        
     # Get the file names for episodes that contain the word
     validFiles = database[wordLoc:wordLoc+1]
-    validFiles = validFiles.loc[:, ~(validFiles != 1).any()]
+    
+    # Remove all the non-source columns
+    # TODO: tidy this up
+    del validFiles['reading']
+    del validFiles['text']
+    del validFiles['kana']
+    del validFiles['gloss']
+    del validFiles['status']
+
+    validFiles = validFiles.loc[:, ~(validFiles == 0.0).any()]
     validFiles = list(validFiles)
     
     # Get the file name (in the database file it is stored as FolderName/ShowName/SeriesNo/EpisodeNo/FileName)

@@ -76,6 +76,19 @@ def updateDatabase(folder, fnames, database, overwrite):
                 aggDict[cols[x]] = 'sum'
     
         database = database.groupby(database['reading']).aggregate(aggDict).reset_index(drop=True)
+        
+        # Count the number of occurances of each word, and record this under each episode
+        for x in range(len(fnames)):
+            colName = database.columns[x+5]
+            subDatabase = database[['reading', 'text', 'kana', 'gloss', 'status', colName]]
+            subDatabase = subDatabase[subDatabase[colName]==1.0]
+            
+            fullTable = pd.read_csv(folder + '/' + fnames[x], sep='\t')
+            
+            for index, row in subDatabase.iterrows():
+                occurances = len(fullTable[fullTable['reading'] == subDatabase['reading'][index]])
+                database.loc[database.index[index], colName] = occurances
+                
         database.to_csv(r'' + folder + '/' + databaseFile, index=None, sep='\t', mode='w')
     
     return database
@@ -202,7 +215,7 @@ def writeDatabase(folder, overwrite, knownList):
     return database
 
 
-
+'''
 '----------------------------------------------------------------------------'
 # TODO This can be a file selected by the user (e.g. from Anki) to update the database if they've been using other resources
 knownList = 'C:/Users/steph/OneDrive/App/SubScope/User Data/SRS/Known Words/Top2k-2.xlsx' 
@@ -223,3 +236,4 @@ consolidateDatabase(showFoldersPath, knownList, overwrite=False, create=True)
 #       This is more useful if the database is mostly zeros, as although the rows are repeated, it removes a lot of empty
 #       cells in columns
 #       This would ideally be just three tables coving all of the data for the program
+'''

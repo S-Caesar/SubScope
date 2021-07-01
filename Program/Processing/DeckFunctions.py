@@ -5,7 +5,7 @@
 import PySimpleGUI as sg
 import pandas as pd
 
-def createDeck(cardFormats):
+def createDeck(cardFormats, wordSources):
     # TODO: when creating a deck, add it to the deckSettings file
     headings = [[sg.Text('Create Deck', font='any 14')]]
     
@@ -13,12 +13,27 @@ def createDeck(cardFormats):
                 sg.In(size=(20,1), key='deckName')]]
     
     cardFormat = [[sg.Text('Card Format:'),
-                   sg.Combo(cardFormats, size=(20,4), enable_events=False, key='deckFormat')],
-                   [sg.Button('Create Deck')]]
-
+                   sg.Combo(cardFormats, size=(20,4), enable_events=False, key='deckFormat')]]
+    
+    spacing = [[sg.Text('='*30)]]
+    
+    autoCheck = [[sg.Checkbox('Automatically add cards to the deck', key='-autoCheck-')]]
+    
+    autoDeck = [[sg.Text('Select source:'),
+                 sg.Combo(wordSources, size=(20,4), enable_events=False, key='-source-', default_value=wordSources[0])],
+                [sg.Text('Required comprehension:'),
+                 sg.In(70, size=(3,1), enable_events=True, key='-comp-')]]
+    
+    createButton = [[sg.Text('='*30)],
+                    [sg.Button('Create Deck')]]
+    
     createDeck = [[sg.Column(headings)],
                   [sg.Column(deckName)],
-                  [sg.Column(cardFormat)]]
+                  [sg.Column(cardFormat)],
+                  [sg.Column(spacing)],
+                  [sg.Column(autoCheck)],
+                  [sg.Column(autoDeck)],
+                  [sg.Column(createButton)]]
 
     return createDeck
 
