@@ -52,7 +52,7 @@ def reviewCards(mainOptions):
             
             reviewLimit = int(mainOptions['Deck Settings']['reviewLimit'][deckName])
             newLimit = int(mainOptions['Deck Settings']['newLimit'][deckName])
-            deck = mc.prepDeck(deck, reviewLimit, newLimit)
+            subDeck = mc.prepDeck(deck, reviewLimit, newLimit)
             
             # Enable flip button
             mc.setFlip(wDeckMenu, False)
@@ -66,13 +66,13 @@ def reviewCards(mainOptions):
             state = 'Rear'
             
             # Get the parsed line for use with the 'hover' dictionary
-            parts, pos, reading, gloss = mc.getParts(sourceFolder, deck, x)
+            parts, pos, reading, gloss = mc.getParts(sourceFolder, subDeck, x)
             if mainOptions['UI Themes']['SRS Text Colouring'] == 'Off':
                 pos = [['black']*10,
                        ['black']*10]
             
             # Update the details in the window
-            mc.setCardDetails(wDeckMenu, sourceFolder, state, deck, x, parts, pos)
+            mc.setCardDetails(wDeckMenu, sourceFolder, state, subDeck, x, parts, pos)
             mc.setFlip(wDeckMenu, True)
             mc.setButtons(wDeckMenu, False)
 
@@ -108,14 +108,14 @@ def reviewCards(mainOptions):
             if event in ['Again', '1']:
                 # Update the q value of the card, but don't update the review
                 # interval so it will show again
-                deck.loc[deck.index[x], 'EF'] = q
+                subDeck.loc[subDeck.index[x], 'EF'] = q
                 
                 # Relocate the card to the end of the deck, unless it's 
                 # already the last card
-                if x != len(deck)-1:
+                if x != len(subDeck)-1:
                     targetRow = deck.iloc[[x],:]
                     deck = deck.shift(-1)
-                    deck.iloc[-1] = targetRow.squeeze()
+                    subDeck.iloc[-1] = targetRow.squeeze()
                 
                 event = 'Front'
                 
@@ -123,41 +123,53 @@ def reviewCards(mainOptions):
                 # Update the card to show as reviewed
                 event = 'Update'
         
+
+        if event == 'Known':
+            # Set the status of the card to known
+            subDeck.loc[subDeck.index[x], 'status'] = 'known'
+            x+=1
+            event = 'Front'           
+
         
         if event == 'Suspend':
             # Set the status of the card to suspended
-            deck.loc[deck.index[x], 'status'] = 'suspended'
+            subDeck.loc[subDeck.index[x], 'status'] = 'suspended'
             x+=1
             event = 'Front'
-
-
-        if event == 'Update' and x < len(deck):
+            
+            
+        if event == 'Update' and x < len(subDeck):
             # Update the card details in the deck
             # TODO: if the user selects 'Again', the card needs to be shown again
-            deck = mc.mainSRS(wDeckMenu, deck, q, x)
+            subDeck = mc.mainSRS(wDeckMenu, subDeck, q, x)
             x+=1
             event = 'Front'
         
         
         if event == 'Front':
             # Show front of first card
-            if len(deck['wordJapanese']) == 0:
+            if len(subDeck['wordJapanese']) == 0:
                 print('No new cards, or reviews in this deck')
                 state = 'Done'
                 mc.setFlip(wDeckMenu, True) # Disable flip button
                 
-            elif x >= len(deck['wordJapanese']):
+            elif x >= len(subDeck['wordJapanese']):
                 state = 'Done'
-                mc.setCardDetails(wDeckMenu, sourceFolder, state, deck, 0) # update cards to 'Done' state
+                mc.setCardDetails(wDeckMenu, sourceFolder, state, subDeck, 0) # update cards to 'Done' state
                 mc.setButtons(wDeckMenu, True) # Disable response buttons
                 mc.setFlip(wDeckMenu, True) # Disable flip button
 
                 # Write the updated deck back to the deck file
+                for x in range(len(subDeck)):
+                    index = deck[deck['wordJapanese'] == subDeck['wordJapanese'][x]].index.values
+                    temp = subDeck.loc[[x]].set_index(index)
+                    deck.loc[index] = temp
                 deck.to_csv(deckFolder + '/' + deckName, sep='\t', index=False)
                 
             else:
                 state = event
-                mc.setCardDetails(wDeckMenu, sourceFolder, state, deck, x)
+                mc.setCardDetails(wDeckMenu, sourceFolder, state, subDeck, x)
+                mc.setButtons(wDeckMenu, True)
                 mc.setFlip(wDeckMenu, False)
                 
             if playAudio != None:
@@ -170,7 +182,7 @@ def reviewCards(mainOptions):
             if playAudio != None:
                 mc.stopAudio(playAudio)
 
-            audioFile = sourceFolder + '/' + deck['source'][x] + '/' + deck['audioClip'][x]
+            audioFile = sourceFolder + '/' + subDeck['source'][x] + '/' + subDeck['audioClip'][x]
             playAudio = mc.playAudio(audioFile, True)
     
     wDeckMenu.close()

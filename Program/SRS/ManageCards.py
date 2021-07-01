@@ -66,7 +66,8 @@ def deckScreen(deckList, parts, pos, gloss):
                 
                 [sg.Text('', size=(1,1))],
                 
-                [sg.Button('Suspend', size=(10,1), disabled=True)]]
+                [sg.Button('Known', size=(10,1), disabled=True),
+                 sg.Button('Suspend', size=(10,1), disabled=True)]]
 
     wordDetails = [[sg.Text(text='Click on a word in the example sentence to display the glossary information below', size=(25,3))],
                    [sg.Text(text='_'*27)],
@@ -103,6 +104,7 @@ def setButtons(window, state):
         window.Element(buttons['Response'][x]).Update(disabled=state)
 
     window.Element('Audio').Update(disabled=state)
+    window.Element('Known').Update(disabled=state)
     window.Element('Suspend').Update(disabled=state)
     return
     
@@ -129,17 +131,18 @@ def getDecks(folderPath):
 
 
 def prepDeck(deck, reviewLimit, newLimit):       
-    # Remove any suspended cards
+    # Remove any known or suspended cards
+    deck = deck[deck['status'] != 'known']
     deck = deck[deck['status'] != 'suspended']
     
     # Add any 'review' cards to the deck, observing the limit
     today = getDate()
-    reviewDeck = deck[deck['nextReview'] != 0]  
+    reviewDeck = deck[deck['lastReview'] != 0]  
     reviewDeck = reviewDeck[reviewDeck['nextReview'] <= today]
     reviewDeck = reviewDeck[:reviewLimit]
     
     # Add any 'new' cards to the deck, observing the limit
-    newDeck = deck[deck['nextReview'] == 0]
+    newDeck = deck[deck['lastReview'] == 0]
     newDeck = newDeck[:newLimit]
 
     # Combine the review and new decks, then randomise the order
