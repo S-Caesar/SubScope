@@ -121,7 +121,14 @@ def reviewCards(mainOptions):
                 
             else:
                 # Update the card to show as reviewed
-                event = 'Update'    
+                event = 'Update'
+        
+        
+        if event == 'Suspend':
+            # Set the status of the card to suspended
+            deck.loc[deck.index[x], 'status'] = 'suspended'
+            x+=1
+            event = 'Front'
 
 
         if event == 'Update' and x < len(deck):
@@ -169,7 +176,7 @@ def reviewCards(mainOptions):
     wDeckMenu.close()
     return
 
-
+'''
 '----------------------------------------------------------------------------'
 from Program.Options import ManageOptions as mo
 
@@ -178,3 +185,4 @@ optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptio
 mainOptions = mo.readOptions(optionsPath)
 
 reviewCards(mainOptions)
+'''

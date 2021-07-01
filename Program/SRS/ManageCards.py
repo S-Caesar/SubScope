@@ -62,7 +62,11 @@ def deckScreen(deckList, parts, pos, gloss):
                 
                 buttonRow,
                 
-                [sg.Button('Audio', size=(10,2), disabled=True)]]
+                [sg.Button('Audio', size=(10,2), disabled=True)],
+                
+                [sg.Text('', size=(1,1))],
+                
+                [sg.Button('Suspend', size=(10,1), disabled=True)]]
 
     wordDetails = [[sg.Text(text='Click on a word in the example sentence to display the glossary information below', size=(25,3))],
                    [sg.Text(text='_'*27)],
@@ -71,11 +75,11 @@ def deckScreen(deckList, parts, pos, gloss):
     
     mainButtons = [[sg.Button('Back')]]
     
-    deckScreen = [[sg.Column(deckCol, size=(200,700)),
+    deckScreen = [[sg.Column(deckCol, size=(200,720)),
                    sg.VSeparator(),
-                   sg.Column(deckCard, size=(500,700), element_justification='c'),
+                   sg.Column(deckCard, size=(500,720), element_justification='c'),
                    sg.VSeparator(),
-                   sg.Column(wordDetails, size=(200,700))],
+                   sg.Column(wordDetails, size=(200,720))],
                    [sg.Column(mainButtons)]]
     
     return deckScreen
@@ -99,6 +103,7 @@ def setButtons(window, state):
         window.Element(buttons['Response'][x]).Update(disabled=state)
 
     window.Element('Audio').Update(disabled=state)
+    window.Element('Suspend').Update(disabled=state)
     return
     
 
@@ -123,7 +128,10 @@ def getDecks(folderPath):
     return deckList
 
 
-def prepDeck(deck, reviewLimit, newLimit):         
+def prepDeck(deck, reviewLimit, newLimit):       
+    # Remove any suspended cards
+    deck = deck[deck['status'] != 'suspended']
+    
     # Add any 'review' cards to the deck, observing the limit
     today = getDate()
     reviewDeck = deck[deck['nextReview'] != 0]  
