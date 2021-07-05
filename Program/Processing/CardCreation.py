@@ -4,6 +4,7 @@ import pandas as pd
 import ast
 import os
 import datetime
+import random
 
 from Program.Processing import FindSentences as fs
 from Program.Processing import ExtractAudio as ea
@@ -65,8 +66,9 @@ def getCardInfo(targetWord, database, sourceFolder):
     wordLoc = fs.findSentences(sourceFolder, database, targetWord)
     
 
-    # TODO: for now, just grab the first sentence, but eventually find the one with the fewest unknown words
-    senNo = 0
+    # TODO: for now, just grab a random sentence, but eventually find the one with the fewest unknown words
+    # TODO: I shouldn't need to use '-1' for this, but if I don't I occasionally get index errors when setting the source
+    senNo = random.randint(0, len(wordLoc)-1)
     
     source = wordLoc['source'][senNo]
     fullFile = wordLoc['episode'][senNo]
