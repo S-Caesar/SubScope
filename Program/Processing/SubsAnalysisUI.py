@@ -8,6 +8,17 @@ import PySimpleGUI as sg
 from Program.Parsing import IchiranParse as ip
 from Program.Processing import ParsedAnalysis as pa
 
+
+def setup(): 
+    # set up the subtitle analysis window
+    folderColumn = [[sg.Text('Select a folder containing subtitle files to be analysed.')],
+                    [sg.In(size=(37, 1), enable_events=True, key="-FOLDER-"),
+                     sg.FolderBrowse()]]
+    
+    setup = [[sg.Column(folderColumn, size=(335,60))]]
+                          
+    return setup
+
 '------------------------------------------------------------------------'
 statsKeys = [['Total Number of Words:',
               'Total Number of Unknown Words:',
@@ -68,78 +79,90 @@ def displayStats(window, stats):
     return
 
 
-def subsAnalysisUI(folder):
-    # Get a list of files in folder
-    try:
-        file_list = os.listdir(folder)
-    except:
-        file_list = []
-
-    fnames = [f for f in file_list
-              if os.path.isfile(os.path.join(folder, f))
-              and f.lower().endswith(('.srt'))
-              or os.path.isfile(os.path.join(folder, f))
-              and f.lower().endswith(('.ass'))]
-
-    # initialise the subtitle analysis window
-    wAnalysis = sg.Window('File Analysis').Layout(subsAnalysisWindow(fnames))
-
+def subsAnalysisUI():
+    wSetup = sg.Window('Folder Selection', layout=setup())
+    
+    # Start UI loop
     while True:
-        event, values = wAnalysis.Read()
-        if event is None or event == 'Exit' or event == 'Back':
+        event, values = wSetup.Read()
+        if event is None or event == 'Exit':
             break
         
-        if event == 'Select All':
-            for i in range(len(fnames)):
-                wAnalysis.Element(f"-SUBTITLES- {i}").Update(value=True)
-                
-        if event == 'Deselect All':
-            for i in range(len(fnames)):
-                wAnalysis.Element(f"-SUBTITLES- {i}").Update(value=False)
-                
-        if event == "-COMP-":
-            if values["-COMP-"] != '':
-                comprehension = int(values["-COMP-"])
-                
-        if event == 'Update Statistics':
-            # Only analyse files if they are selected
-            fnamesSelect = []
-            for i in range(len(fnames)):
-                if values[f"-SUBTITLES- {i}"] == True:
-                    fnamesSelect.append(fnames[i])
+        # TODO: set the default starting location for the folder search
+        if event == "-FOLDER-":
+            folder = values["-FOLDER-"]
+            # Get a list of files in folder
+            try:
+                file_list = os.listdir(folder)
+            except:
+                file_list = []
             
-            if fnamesSelect == []:
-                print('No files have been selected.')
-            else:
-                ip.parseWrapper(folder, fnamesSelect, file_list)
+            fnames = [f for f in file_list
+                      if os.path.isfile(os.path.join(folder, f))
+                      and f.lower().endswith(('.srt'))
+                      or os.path.isfile(os.path.join(folder, f))
+                      and f.lower().endswith(('.ass'))]
+               
+            # initialise the subtitle analysis window
+            wAnalysis = sg.Window('File Analysis').Layout(subsAnalysisWindow(fnames))
+            wSetup.Close()
+        
+            while True:
+                event, values = wAnalysis.Read()
+                if event is None or event == 'Exit' or event == 'Back':
+                    break
                 
-                # For every specified file, create a list containing the names of the analysed text files
-                dataFiles = []
-                for x in range(len(fnamesSelect)):
-                    fnamesSelect[x] = fnamesSelect[x].split('.')
-                    del fnamesSelect[x][-1]
-                    fnamesSelect[x] = '.'.join(fnamesSelect[x])
-                    fnamesSelect[x] = fnamesSelect[x] + '_full.txt'
-                    dataFiles.append(fnamesSelect[x])
-                
-                # Read each of the files to be analysed and combine into a single table
-                outputTable = pd.DataFrame()
-                for x in range(len(fnamesSelect)):
-                    fullTable = pd.read_csv(folder + '/' +  fnamesSelect[x], sep='\t')
-                    outputTable = outputTable.append(fullTable)
-                outputTable = outputTable.reset_index(drop=True)
-                
-                # Analyse the combined table and return the stats, then update the UI to display the results
-                try:
-                    comprehension = int(values['-COMP-'])
-                except:
-                    print('Invalid comprehension. Using default value of 70.')
-                    comprehension = 70
-                    wAnalysis.Element('-COMP-').update(value=comprehension)
+                if event == 'Select All':
+                    for i in range(len(fnames)):
+                        wAnalysis.Element(f"-SUBTITLES- {i}").Update(value=True)
+                        
+                if event == 'Deselect All':
+                    for i in range(len(fnames)):
+                        wAnalysis.Element(f"-SUBTITLES- {i}").Update(value=False)
+                        
+                if event == "-COMP-":
+                    if values["-COMP-"] != '':
+                        comprehension = int(values["-COMP-"])
+                        
+                if event == 'Update Statistics':
+                    # Only analyse files if they are selected
+                    fnamesSelect = []
+                    for i in range(len(fnames)):
+                        if values[f"-SUBTITLES- {i}"] == True:
+                            fnamesSelect.append(fnames[i])
                     
-                
-                stats = pa.prepStats(outputTable, 1, '==',  comprehension)
-                displayStats(wAnalysis, stats)
-            
-    wAnalysis.Close()
+                    if fnamesSelect == []:
+                        print('No files have been selected.')
+                    else:
+                        ip.parseWrapper(folder, fnamesSelect, file_list)
+                        
+                        # For every specified file, create a list containing the names of the analysed text files
+                        dataFiles = []
+                        for x in range(len(fnamesSelect)):
+                            fnamesSelect[x] = fnamesSelect[x].split('.')
+                            del fnamesSelect[x][-1]
+                            fnamesSelect[x] = '.'.join(fnamesSelect[x])
+                            fnamesSelect[x] = fnamesSelect[x] + '_full.txt'
+                            dataFiles.append(fnamesSelect[x])
+                        
+                        # Read each of the files to be analysed and combine into a single table
+                        outputTable = pd.DataFrame()
+                        for x in range(len(fnamesSelect)):
+                            fullTable = pd.read_csv(folder + '/' +  fnamesSelect[x], sep='\t')
+                            outputTable = outputTable.append(fullTable)
+                        outputTable = outputTable.reset_index(drop=True)
+                        
+                        # Analyse the combined table and return the stats, then update the UI to display the results
+                        try:
+                            comprehension = int(values['-COMP-'])
+                        except:
+                            print('Invalid comprehension. Using default value of 70.')
+                            comprehension = 70
+                            wAnalysis.Element('-COMP-').update(value=comprehension)
+                            
+                        
+                        stats = pa.prepStats(outputTable, 1, '==',  comprehension)
+                        displayStats(wAnalysis, stats)
+                    
+            wAnalysis.Close()
     return

@@ -8,7 +8,7 @@ import os
 from Program.Subtitles import SubRetimer as sr
 
 def subRetime():
-    wSetup = sg.Window('Setup', layout=sr.wSetup())
+    wSetup = sg.Window('Folder Selection', layout=sr.wSetup())
     
     # Start UI loop
     while True:
@@ -30,7 +30,7 @@ def subRetime():
             
     
             wSubRetimer = sg.Window('Subtitles Retimer').Layout(sr.wSubRetimer(fnames))
-            wSetup.Hide()
+            wSetup.Close()
             
             while True:
                 event, values = wSubRetimer.Read()

@@ -2,30 +2,33 @@
 
 import PySimpleGUI as sg
 
-from Program.Processing import DeckMngmtUI as dmu
-from Program.Processing import SubsAnalysisUI as sau
-from Program.Subtitles import SubRetimerUI as sru
-from Program.SRS import ReviewUI as ru
 from Program.Options import ManageOptions as mo
+
+from Program.SRS import ReviewUI as ru
+from Program.Processing import DeckMngmtUI as dmu
+from Program.Database import ImportKnown as ik
+from Program.Subtitles import AddSubsUI as asu
+from Program.Subtitles import SubRetimerUI as sru
+from Program.Processing import SubsAnalysisUI as sau
 from Program.Options import OptionsUI as ou
 
-def splashScreen(buttons, keys):
 
-    buttonRow = []
-    for x in range(len(buttons)):
-        buttonRow.append(sg.Button(buttons[x]))
+def mainMenu(headings, buttons):
     
-    splashScreen = [[sg.Text('Review / Modify SRS Cards')],
-                    
-                    buttonRow,
-                    
-                    [sg.Text("=" * 53)],
-                    
-                    [sg.Text('Select a folder containing subtitle files to be analysed.')],
-                    [sg.In(size=(51, 1), enable_events=True, key=keys[0]),
-                     sg.FolderBrowse()]]
+    columns = []
+    for x in range(len(headings)):
+        columns.append([[sg.Text(headings[x])],
+                         *[[sg.Button(buttons[x][i])] for i in range(len(buttons[x]))]])
     
-    return splashScreen
+    window = []
+    for x in range(len(columns)):
+        window.append(sg.Column(columns[x], vertical_alignment='t'))
+        if x != len(columns)-1:
+            window.append(sg.VSeperator())
+
+    mainMenu = [window]
+    
+    return mainMenu
 
 
 # Read in the user settings
@@ -34,40 +37,33 @@ mainOptions = mo.readOptions(optionsPath)
 
 sg.theme(mainOptions['UI Themes']['Main Theme'])
 
-buttons = ['Review Cards', 'Change Settings', 'Retime Subtitles', 'Manage Decks']
-keys = ['-FOLDER-']
-wSplash = sg.Window('Main Menu', layout=splashScreen(buttons, keys))
 
+headings = ['Flash Cards (SRS)', 'Subtitle Management', 'Options']
+
+buttons = [['Review Cards', 'Manage Decks', 'Import Known Words'],
+           ['Add Subtitles', 'Retime Subtitles', 'Analyse Subtitles'],
+           ['Change Settings']]
+
+# NOTE: if I don't put these as strings, then the windows open when they 
+#       are assigned to the list, and then won't run later
+destinations = [['ru.reviewCards(mainOptions)',   'dmu.manageDecks(mainOptions)',   'ik.importKnown()'    ],
+                ['asu.addSubs()',                 'sru.subRetime()',                'sau.subsAnalysisUI()'],
+                ['ou.manageOptions(mainOptions)'                                                          ]]
+
+wMainMenu = sg.Window('Main Menu', layout=mainMenu(headings, buttons))
 
 # Start UI loop
 while True:
-    event, values = wSplash.Read()
+    event, values = wMainMenu.Read()
     if event is None or event == 'Exit':
         break
-    
-    if event in buttons or event in keys:
-        wSplash.Hide()
-        
-        if event == buttons[0]:
-            # Go to SRS deck selection and card review
-            ru.reviewCards(mainOptions)
-            
-        elif event == buttons[1]:
-            # Go to options settings
-            ou.manageOptions(mainOptions)
-                
-        elif event == buttons[2]:
-            # Go to subtitle renaming
-            # TODO: consider incorporating with the anaylsis selection, since they use the same selection of subtitles
-            sru.subRetime()
-            
-        elif event == buttons[3]:
-            # Go to deck management
-            dmu.manageDecks(mainOptions)
-            
-        elif event == keys[0]:
-            # With the selected folder, go to subtitle analysis
-            sau.subsAnalysisUI(values[keys[0]])
-            
-        wSplash.UnHide()
-wSplash.Close()
+
+    for x in range(len(buttons)):
+        if event in buttons[x]:
+            for y in range(len(buttons[x])):
+                if event == buttons[x][y]:
+                    wMainMenu.Hide()
+                    eval(destinations[x][y])
+         
+        wMainMenu.UnHide()
+wMainMenu.Close()
