@@ -46,9 +46,9 @@ buttons = [['Review Cards', 'Manage Decks', 'Import Known Words'],
 
 # NOTE: if I don't put these as strings, then the windows open when they 
 #       are assigned to the list, and then won't run later
-destinations = [['ru.reviewCards(mainOptions)',   'dmu.manageDecks(mainOptions)',   'ik.importKnown()'    ],
-                ['asu.addSubs()',                 'sru.subRetime()',                'sau.subsAnalysisUI()'],
-                ['ou.manageOptions(mainOptions)'                                                          ]]
+destinations = [['ru.reviewCards(mainOptions)',   'dmu.manageDecks(mainOptions)',   'ik.importKnown(mainOptions)'],
+                ['asu.addSubs()',                 'sru.subRetime()',                'sau.subsAnalysisUI()'       ],
+                ['ou.manageOptions(mainOptions)'                                                                 ]]
 
 wMainMenu = sg.Window('Main Menu', layout=mainMenu(headings, buttons))
 

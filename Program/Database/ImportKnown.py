@@ -4,6 +4,7 @@ import PySimpleGUI as sg
 import pandas as pd
 
 from Program.Parsing import IchiranParse as ip
+from Program.Database import DataHandling as dh
 
 def importScreen(path, deckHeadings, words):
     
@@ -44,7 +45,7 @@ def importScreen(path, deckHeadings, words):
     return importScreen
 
 
-def importKnown():
+def importKnown(mainOptions):
     path = ''
     words = ['1', '2', '3', '4', '5', '6', '7', '8']
     deckHeadings = ['words']
@@ -80,39 +81,69 @@ def importKnown():
                 # Selected column is sentences, so parse them first
                 sentences = ip.prepParseInput(words)
                 
-                fullTable = pd.DataFrame()
+                fullTable = pd.DataFrame(columns=['text'])
+                # Just an example subset displayed because of how long parsing takes
                 for x in range(10):
-                    parsedWords = ip.ichiranParse(sentences[x])
-                    fullTable = fullTable.append(ip.flattenIchiran(parsedWords), ignore_index=True)
+                    if sentences[x] != '':
+                        parsedWords = ip.ichiranParse(sentences[x])
+                        fullTable = fullTable.append(ip.flattenIchiran(parsedWords), ignore_index=True)
                 
-                words = fullTable['text'].tolist()
+                if len(words) != 0:
+                    words = fullTable['text'].tolist()
                 
-            
             # Split the words list in columns, then display
             displayWords = [words[x:x+8] for x in range(0, len(words), 8)]
             wImport.Element('-PREVIEW-').update(displayWords)
                     
 
-
         if event == 'Mark Words As Known':
             if values['-WORD-'] != True:
-                # Parse the sentences to words
-                fullTable = pd.DataFrame()
-                #for x in range(len(sentences)):
-                for x in range(len(5)):
-                    parsedWords = ip.ichiranParse(sentences[x])
-                    fullTable = fullTable.append(ip.flattenIchiran(parsedWords), ignore_index=True)
+                index = deckHeadings.index(values['-HEADINGS-'])
                 
-                words = fullTable['text'].tolist()
+                words = []
+                for x in range(len(deck)):
+                    words.append(deck[x][index])
+                
+                sentences = ip.prepParseInput(words)
+                
+                fullTable = pd.DataFrame(columns=['text'])
+                # Parse the sentences to words
+                i=0
+                for x in range(len(sentences)):
+                    if sentences[x] != '':
+                        parsedWords = ip.ichiranParse(sentences[x])
+                        fullTable = fullTable.append(ip.flattenIchiran(parsedWords), ignore_index=True)
+                    
+                    if i >= 20:
+                        print('Rows Complete:', x, '/', len(sentences))
+                        i=0
+                    i+=1
+                    
+                if len(words) != 0:
+                    words = fullTable['text'].tolist()
                 
             # Remove duplicates
             words = list(dict.fromkeys(words))
 
             # Mark the words as known in the main database
-            print('yep')
+            databasePath = mainOptions['Default Paths']['Source Folder']
+            database = pd.read_csv(databasePath + '/' + 'mainDatabase.txt', sep='\t')
+            
+            for x in range(len(words)):
+                index = database.loc[database['text']==words[x]].index
+                database.loc[database.index[index], 'status'] = 1
+            
+            database.to_csv(r'' + databasePath + '/' + 'mainDatabase.txt', index=None, sep='\t', mode='w')
         
-      
     wImport.Close()
     return
 
-importKnown()
+
+'''
+'----------------------------------------------------------------------------'
+from Program.Options import ManageOptions as mo
+optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptions.txt'
+mainOptions = mo.readOptions(optionsPath)
+importKnown(mainOptions)
+'----------------------------------------------------------------------------'
+'''
