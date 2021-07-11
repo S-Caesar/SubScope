@@ -21,11 +21,12 @@ cardDetails = pd.DataFrame({
 
 
 buttons = pd.DataFrame({
-    'Response':     ['Flip',   'Again',  'Hard',        'Good',   'Easy'        ],
-    'Keystroke':    ['',       '1',      '2',           '3',      '4'           ],
-    'q':            ['',        0,        1,             2,        3            ],
-    'TextColour':   ['grey99', 'grey99', 'grey99',      'grey99', 'grey99'      ],
-    'ButtonColour': ['grey30', 'red2',   'dark orange', 'green3', 'DeepSkyBlue3']})
+    'Response':     ['Flip',   'Again',   'Hard',        'Good',   'Easy'        ],
+    'Key':          ['-FLIP-', '-AGAIN-', '-HARD-',      '-GOOD-', '-EASY-'      ],
+    'Keystroke':    ['',       '1',       '2',           '3',      '4'           ],
+    'q':            ['',        0,         1,             2,        3            ],
+    'TextColour':   ['grey99', 'grey99',  'grey99',      'grey99', 'grey99'      ],
+    'ButtonColour': ['grey30', 'red2',    'dark orange', 'green3', 'DeepSkyBlue3']})
 
 def deckScreen(deckList, parts, pos, gloss):
     # Can't unpack * method in a row, so have to do it like this
@@ -35,7 +36,8 @@ def deckScreen(deckList, parts, pos, gloss):
                                     size=(10,2),
                                     disabled=True,
                                     button_color=(buttons['TextColour'][x],
-                                                  buttons['ButtonColour'][x])))
+                                                  buttons['ButtonColour'][x]),
+                                    key=buttons['Key'][x]))
     
 
     # Calculate the length of each line for sizing of the elements
@@ -101,7 +103,7 @@ def setButtons(window, state):
     # Set buttons buttons as active / inactive (used to prevent an error
     # where the buttons are pressed before a deck is selected)
     for x in range(1, len(buttons)):
-        window.Element(buttons['Response'][x]).Update(disabled=state)
+        window.Element(buttons['Key'][x]).Update(disabled=state)
 
     window.Element('Audio').Update(disabled=state)
     window.Element('Known').Update(disabled=state)
@@ -112,7 +114,7 @@ def setButtons(window, state):
 def setFlip(window, state):
     # Set 'Flip' button as active / inactive (used to prevent an error
     # where the buttons are pressed before a deck is selected)
-    window.Element(buttons['Response'][0]).Update(disabled=state)
+    window.Element(buttons['Key'][0]).Update(disabled=state)
     return
 
 
@@ -186,6 +188,19 @@ def setCardDetails(window, sourceFolder, cardState, deck, x, parts='', pos=''):
                 
                 window.Element(f'partA{y}').Update(text_color=pos[0][y])
                 window.Element(f'partB{y}').Update(text_color=pos[1][y])
+                
+            # Update the response buttons to show the new durations
+            durations = ['', '', '']
+            for y in range(len(durations)):
+                durations[y] = mainSRS(deck, buttons['q'][2], x)
+                durations[y] = str(int(durations[y]['nextReview'][x] - durations[y]['lastReview'][x]))
+                durations[y] = '\n+' + durations[y] + ' days'
+            
+            # The first two are blank, as these are the 'Flip' and 'Again' buttons
+            newDurations = ['', '', durations[0], durations[1], durations[2]]
+
+            for y in range(len(buttons['Key'])):
+                window.Element(buttons['Key'][y]).Update(buttons['Response'][y] + newDurations[y])
         
         if cardState != 'Done':
             image = Image.open(sourceFolder + '/' + deck['source'][x] + '/' + states.iloc[row]['IMAGE'])
@@ -209,6 +224,9 @@ def setCardDetails(window, sourceFolder, cardState, deck, x, parts='', pos=''):
                 
                 window.Element(f'partA{y}').Update(text_color=pos[0][y])
                 window.Element(f'partB{y}').Update(text_color=pos[1][y])
+                
+            for y in range(len(buttons['Key'])):
+                window.Element(buttons['Key'][y]).Update(buttons['Response'][y])
     return
 
 
@@ -286,10 +304,10 @@ def getParts(sourceFolder, deck, x):
 def userResponse(window, event, state):
     # Check user response, and record the q value
     q = None
-    for item in ['Response', 'Keystroke']:
+    for item in ['Key', 'Keystroke']:
         # Check if the event is in the 'buttons' table
-        if len(buttons.loc[buttons[item] == event]) > 0:
-            if event == 'Flip' or state == 'Front':
+        if event in buttons[item].values:
+            if event == '-FLIP-' or state == 'Front':
                 # The flip button changes the card state, so no need to update the ease values
                 # Or
                 # If a number is pressed, ignore it if the user is on the front of the card
@@ -306,7 +324,7 @@ def updateCard(EF, q, oldInterval):
     newEF = EF+(0.1-(3-q)*(0.1+(3-q)*0.06))
     if newEF < 1.3:
         newEF = 1.3
-    
+
     if q == 0:
         newInterval = 1
     else:
@@ -315,13 +333,16 @@ def updateCard(EF, q, oldInterval):
     return newEF, newInterval
 
 
-def mainSRS(window, deck, q, x):
+def mainSRS(deck, q, x):
     if deck['lastReview'][x] == 0:
         # Card is new, so just set the interval to 1
         oldInterval = 1
     else:
         # TODO: consider making the interval the current date, rather than the original planned review date
         oldInterval = deck['nextReview'][x] - deck['lastReview'][x]
+        
+        if oldInterval == 0:
+            oldInterval = 1
     
     newEF, newInterval = updateCard(deck['EF'][x], q, oldInterval)
     

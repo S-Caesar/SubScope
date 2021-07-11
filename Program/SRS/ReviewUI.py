@@ -62,7 +62,7 @@ def reviewCards(mainOptions):
         
         # Show the back of the card when the button is pressed, 
         # disable the flip button, and enable the response buttons
-        if event == 'Flip':
+        if event == '-FLIP-':
             state = 'Rear'
             
             # Get the parsed line for use with the 'hover' dictionary
@@ -101,17 +101,21 @@ def reviewCards(mainOptions):
             wDeckMenu.Element('-GLOSS-').update(glossOut)
         
         
-        if event in ['Again', 'Hard', 'Good', 'Easy', '1', '2', '3', '4']:
+        if event in ['-AGAIN-', '-HARD-', '-GOOD-', '-EASY-', '1', '2', '3', '4']:
             # Check if the user has pressed a key/button and return values
             q = mc.userResponse(wDeckMenu, event, state)
             
-            if event in ['Again', '1']:
+            if event in ['-AGAIN-', '1']:
                 # Update the q value of the card, but don't update the review
                 # interval so it will show again
-                subDeck.loc[subDeck.index[x], 'EF'] = q
+                subDeck.loc[subDeck.index[x], 'EF'], temp = mc.updateCard(subDeck['EF'][x], q, 0)
+                
+                today = mc.getDate()
+                subDeck.loc[subDeck.index[x], 'nextReview'] = today
                 
                 # Relocate the card to the end of the deck, unless it's 
                 # already the last card
+                # TODO: this used to work, but doesn't anymore for some reason...
                 if x != len(subDeck)-1:
                     targetRow = deck.iloc[[x],:]
                     deck = deck.shift(-1)
@@ -140,8 +144,7 @@ def reviewCards(mainOptions):
             
         if event == 'Update' and x < len(subDeck):
             # Update the card details in the deck
-            # TODO: if the user selects 'Again', the card needs to be shown again
-            subDeck = mc.mainSRS(wDeckMenu, subDeck, q, x)
+            subDeck = mc.mainSRS(subDeck, q, x)
             x+=1
             event = 'Front'
         
