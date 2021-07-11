@@ -42,11 +42,13 @@ def createDeck(deckFolder, deckName, deckFormat):
                                           'nextReview',
                                           'status']) # new, learning, known, suspended
         blankDeck.to_csv(r'' + deckFolder + '/' + deckName, index=None, sep='\t', mode='w')
+        exists = 0
         
     else:
         print('Deck already exists:', deckName)
+        exists = 1
         
-    return
+    return exists
 
 
 def getCardInfo(targetWord, database, sourceFolder):

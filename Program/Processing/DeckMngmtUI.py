@@ -80,61 +80,66 @@ def manageDecks(mainOptions):
                     deckFormat = values['deckFormat']
                     
                     # Create a new deck
-                    cc.createDeck(deckFolder, deckName, deckFormat)
+                    exists = cc.createDeck(deckFolder, deckName, deckFormat)
                     
-                    # Add the review and new limits to the deck options file
-                    optionsFolder = mainOptions['Main Options']['Options Folder']
-                    options = open(optionsFolder + '/' + 'mainOptions.txt').read()
-                    options = options.split('\n\n')
-                    
-                    for x in range(len(options)):
-                        splitOps = options[x].split('\n')
-                        if splitOps[0] == 'Deck Settings':
-                            # Set to defualt new/review limits
-                            # TODO: allow user to set limits when creating the deck
-                            options[x] = options[x] + '\n' + deckName + '\t' + '5' + '\t' + '100'
-
-                    options = '\n\n'.join(options)
-                    open(optionsFolder + '/' + 'mainOptions.txt', 'w').write(options)
-                    
-                    # If auto is ticked, then add cards based on user selection
-                    if values['-autoCheck-'] == True:
-                        source = values['-source-']
+                    # If the deck name isn't taken, then create the deck
+                    if exists == 0:
+                        # Add the review and new limits to the deck options file
+                        optionsFolder = mainOptions['Main Options']['Options Folder']
+                        options = open(optionsFolder + '/' + 'mainOptions.txt').read()
+                        options = options.split('\n\n')
                         
-                        path = sourceFolder + '/' + source + '/' + 'database.txt'
-                        sourceDatabase = pd.read_csv(path, sep='\t')
+                        for x in range(len(options)):
+                            splitOps = options[x].split('\n')
+                            if splitOps[0] == 'Deck Settings':
+                                # Set to defualt new/review limits
+                                # TODO: allow user to set limits when creating the deck
+                                options[x] = options[x] + '\n' + deckName + '\t' + '5' + '\t' + '100'
+    
+                        options = '\n\n'.join(options)
+                        open(optionsFolder + '/' + 'mainOptions.txt', 'w').write(options)
                         
-                        # Go through the database (starting at the first episode column),
-                        # sort by frequency, then get words to achieve x% comprehension
-                        words = []
-                        for x in range(5, sourceDatabase.shape[1]):
-                            colName = sourceDatabase.columns[x]
-                            subDatabase = sourceDatabase[['reading', 'text', 'kana', 'gloss', 'status', colName]]
-                            subDatabase = subDatabase[subDatabase[colName] != 0.0]
-                            subDatabase = subDatabase.sort_values(by=[colName], ascending=False, ignore_index=True)
-
-                            totalWords = subDatabase[colName].sum()
-                            comprehension = int(values['-comp-'])/100
-                            targetWords = round(totalWords * comprehension)
+                        # If auto is ticked, then add cards based on user selection
+                        if values['-autoCheck-'] == True:
+                            # TODO: add option to create a deck from multiple sources
+                            source = values['-source-']
                             
-                            y = 0
-                            cumTotal = 0
-                            while cumTotal < targetWords:
-                                cumTotal += subDatabase[colName][y]
-                                y+=1
+                            path = sourceFolder + '/' + 'mainDatabase.txt'
+                            sourceDatabase = pd.read_csv(path, sep='\t')
                             
-                            subDatabase = subDatabase.head(y)
-                            for y in range(len(subDatabase)):
-                                targetWord = subDatabase['text'][y]
-                                
-                                # Check whether the word has already been added to the deck
-                                if targetWord not in words:
-                                    # Get card info, then create the media files
-                                    cardInfo, wordLoc = cc.getCardInfo(targetWord, database, sourceFolder)
-                                    cc.addCard(deckFolder, deckName, cardInfo)
-                                    cc.createMedia(sourceFolder, wordLoc)
+                            # Go through the database (starting at the first episode column),
+                            # sort by frequency, then get words to achieve x% comprehension
+                            words = []
+                            for col in sourceDatabase.head():
+                                if source in col:
+                                    subDatabase = sourceDatabase[['reading', 'text', 'kana', 'gloss', 'status', col]]
+                                    subDatabase = subDatabase[subDatabase[col] != 0.0]
+                                    subDatabase = subDatabase.sort_values(by=[col], ascending=False, ignore_index=True)
+        
+                                    totalWords = subDatabase[col].sum()
+                                    comprehension = int(values['-comp-'])/100
+                                    targetWords = round(totalWords * comprehension)
                                     
-                                    words.append(targetWord)
+                                    y = 0
+                                    cumTotal = 0
+                                    while cumTotal < targetWords:
+                                        cumTotal += subDatabase[col][y]
+                                        y+=1
+                                    
+                                    subDatabase = subDatabase.head(y)
+                                    for y in range(len(subDatabase)):
+                                        
+                                        if subDatabase['status'][y] == 0:
+                                            targetWord = subDatabase['text'][y]
+                                            
+                                            # Check whether the word has already been added to the deck
+                                            if targetWord not in words:
+                                                # Get card info, then create the media files
+                                                cardInfo, wordLoc = cc.getCardInfo(targetWord, database, sourceFolder)
+                                                cc.addCard(deckFolder, deckName, cardInfo)
+                                                cc.createMedia(sourceFolder, wordLoc)
+                                                
+                                                words.append(targetWord)
                     
                     # Update the deck list to show the new deck
                     deckList = os.listdir(deckFolder)
