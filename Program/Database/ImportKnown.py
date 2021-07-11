@@ -2,9 +2,9 @@
 
 import PySimpleGUI as sg
 import pandas as pd
+import timeit
 
 from Program.Parsing import IchiranParse as ip
-from Program.Database import DataHandling as dh
 
 def importScreen(path, deckHeadings, words):
     
@@ -106,18 +106,28 @@ def importKnown(mainOptions):
                 
                 sentences = ip.prepParseInput(words)
                 
-                fullTable = pd.DataFrame(columns=['text'])
-                # Parse the sentences to words
                 i=0
+                j=0
+                startTime = timeit.default_timer()
+                # Parse the sentences to words
+                fullTable = pd.DataFrame(columns=['text'])
                 for x in range(len(sentences)):
                     if sentences[x] != '':
                         parsedWords = ip.ichiranParse(sentences[x])
                         fullTable = fullTable.append(ip.flattenIchiran(parsedWords), ignore_index=True)
                     
                     if i >= 20:
+                        passedTime = timeit.default_timer() - startTime
+                        estTime = round((passedTime / j) * (len(sentences)-j) / 60, 1)
+                        
+                        print('===================================')
                         print('Rows Complete:', x, '/', len(sentences))
+                        print('Estimated time remaining:', estTime, 'minutes')
+                        print('===================================')
+                        
                         i=0
                     i+=1
+                    j+=1
                     
                 if len(words) != 0:
                     words = fullTable['text'].tolist()

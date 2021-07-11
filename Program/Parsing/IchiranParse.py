@@ -19,6 +19,7 @@ import subprocess
 import json
 import pandas as pd
 import re
+import timeit
 
 # Take the list of files, remove any that have been analysed already,
 # Then write the output files ('_justText', '_full') for the rest
@@ -266,12 +267,24 @@ def parseFiles(folder, files):
         parseInput = parseInput.reset_index()
 
         i=0
+        j=0
+        # Time the processing of each block of 20 and estimate the remaining duration
+        startTime = timeit.default_timer()
+        
         for y in range(len(parseInput['sentence'])):
             # Print an update to the console to show parsing progress
             if i >= 20:
-                print('Rows Complete:', y, '/', len(parseInput['sentence'])) 
+                passedTime = timeit.default_timer() - startTime
+                estTime = round((passedTime / j) * (len(parseInput['sentence'])-j) / 60, 1)
+                   
+                print('===================================')                         
+                print('Rows Complete:', y, '/', len(parseInput['sentence']))
+                print('Estimated time remaining:', estTime, 'minutes')
+                print('===================================')
+                
                 i = 0
             i+=1
+            j+=1
             
             # Send each element for parsing, then append onto the main table
             jsonOutput = ichiranParse(parseInput['sentence'][y])

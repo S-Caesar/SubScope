@@ -5,6 +5,7 @@
 import PySimpleGUI as sg
 import os
 import pandas as pd
+import timeit
 
 from Program.Processing import CardCreation as cc
 from Program.Processing import DeckFunctions as df
@@ -126,6 +127,11 @@ def manageDecks(mainOptions):
                                         cumTotal += subDatabase[col][y]
                                         y+=1
                                     
+                                    i=0
+                                    j=0
+                                    # Time the processing of each block of 20 and estimate the remaining duration
+                                    startTime = timeit.default_timer()
+                                    
                                     subDatabase = subDatabase.head(y)
                                     for y in range(len(subDatabase)):
                                         
@@ -140,6 +146,19 @@ def manageDecks(mainOptions):
                                                 cc.createMedia(sourceFolder, wordLoc)
                                                 
                                                 words.append(targetWord)
+                                                
+                                        if i >= 20:
+                                            passedTime = timeit.default_timer() - startTime
+                                            estTime = round((passedTime / j) * (len(subDatabase)-j) / 60, 1)
+                                            
+                                            print('===================================')
+                                            print('Rows Complete:', y, '/', len(subDatabase))
+                                            print('Estimated time remaining:', estTime, 'minutes')
+                                            print('===================================')
+                                            
+                                            i = 0
+                                        i+=1
+                                        j+=1
                     
                     # Update the deck list to show the new deck
                     deckList = os.listdir(deckFolder)
