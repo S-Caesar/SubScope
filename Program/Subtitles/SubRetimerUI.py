@@ -29,7 +29,7 @@ def subRetime():
                       and f.lower().endswith(('.srt'))]
             
     
-            wSubRetimer = sg.Window('Subtitles Retimer').Layout(sr.wSubRetimer(fnames))
+            wSubRetimer = sg.Window('Subtitles Retimer', layout=sr.wSubRetimer(fnames))
             wSetup.Close()
             
             while True:
@@ -56,11 +56,8 @@ def subRetime():
                     
                     for x in range(len(fnamesSelect)):
                         sr.retime(folder, fnamesSelect[x], offset)
-    
-            wSubRetimer.Close()
-            wSetup.UnHide()
             
-    wSetup.Close()
+            wSubRetimer.Close()
         
     return
 
