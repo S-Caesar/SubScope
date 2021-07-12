@@ -13,6 +13,7 @@ def reviewCards(mainOptions):
     deckList = mc.getDecks(deckFolder)
     
     sourceFolder = mainOptions['Default Paths']['Source Folder']
+    database = pd.read_csv(sourceFolder + '/' + 'mainDatabase.txt', sep='\t')
     
     # Placeholder - will be the sentence for each card
     parts = [['']*10,
@@ -131,6 +132,11 @@ def reviewCards(mainOptions):
         if event == 'Known':
             # Set the status of the card to known
             subDeck.loc[subDeck.index[x], 'status'] = 'known'
+            
+            # Update the main database so the word is marked as known
+            index = database.loc[database['text'] == subDeck['wordJapanese'][x]].index
+            database.loc[database.index[index], 'status'] = 1
+            
             x+=1
             event = 'Front'           
 
@@ -168,6 +174,9 @@ def reviewCards(mainOptions):
                     temp = subDeck.loc[[x]].set_index(index)
                     deck.loc[index] = temp
                 deck.to_csv(deckFolder + '/' + deckName, sep='\t', index=False)
+                
+                # TODO: write the updated database back to the database file
+                database.to_csv(sourceFolder + '/' + 'mainDatabase.txt', sep='\t', index=False)
                 
             else:
                 state = event
