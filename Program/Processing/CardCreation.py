@@ -116,14 +116,19 @@ def createMedia(sourceFolder, wordLoc):
     folder = sourceFolder + '/' + source
     mainPath = folder + '/' + video
     
-    if video + '.mp4' not in os.listdir(folder):
-        print('Video file does not exist:', video + '.mp4')
-        
+    if video + '.mp4' in os.listdir(folder):
+        fileType = '.mp4'
+    elif video + '.mkv' in os.listdir(folder):
+        fileType = '.mkv'
     else:
+        fileType = ''
+        
+        
+    if fileType != '':
         # Will only need to create the audio file for an episode once,
         # then it can be split up multiple times for the audio clips/screenshots
         if ea.checkForFiles(folder, video, '.mp3') == False:
-            ea.createAudio(mainPath)
+            ea.createAudio(mainPath, fileType)
         
         if ea.checkForFiles(folder, video, '_' + lineNo + '.wav') == False:
             ea.createAudioClip(mainPath, lineNo, startStamp, endStamp) 
@@ -131,11 +136,14 @@ def createMedia(sourceFolder, wordLoc):
         # The trimmed video is used to get the screenshot
         if ea.checkForFiles(folder, video, '_' + lineNo + '.mp4') == False:
             trimmedVideo = mainPath + '_' + lineNo + '.mp4'
-            ea.trimVideo(startStamp, endStamp, mainPath, trimmedVideo)
+            ea.trimVideo(startStamp, endStamp, mainPath, fileType, trimmedVideo)
         
         if ea.checkForFiles(folder, video, '_' + lineNo + '.jpg') == False:
-            ea.createScreenshot(mainPath, lineNo, startStamp, endStamp)
+            ea.createScreenshot(mainPath, fileType, lineNo, startStamp, endStamp)
         
+    else:
+        print('Video file (.mp4 or .mkv) does not exist for:', video)
+
     return
 
 

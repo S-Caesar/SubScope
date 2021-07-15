@@ -18,9 +18,9 @@ import os
 # TODO: Would be good if only one video package could be used here
 # TODO: Only works with .mp4 files - need to add support for other file types
 
-def createAudio(mainPath):
+def createAudio(mainPath, fileType):
     # Create an audio file from a video file
-    videoClip = mp.VideoFileClip(r'' + mainPath + '.mp4') 
+    videoClip = mp.VideoFileClip(r'' + mainPath + fileType) 
     videoClip.audio.write_audiofile(r'' + mainPath + '.mp3')
     return
 
@@ -55,7 +55,7 @@ def convertTimestamp(timestamp, conversion):
         time = float(stampParts[0]) + float(stampParts[1])/60 + float(stampParts[2])/1440
     return time
 
-def createScreenshot(mainPath, lineNo, startStamp, endStamp):
+def createScreenshot(mainPath, fileType, lineNo, startStamp, endStamp):
     # Extract a single frame from a video based on a start and end timestamp
     # Convert from 00:00:00.000 format to seconds, then get the midpoint of the start and end time
     startTime = convertTimestamp(startStamp, 's')
@@ -63,7 +63,7 @@ def createScreenshot(mainPath, lineNo, startStamp, endStamp):
     midpoint = (endTime - startTime)/2
     
     # Get the FPS of the video
-    cap = cv2.VideoCapture(r'' + mainPath + '.mp4')
+    cap = cv2.VideoCapture(r'' + mainPath + fileType)
     fps = cap.get(cv2.CAP_PROP_FPS)
     
     # Calculate the target frame
@@ -80,11 +80,11 @@ def createScreenshot(mainPath, lineNo, startStamp, endStamp):
             break
     return
 
-def trimVideo(startStamp, endStamp, mainPath, trimmedVideo):   
+def trimVideo(startStamp, endStamp, mainPath, fileType, trimmedVideo):   
     # TODO: can be used to make a shorter clip to extract audio from - currently seems to start too early    
     startTime = convertTimestamp(startStamp, 's')
     endTime = convertTimestamp(endStamp, 's')
-    ffmpeg_extract_subclip(r'' + mainPath + '.mp4', startTime, endTime, targetname=trimmedVideo)
+    ffmpeg_extract_subclip(r'' + mainPath + fileType, startTime, endTime, targetname=trimmedVideo)
     
     return
 
