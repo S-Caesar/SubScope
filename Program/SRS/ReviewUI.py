@@ -116,12 +116,11 @@ def reviewCards(mainOptions):
                 
                 # Relocate the card to the end of the deck, unless it's 
                 # already the last card
-                # TODO: this used to work, but doesn't anymore for some reason...
                 if x != len(subDeck)-1:
-                    targetRow = deck.iloc[[x],:]
-                    deck = deck.shift(-1)
+                    targetRow = subDeck.iloc[[x],:]
+                    subDeck = subDeck.shift(-1)
                     subDeck.iloc[-1] = targetRow.squeeze()
-                
+                    
                 event = 'Front'
                 
             else:
