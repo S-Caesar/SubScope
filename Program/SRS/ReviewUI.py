@@ -44,6 +44,9 @@ def reviewCards(mainOptions):
         print('Event: ', event)
         
         if event in deckList:
+            # Reset x, otherwise you can't review a second deck without leaving the window
+            x=0
+            
             # If a deck is selected, load up the cards for that deck
             deckName = deckList[deckList.index(event)]
             deck = pd.read_csv(deckFolder + '/' + deckName, sep='\t')
