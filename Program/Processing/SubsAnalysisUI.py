@@ -7,6 +7,7 @@ import PySimpleGUI as sg
 
 from Program.Parsing import IchiranParse as ip
 from Program.Processing import ParsedAnalysis as pa
+from Program.Database import DataHandling as dh
 
 
 def setup(): 
@@ -155,6 +156,9 @@ def subsAnalysisUI():
                             fullTable = pd.read_csv(folder + '/' +  fnamesSelect[x], sep='\t')
                             outputTable = outputTable.append(fullTable)
                         outputTable = outputTable.reset_index(drop=True)
+                        
+                        # Create or update the database for this content
+                        
                         
                         # Analyse the combined table and return the stats, then update the UI to display the results
                         try:

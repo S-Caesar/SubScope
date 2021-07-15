@@ -9,6 +9,7 @@ import timeit
 
 from Program.Processing import CardCreation as cc
 from Program.Processing import DeckFunctions as df
+from Program.Database import DataHandling as dh
 
 
 def deckManagement(deckList):
@@ -47,9 +48,11 @@ def manageDecks(mainOptions):
             wordSources[x] = ''
     wordSources = [x for x in wordSources if x != '']
     
-    databaseFile = sourceFolder + '/' + 'mainDatabase.txt'
-    database = pd.read_csv(databaseFile, sep='\t')
+    databaseFile = sourceFolder + '\\' + 'mainDatabase.txt'
     
+    # If there isn't a database file to read, create one
+    dh.consolidateDatabase(sourceFolder, '', True, True)
+    database = pd.read_csv(databaseFile, sep='\t')
     
     # Main UI Window
     wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList))

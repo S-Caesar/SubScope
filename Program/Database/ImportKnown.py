@@ -47,6 +47,7 @@ def importScreen(path, deckHeadings, words):
 
 def importKnown(mainOptions):
     path = ''
+    deck = ''
     words = ['1', '2', '3', '4', '5', '6', '7', '8']
     deckHeadings = ['words']
     wImport = sg.Window('Import Known Words', layout=importScreen(path, deckHeadings, words))
@@ -59,41 +60,44 @@ def importKnown(mainOptions):
 
         if event == '-PATH-':
             path = values['-PATH-']
-            deck = open(path).read().split('\n')
-            for x in range(len(deck)):
-                deck[x] = deck[x].split('\t')
-
-            deckHeadings = deck[0:1][0]
             
-            # Update the combo list
-            wImport.Element('-HEADINGS-').update(values=deckHeadings)
-            # Update the default value
-            wImport.Element('-HEADINGS-').update(deckHeadings[0])
+            if path != '':
+                deck = open(path).read().split('\n')
+                for x in range(len(deck)):
+                    deck[x] = deck[x].split('\t')
+    
+                deckHeadings = deck[0:1][0]
+                
+                # Update the combo list
+                wImport.Element('-HEADINGS-').update(values=deckHeadings)
+                # Update the default value
+                wImport.Element('-HEADINGS-').update(deckHeadings[0])
 
         if event == 'Refresh List':
-            index = deckHeadings.index(values['-HEADINGS-'])
-            
-            words = []
-            for x in range(len(deck)):
-                words.append(deck[x][index])
-            
-            if values['-WORD-'] != True:
-                # Selected column is sentences, so parse them first
-                sentences = ip.prepParseInput(words)
+            if values['-HEADINGS-'] != '' or deck != '':
+                index = deckHeadings.index(values['-HEADINGS-'])
                 
-                fullTable = pd.DataFrame(columns=['text'])
-                # Just an example subset displayed because of how long parsing takes
-                for x in range(10):
-                    if sentences[x] != '':
-                        parsedWords = ip.ichiranParse(sentences[x])
-                        fullTable = fullTable.append(ip.flattenIchiran(parsedWords), ignore_index=True)
+                words = []
+                for x in range(len(deck)):
+                    words.append(deck[x][index])
                 
-                if len(words) != 0:
-                    words = fullTable['text'].tolist()
-                
-            # Split the words list in columns, then display
-            displayWords = [words[x:x+8] for x in range(0, len(words), 8)]
-            wImport.Element('-PREVIEW-').update(displayWords)
+                if values['-WORD-'] != True:
+                    # Selected column is sentences, so parse them first
+                    sentences = ip.prepParseInput(words)
+                    
+                    fullTable = pd.DataFrame(columns=['text'])
+                    # Just an example subset displayed because of how long parsing takes
+                    for x in range(10):
+                        if sentences[x] != '':
+                            parsedWords = ip.ichiranParse(sentences[x])
+                            fullTable = fullTable.append(ip.flattenIchiran(parsedWords), ignore_index=True)
+                    
+                    if len(words) != 0:
+                        words = fullTable['text'].tolist()
+                    
+                # Split the words list in columns, then display
+                displayWords = [words[x:x+8] for x in range(0, len(words), 8)]
+                wImport.Element('-PREVIEW-').update(displayWords)
                     
 
         if event == 'Mark Words As Known':

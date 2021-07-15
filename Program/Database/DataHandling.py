@@ -179,9 +179,10 @@ def consolidateDatabase(showFoldersPath, knownList, overwrite=False, create=Fals
             aggDict[cols[x]] = 'first'
         else:
             aggDict[cols[x]] = 'sum'
-
-    mainDataTable = mainDataTable.groupby(mainDataTable['reading']).aggregate(aggDict).reset_index(drop=True)
-    mainDataTable.to_csv(r'' + showFoldersPath + '/' + mainDatabaseFile, index=None, sep='\t', mode='w')
+            
+    if len(mainDataTable) >= 1:
+        mainDataTable = mainDataTable.groupby(mainDataTable['reading']).aggregate(aggDict).reset_index(drop=True)
+        mainDataTable.to_csv(r'' + showFoldersPath + '/' + mainDatabaseFile, index=None, sep='\t', mode='w')
     
     return mainDataTable
 
@@ -206,7 +207,8 @@ def writeDatabase(folder, overwrite, knownList):
     database = database.sort_values(by=['reading'])    
     
     # Update the database with which words are known
-    database = updateKnown(database, knownList)
+    # TODO: left this out for now - it should be covered by the 'Import Known Words' part now
+    #database = updateKnown(database, knownList)
     
     # Write the database DataFrame to a file
     database = database.fillna(0)

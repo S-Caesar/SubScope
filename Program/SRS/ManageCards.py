@@ -203,11 +203,14 @@ def setCardDetails(window, sourceFolder, cardState, deck, x, parts='', pos=''):
                 window.Element(buttons['Key'][y]).Update(buttons['Response'][y] + newDurations[y])
         
         if cardState != 'Done':
-            image = Image.open(sourceFolder + '/' + deck['source'][x] + '/' + states.iloc[row]['IMAGE'])
-            image.thumbnail((475, 475))
-            bio = io.BytesIO()
-            image.save(bio, format='PNG')
-            window.Element('-IMAGE-').Update(data=bio.getvalue(), visible=True)
+            try:
+                image = Image.open(sourceFolder + '\\' + deck['source'][x] + '\\' + states.iloc[row]['IMAGE'])
+                image.thumbnail((475, 475))
+                bio = io.BytesIO()
+                image.save(bio, format='PNG')
+                window.Element('-IMAGE-').Update(data=bio.getvalue(), visible=True)
+            except:
+                print('File does not exist:', states.iloc[row]['IMAGE'])
         
         if cardState != 'Rear':
             window.Element('-IMAGE-').Update(visible=False)
@@ -254,7 +257,7 @@ def getParts(sourceFolder, deck, x):
                   '[suf]': 'medium blue',
                   '[conj]': 'OliveDrab4'}
     
-    file = pd.read_csv(sourceFolder + '/' + deck['source'][x] + '/' + deck['fullFile'][x], sep='\t')
+    file = pd.read_csv(sourceFolder + '\\' + deck['source'][x] + '\\' + deck['fullFile'][x], sep='\t')
     
     # Some timestamps will have multiple spoke lines - need to collect all of them
     parts1 = file[file['line']+1 == deck['line no'][x]].reset_index(drop=True)

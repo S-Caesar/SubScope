@@ -61,7 +61,7 @@ def findSentences(folder, database, targetWord):
         validFiles[x] = validFiles[x].replace('_justText.txt', '.srt')
         
         # Read in the file, find the sentence, then work backwards to find a timestamp
-        file = open(folder + '/' + showFolder[x] + '/' + validFiles[x], 'r').readlines()
+        file = open(folder + '\\' + showFolder[x] + '\\' + validFiles[x], 'r').readlines()
 
         # Extract the timestamp for a given sentence
         # Start at the line number of the selected sentence,

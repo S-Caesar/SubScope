@@ -42,15 +42,16 @@ def readOptions(optionsPath):
             columns = options[x][2].split('\t')
             
             data = []
-            for y in range(3, len(options[x])):
-                data.append(options[x][y].split('\t'))
-            
-            output = pd.DataFrame()
-            output = output.append(data)
-            output.columns = columns
-            output = output.set_index('deckName')
-            
-            mainOptions[options[x][0]] = output
+            if len(options[x]) > 3:
+                for y in range(3, len(options[x])):
+                    data.append(options[x][y].split('\t'))
+                
+                output = pd.DataFrame()
+                output = output.append(data)
+                output.columns = columns
+                output = output.set_index('deckName')
+                
+                mainOptions[options[x][0]] = output
             
         if options[x][1] == 'dict':
             optionsDict = {}
