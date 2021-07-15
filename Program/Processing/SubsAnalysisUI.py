@@ -10,10 +10,14 @@ from Program.Processing import ParsedAnalysis as pa
 
 
 def setup(): 
+    startPath = os.getcwd().split('\\')
+    startPath = startPath[:len(startPath)-2]
+    startPath = '\\'.join(startPath) + '\\User Data\\Subtitles'
+    
     # set up the subtitle analysis window
     folderColumn = [[sg.Text('Select a folder containing subtitle files to be analysed.')],
                     [sg.In(size=(37, 1), enable_events=True, key="-FOLDER-"),
-                     sg.FolderBrowse()]]
+                     sg.FolderBrowse(initial_folder=startPath)]]
     
     setup = [[sg.Column(folderColumn, size=(335,60))]]
                           

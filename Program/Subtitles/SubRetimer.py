@@ -5,14 +5,19 @@
 
 import PySimpleGUI as sg
 import math
+import os
 
 sg.theme('BlueMono')
 
-def wSetup(): 
+def wSetup():
+    startPath = os.getcwd().split('\\')
+    startPath = startPath[:len(startPath)-2]
+    startPath = '\\'.join(startPath) + '\\User Data\\Subtitles'
+    
     # set up the subtitle analysis window
     folderColumn = [[sg.Text('Select a folder containing subtitle files to be retimed.')],
                     [sg.In(size=(37, 1), enable_events=True, key="-FOLDER-"),
-                     sg.FolderBrowse()]]
+                     sg.FolderBrowse(initial_folder=startPath)]]
     
     wSetup = [[sg.Column(folderColumn, size=(335,60))]]
                           
