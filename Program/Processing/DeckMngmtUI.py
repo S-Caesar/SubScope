@@ -51,7 +51,7 @@ def manageDecks(mainOptions):
     databaseFile = sourceFolder + '\\' + 'mainDatabase.txt'
     
     # If there isn't a database file to read, create one
-    dh.consolidateDatabase(sourceFolder, '', True, True)
+    dh.consolidateDatabase(sourceFolder, '', False, True)
     database = pd.read_csv(databaseFile, sep='\t')
     
     # Main UI Window

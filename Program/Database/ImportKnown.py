@@ -5,6 +5,7 @@ import pandas as pd
 import timeit
 
 from Program.Parsing import IchiranParse as ip
+from Program.Database import DataHandling as dh
 
 def importScreen(path, deckHeadings, words):
     

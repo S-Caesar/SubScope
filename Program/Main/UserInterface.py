@@ -37,13 +37,13 @@ def mainMenu(buttons):
 # Read in the user settings
 startPath = os.getcwd().split('\\')
 startPath = startPath[:len(startPath)-2]
-optionsPath = '\\'.join(startPath) + '\\User Data\\Settings\\mainOptions.txt'
+optionsPath = '/'.join(startPath) + '/User Data/Settings/mainOptions.txt'
 
 mainOptions = mo.readOptions(optionsPath)
 # TODO: write these back into the options file - this will do for now
-mainOptions['Main Options']['Options Folder'] = '\\'.join(startPath) + '\\User Data\\Settings'
-mainOptions['Default Paths']['Deck Folder'] = '\\'.join(startPath) + '\\User Data\\SRS\\Decks'
-mainOptions['Default Paths']['Source Folder'] = '\\'.join(startPath) + '\\User Data\\Subtitles'
+mainOptions['Main Options']['Options Folder'] = '/'.join(startPath) + '/User Data/Settings'
+mainOptions['Default Paths']['Deck Folder'] = '/'.join(startPath) + '/User Data/SRS/Decks'
+mainOptions['Default Paths']['Source Folder'] = '/'.join(startPath) + '/User Data/Subtitles'
 
 
 sg.theme(mainOptions['UI Themes']['Main Theme'])
