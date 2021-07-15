@@ -5,6 +5,7 @@ import os
 
 from Program.Options import ManageOptions as mo
 
+from Program.Subtitles import InitialSetupUI as isu
 from Program.SRS import ReviewUI as ru
 from Program.Processing import DeckMngmtUI as dmu
 from Program.Database import ImportKnown as ik
@@ -48,7 +49,7 @@ mainOptions['Default Paths']['Source Folder'] = '\\'.join(startPath) + '\\User D
 sg.theme(mainOptions['UI Themes']['Main Theme'])
 
 
-buttons = [['Add Subtitles'                          ],
+buttons = [['Initial Setup',      'Add Subtitles'    ],
            ['Retime Subtitles',   'Analyse Subtitles'],
            ['Import Known Words', 'Manage Decks'     ],
            ['Review Cards'                           ],
@@ -56,7 +57,7 @@ buttons = [['Add Subtitles'                          ],
 
 # NOTE: if I don't put these as strings, then the windows open when they 
 #       are assigned to the list, and then won't run later
-destinations = [['asu.addSubs()'                                                ],
+destinations = [['isu.initialSetup()',            'asu.addSubs()'               ],
                 ['sru.subRetime()',               'sau.subsAnalysisUI()'        ],
                 ['ik.importKnown(mainOptions)',   'dmu.manageDecks(mainOptions)'],
                 ['ru.reviewCards(mainOptions)'                                  ],
