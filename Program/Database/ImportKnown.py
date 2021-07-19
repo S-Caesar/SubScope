@@ -142,13 +142,15 @@ def importKnown(mainOptions):
 
             # Mark the words as known in the main database
             databasePath = mainOptions['Default Paths']['Source Folder']
-            database = pd.read_csv(databasePath + '/' + 'mainDatabase.txt', sep='\t')
+            
+            dh.consolidateDatabase(databasePath, '', True, True)
+            database = pd.read_csv(databasePath + '\\' + 'mainDatabase.txt', sep='\t')
             
             for x in range(len(words)):
                 index = database.loc[database['text']==words[x]].index
                 database.loc[database.index[index], 'status'] = 1
             
-            database.to_csv(r'' + databasePath + '/' + 'mainDatabase.txt', index=None, sep='\t', mode='w')
+            database.to_csv(r'' + databasePath + '\\' + 'mainDatabase.txt', index=None, sep='\t', mode='w')
         
     wImport.Close()
     return
