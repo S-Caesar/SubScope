@@ -58,7 +58,7 @@ buttons = [['Initial Setup',      'Add Subtitles'    ],
 # NOTE: if I don't put these as strings, then the windows open when they 
 #       are assigned to the list, and then won't run later
 destinations = [['isu.initialSetup()',            'asu.addSubs()'               ],
-                ['sru.subRetime()',               'sau.subsAnalysisUI()'        ],
+                ['sru.subRetime()',               'sau.analysis()'        ],
                 ['ik.importKnown(mainOptions)',   'dmu.manageDecks(mainOptions)'],
                 ['ru.reviewCards(mainOptions)'                                  ],
                 ['ou.manageOptions(mainOptions)'                                ]]
