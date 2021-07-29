@@ -6,7 +6,7 @@ import pandas as pd
 import PySimpleGUI as sg
 
 from Program.Parsing import IchiranParse as ip
-from Program.Processing import ParsedAnalysis as pa
+from Program.Parsing import ParsedAnalysis as pa
 from Program.General import FileHandling as fh
 
 

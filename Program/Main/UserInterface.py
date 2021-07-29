@@ -11,7 +11,7 @@ from Program.Processing import DeckMngmtUI as dmu
 from Program.Database import ImportKnown as ik
 from Program.Subtitles import AddSubsUI as asu
 from Program.Subtitles import SubRetimerUI as sru
-from Program.Processing import SubsAnalysisUI as sau
+from Program.Parsing import SubsAnalysisUI as sau
 from Program.Options import OptionsUI as ou
 
 
