@@ -49,7 +49,7 @@ def subRetime():
     
     while True:
         event, values = uSubRetime.Read()
-        if event is None or event == 'Exit' or event == 'Back':
+        if event is None or event == 'Exit':
             break
         
         if event == '-FOLDER-' and values['-FOLDER-'] != '':
@@ -79,10 +79,13 @@ def subRetime():
             
             timeNow = str(datetime.now()).split(' ')
             timeNow = str(timeNow[1])
-            print(timeNow[:8])
 
             uSubRetime.Element('-STATUS-').Update(value = str(x) + ' file(s) updated (' + timeNow[:8] + ')')
-            
+        
+        # When the window is recreated with the selected files, the back button
+        # has to be pressed twice unless I put the event trigger at the end        
+        if event == 'Back':
+            break    
     uSubRetime.Close()
     
     return

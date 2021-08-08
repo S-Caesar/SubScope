@@ -87,7 +87,7 @@ def analysis():
     # Start UI loop
     while True:
         event, values = uAnalysis.Read()
-        if event is None or event == 'Exit' or event == 'Back':
+        if event is None or event == 'Exit':
             break
 
         if event == '-FOLDER-' and values['-FOLDER-'] != '':
@@ -143,6 +143,11 @@ def analysis():
                     
                 stats = pa.prepStats(outputTable, 1, '==',  comp)
                 displayStats(uAnalysis, stats)
+        
+        # When the window is recreated with the selected files, the back button
+        # has to be pressed twice unless I put the event trigger at the end
+        if event == 'Back':
+            break
                     
     uAnalysis.Close()
     return

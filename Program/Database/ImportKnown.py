@@ -7,7 +7,7 @@ import timeit
 from Program.Parsing import IchiranParse as ip
 from Program.Database import DataHandling as dh
 
-def importScreen(path, deckHeadings, words):
+def importScreen(path, deckHeadings, tableHeadings, words):
     
     settings = [[sg.Text('Import known words from a text file (e.g. exported Anki deck)')],
                     
@@ -22,6 +22,10 @@ def importScreen(path, deckHeadings, words):
                [sg.Text('Select the target column:', size=(28,1)),
                 sg.Combo(deckHeadings, size=(15,1), key='-HEADINGS-'),
                 sg.Button('Refresh List')],
+               
+               [sg.Text('Does the deck contain a header row?  '),
+                sg.Radio('Yes', 2, default=True, key='-H_YES-'),
+                sg.Radio('No', 2, key='-H_NO-')],
                     
                [sg.Text("=" * 55)],
                
@@ -37,7 +41,7 @@ def importScreen(path, deckHeadings, words):
                 sg.Button('Mark Words As Known')]]
     
     preview = [[sg.Text('Word list preview:')],
-               [sg.Table([words], def_col_width=8, auto_size_columns=False, key='-PREVIEW-', size=(0,18))]]
+               [sg.Table([words], headings=tableHeadings, def_col_width=8, auto_size_columns=False, key='-PREVIEW-', size=(0,18))]]
     
     importScreen = [[sg.Column(settings),
                      sg.VSeparator(),
@@ -49,9 +53,10 @@ def importScreen(path, deckHeadings, words):
 def importKnown(mainOptions):
     path = ''
     deck = ''
-    words = ['1', '2', '3', '4', '5', '6', '7', '8']
-    deckHeadings = ['words']
-    wImport = sg.Window('Import Known Words', layout=importScreen(path, deckHeadings, words))
+    tableHeadings = ['1', '2', '3', '4', '5', '6', '7', '8']
+    words = ['', '', '', '', '', '', '', '']
+    deckHeadings = ['']
+    wImport = sg.Window('Import Known Words', layout=importScreen(path, deckHeadings, tableHeadings, words))
     
     # Start UI loop
     while True:
@@ -61,7 +66,6 @@ def importKnown(mainOptions):
 
         if event == '-PATH-':
             path = values['-PATH-']
-            
             if path != '':
                 deck = open(path).read().split('\n')
                 for x in range(len(deck)):
@@ -77,10 +81,15 @@ def importKnown(mainOptions):
         if event == 'Refresh List':
             if values['-HEADINGS-'] != '' or deck != '':
                 index = deckHeadings.index(values['-HEADINGS-'])
-                
+
                 words = []
                 for x in range(len(deck)):
-                    words.append(deck[x][index])
+                    # Skip the header row if there is one
+                    if x == 0 and values['-H_YES-'] == True:
+                        continue
+                    # Only append if the line isn't blank
+                    elif deck[x] != ['']:
+                        words.append(deck[x][index])
                 
                 if values['-WORD-'] != True:
                     # Selected column is sentences, so parse them first
