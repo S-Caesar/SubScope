@@ -48,10 +48,8 @@ def manageDecks(mainOptions):
             wordSources[x] = ''
     wordSources = [x for x in wordSources if x != '']
     
-    databaseFile = sourceFolder + '\\' + 'mainDatabase.txt'
+    databaseFile = sourceFolder + '/' + 'database.txt'
     
-    # If there isn't a database file to read, create one
-    dh.consolidateDatabase(sourceFolder, '', False, True)
     database = pd.read_csv(databaseFile, sep='\t')
     
     # Main UI Window
@@ -108,7 +106,7 @@ def manageDecks(mainOptions):
                             # TODO: add option to create a deck from multiple sources
                             source = values['-source-']
                             
-                            path = sourceFolder + '/' + 'mainDatabase.txt'
+                            path = sourceFolder + '/' + 'database.txt'
                             sourceDatabase = pd.read_csv(path, sep='\t')
                             
                             # Go through the database (starting at the first episode column),

@@ -121,7 +121,6 @@ def importKnown(mainOptions):
                 sentences = ip.prepParseInput(words)
                 
                 i=0
-                j=0
                 startTime = timeit.default_timer()
                 # Parse the sentences to words
                 fullTable = pd.DataFrame(columns=['text'])
@@ -130,18 +129,16 @@ def importKnown(mainOptions):
                         parsedWords = ip.ichiranParse(sentences[x])
                         fullTable = fullTable.append(ip.flattenIchiran(parsedWords), ignore_index=True)
                     
-                    if i >= 20:
+                    if x > 1 and x % 20 == 0:
                         passedTime = timeit.default_timer() - startTime
-                        estTime = round((passedTime / j) * (len(sentences)-j) / 60, 1)
+                        estTime = round((passedTime / i) * (len(sentences)-i) / 60, 1)
                         
                         print('===================================')
                         print('Rows Complete:', x, '/', len(sentences))
                         print('Estimated time remaining:', estTime, 'minutes')
                         print('===================================')
-                        
-                        i=0
+
                     i+=1
-                    j+=1
                     
                 if len(words) != 0:
                     words = fullTable['text'].tolist()
@@ -152,24 +149,14 @@ def importKnown(mainOptions):
             # Mark the words as known in the main database
             databasePath = mainOptions['Default Paths']['Source Folder']
             
-            dh.consolidateDatabase(databasePath, '', True, True)
-            database = pd.read_csv(databasePath + '\\' + 'mainDatabase.txt', sep='\t')
+            dh.writeDatabase(databasePath, False)
+            database = pd.read_csv(databasePath + '/' + 'database.txt', sep='\t')
             
             for x in range(len(words)):
                 index = database.loc[database['text']==words[x]].index
                 database.loc[database.index[index], 'status'] = 1
             
-            database.to_csv(r'' + databasePath + '\\' + 'mainDatabase.txt', index=None, sep='\t', mode='w')
+            database.to_csv(databasePath + '/' + 'database.txt', index=None, sep='\t', mode='w')
         
     wImport.Close()
     return
-
-
-'''
-'----------------------------------------------------------------------------'
-from Program.Options import ManageOptions as mo
-optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptions.txt'
-mainOptions = mo.readOptions(optionsPath)
-importKnown(mainOptions)
-'----------------------------------------------------------------------------'
-'''

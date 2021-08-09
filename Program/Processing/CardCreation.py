@@ -64,9 +64,8 @@ def getCardInfo(targetWord, database, sourceFolder):
         info = line[0]['info']
     else:
         info = 'N/A'
-
-    wordLoc = fs.findSentences(sourceFolder, database, targetWord)
     
+    wordLoc = fs.findSentences(sourceFolder, database, targetWord)
 
     # TODO: for now, just grab a random sentence, but eventually find the one with the fewest unknown words
     # TODO: I shouldn't need to use '-1' for this, but if I don't I occasionally get index errors when setting the source
@@ -89,7 +88,7 @@ def getCardInfo(targetWord, database, sourceFolder):
     
     # Return just the selected line, for use in making media files
     wordLoc = wordLoc[:][senNo:senNo+1].reset_index(drop=True)
-
+        
     return cardInfo, wordLoc
 
 
@@ -114,7 +113,6 @@ def createMedia(sourceFolder, wordLoc):
     endStamp = wordLoc['timestamp'][0][1]
     
     folder = sourceFolder + '/' + source
-    mainPath = folder + '/' + video
     
     if video + '.mp4' in os.listdir(folder):
         fileType = '.mp4'
@@ -127,19 +125,19 @@ def createMedia(sourceFolder, wordLoc):
     if fileType != '':
         # Will only need to create the audio file for an episode once,
         # then it can be split up multiple times for the audio clips/screenshots
-        if ea.checkForFiles(folder, video, '.mp3') == False:
-            ea.createAudio(mainPath, fileType)
+        if ea.checkForFiles(folder + '/Audio', video, '.mp3') == False:
+            ea.createAudio(folder, video, fileType)
         
-        if ea.checkForFiles(folder, video, '_' + lineNo + '.wav') == False:
-            ea.createAudioClip(mainPath, lineNo, startStamp, endStamp) 
+        if ea.checkForFiles(folder + '/Video', video, '_' + lineNo + '.wav') == False:
+            ea.createAudioClip(folder, video, lineNo, startStamp, endStamp) 
         
         # The trimmed video is used to get the screenshot
-        if ea.checkForFiles(folder, video, '_' + lineNo + '.mp4') == False:
-            trimmedVideo = mainPath + '_' + lineNo + '.mp4'
-            ea.trimVideo(startStamp, endStamp, mainPath, fileType, trimmedVideo)
+        if ea.checkForFiles(folder + '/Video', video, '_' + lineNo + '.mp4') == False:
+            trimmedVideo = folder + '/Video/' + video + '_' + lineNo + '.mp4'
+            ea.trimVideo(startStamp, endStamp, folder + '/' + video, fileType, trimmedVideo)
         
-        if ea.checkForFiles(folder, video, '_' + lineNo + '.jpg') == False:
-            ea.createScreenshot(mainPath, fileType, lineNo, startStamp, endStamp)
+        if ea.checkForFiles(folder + '/Image', video, '_' + lineNo + '.jpg') == False:
+            ea.createScreenshot(folder, video, fileType, lineNo, startStamp, endStamp)
         
     else:
         print('Video file (.mp4 or .mkv) does not exist for:', video)

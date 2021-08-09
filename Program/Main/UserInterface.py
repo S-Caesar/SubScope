@@ -4,6 +4,7 @@ import PySimpleGUI as sg
 import os
 
 from Program.Options import ManageOptions as mo
+from Program.Database import DataHandling as dh
 
 from Program.Subtitles import InitialSetupUI as isu
 from Program.SRS import ReviewUI as ru
@@ -58,10 +59,14 @@ buttons = [['Initial Setup',      'Add Subtitles'    ],
 # NOTE: if I don't put these as strings, then the windows open when they 
 #       are assigned to the list, and then won't run later
 destinations = [['isu.initialSetup()',            'asu.addSubs()'               ],
-                ['sru.subRetime()',               'sau.analysis()'        ],
+                ['sru.subRetime()',               'sau.analysis()'              ],
                 ['ik.importKnown(mainOptions)',   'dmu.manageDecks(mainOptions)'],
                 ['ru.reviewCards(mainOptions)'                                  ],
                 ['ou.manageOptions(mainOptions)'                                ]]
+
+# Create a database if one does not exist
+databaseFolder = mainOptions['Default Paths']['Source Folder']
+dh.createDatabase(databaseFolder)
 
 wMainMenu = sg.Window('Main Menu', layout=mainMenu(buttons))
 
@@ -70,7 +75,7 @@ while True:
     event, values = wMainMenu.Read()
     if event is None or event == 'Exit':
         break
-
+    
     for x in range(len(buttons)):
         if event in buttons[x]:
             for y in range(len(buttons[x])):

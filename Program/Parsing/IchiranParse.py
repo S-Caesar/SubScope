@@ -267,24 +267,21 @@ def parseFiles(folder, files):
         parseInput = parseInput.reset_index()
 
         i=0
-        j=0
         # Time the processing of each block of 20 and estimate the remaining duration
         startTime = timeit.default_timer()
         
         for y in range(len(parseInput['sentence'])):
             # Print an update to the console to show parsing progress
-            if i >= 20:
+            if x > 0 and x % 20 == 0:
                 passedTime = timeit.default_timer() - startTime
-                estTime = round((passedTime / j) * (len(parseInput['sentence'])-j) / 60, 1)
+                estTime = round((passedTime / i) * (len(parseInput['sentence'])-i) / 60, 1)
                    
                 print('===================================')                         
                 print('Rows Complete:', y, '/', len(parseInput['sentence']))
                 print('Estimated time remaining:', estTime, 'minutes')
                 print('===================================')
-                
-                i = 0
+
             i+=1
-            j+=1
             
             # Send each element for parsing, then append onto the main table
             jsonOutput = ichiranParse(parseInput['sentence'][y])

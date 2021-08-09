@@ -27,28 +27,34 @@ def findSentences(folder, database, targetWord):
     validFiles = validFiles.loc[:, ~(validFiles == 0.0).any()]
     validFiles = list(validFiles)
     
-    # Get the file name (in the database file it is stored as FolderName/ShowName/SeriesNo/EpisodeNo/FileName)
+    # Get the file name (in the database file it is stored as ShowName/FileName/EpisodeNo)
     showFolder = []
     for x in range(len(validFiles)):
-        # TODO: account for the different file endings - need to tie in earlier than this (record the actual subtitle file in the database?)
         validFiles[x] = validFiles[x].split('/')
         showFolder.append(validFiles[x][0])
-        validFiles[x] = validFiles[x][4]
+        validFiles[x] = validFiles[x][1]
         
     # Extract details for the sentence location
     wordLoc = pd.DataFrame(columns=['source', 'episode', 'line no', 'sentence', 'timestamp'])
     template = wordLoc.copy()
     for x in range(len(validFiles)):
-        targetLines = template.copy() 
-        words = pd.read_csv(folder + '/' + showFolder[x] + '/' + validFiles[x], sep='\t')
+        rawLines = template.copy()
+        dictLines = template.copy()        
+        targetLines = template.copy()
+        
+        validFiles[x] = validFiles[x] + '_full.txt'
+        words = pd.read_csv(folder + '/' + showFolder[x] + '/Text/' + validFiles[x], sep='\t')
 
-        targetLines['line no'] = words[words['text'].str.contains(targetWord)]['line'].reset_index(drop=True)
+        rawLines['line no'] = words[words['text'].str.contains(targetWord)]['line']
+        dictLines['line no'] = words[words['dict-text'].str.contains(targetWord)]['line']
+        targetLines['line no'] = rawLines['line no'].append(dictLines['line no']).reset_index(drop=True)
+        
         targetLines['episode'] = validFiles[x]
         targetLines['source'] = showFolder[x]
         
         # Extract the sentence
         validFiles[x] = validFiles[x].replace('_full', '_justText')
-        lines = pd.read_csv(folder + '/' + showFolder[x] + '/' + validFiles[x], sep='\t')
+        lines = pd.read_csv(folder + '/' + showFolder[x] + '/Text/' + validFiles[x], sep='\t')
         
         # TODO: If I don't use 'sentences' as an intermediary, I get a 'SettingWithCopyWarning'
         #       Probably a more proper way to do this
@@ -61,7 +67,7 @@ def findSentences(folder, database, targetWord):
         validFiles[x] = validFiles[x].replace('_justText.txt', '.srt')
         
         # Read in the file, find the sentence, then work backwards to find a timestamp
-        file = open(folder + '\\' + showFolder[x] + '\\' + validFiles[x], 'r').readlines()
+        file = open(folder + '/' + showFolder[x] + '/' + validFiles[x], 'r').readlines()
 
         # Extract the timestamp for a given sentence
         # Start at the line number of the selected sentence,

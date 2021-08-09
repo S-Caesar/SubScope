@@ -18,20 +18,20 @@ import os
 # TODO: Would be good if only one video package could be used here
 # TODO: Only works with .mp4 files - need to add support for other file types
 
-def createAudio(mainPath, fileType):
+def createAudio(folder, video, fileType):
     # Create an audio file from a video file
-    videoClip = mp.VideoFileClip(r'' + mainPath + fileType) 
-    videoClip.audio.write_audiofile(r'' + mainPath + '.mp3')
+    videoClip = mp.VideoFileClip(folder + '/' + video + fileType) 
+    videoClip.audio.write_audiofile(folder + '/Audio/' + video + '.mp3')
     return
 
-def createAudioClip(mainPath, lineNo, startStamp, endStamp):
+def createAudioClip(folder, video, lineNo, startStamp, endStamp):
     # from: https://stackoverflow.com/questions/31929538/how-to-subtract-datetimes-timestamps-in-python/31929686
     startTime = datetime.strptime(startStamp, '%H:%M:%S.%f')
     endTime = datetime.strptime(endStamp, '%H:%M:%S.%f')
     duration = endTime - startTime
     
-    audioClip = mainPath + '.mp3'
-    outputClip = mainPath + '_' + lineNo + '.wav'
+    audioClip = folder + '/Audio/' + video + '.mp3'
+    outputClip = folder + '/Audio/' + video + '_' + lineNo + '.wav'
 
     # from: https://stackoverflow.com/questions/65065501/trim-audio-file-using-python-ffmpeg
     audio_input = ffmpeg.input(audioClip, ss=startStamp)
@@ -55,7 +55,7 @@ def convertTimestamp(timestamp, conversion):
         time = float(stampParts[0]) + float(stampParts[1])/60 + float(stampParts[2])/1440
     return time
 
-def createScreenshot(mainPath, fileType, lineNo, startStamp, endStamp):
+def createScreenshot(folder, video, fileType, lineNo, startStamp, endStamp):
     # Extract a single frame from a video based on a start and end timestamp
     # Convert from 00:00:00.000 format to seconds, then get the midpoint of the start and end time
     startTime = convertTimestamp(startStamp, 's')
@@ -63,7 +63,7 @@ def createScreenshot(mainPath, fileType, lineNo, startStamp, endStamp):
     midpoint = (endTime - startTime)/2
     
     # Get the FPS of the video
-    cap = cv2.VideoCapture(r'' + mainPath + fileType)
+    cap = cv2.VideoCapture(folder + '/Video/' + video + fileType)
     fps = cap.get(cv2.CAP_PROP_FPS)
     
     # Calculate the target frame
@@ -72,11 +72,11 @@ def createScreenshot(mainPath, fileType, lineNo, startStamp, endStamp):
     # From: https://stackoverflow.com/questions/64143387/split-video-into-images-with-ffmpeg-python
     # Extract a single frame from the video
     # Use the trimmed video, as it's much faster
-    reader = imageio.get_reader(r'' + mainPath + '_' + lineNo + '.mp4')
+    reader = imageio.get_reader(folder + '/Video/' + video + '_' + lineNo + '.mp4')
     
     for frame_number, im in enumerate(reader):
         if frame_number == targetFrame:
-            imageio.imwrite(mainPath + '_' + lineNo + '.jpg', im)
+            imageio.imwrite(folder + '/Image/' + video + '_' + lineNo + '.jpg', im)
             break
     return
 
@@ -84,7 +84,7 @@ def trimVideo(startStamp, endStamp, mainPath, fileType, trimmedVideo):
     # TODO: can be used to make a shorter clip to extract audio from - currently seems to start too early    
     startTime = convertTimestamp(startStamp, 's')
     endTime = convertTimestamp(endStamp, 's')
-    ffmpeg_extract_subclip(r'' + mainPath + fileType, startTime, endTime, targetname=trimmedVideo)
+    ffmpeg_extract_subclip(mainPath + fileType, startTime, endTime, targetname=trimmedVideo)
     
     return
 
