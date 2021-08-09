@@ -9,7 +9,6 @@ import timeit
 
 from Program.Processing import CardCreation as cc
 from Program.Processing import DeckFunctions as df
-from Program.Database import DataHandling as dh
 
 
 def deckManagement(deckList):
@@ -31,6 +30,8 @@ def deckManagement(deckList):
 
     return deckManagement
 
+
+#buttonsDict = 
 
 
 def manageDecks(mainOptions):

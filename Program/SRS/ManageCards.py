@@ -204,7 +204,7 @@ def setCardDetails(window, sourceFolder, cardState, deck, x, parts='', pos=''):
         
         if cardState != 'Done':
             try:
-                image = Image.open(sourceFolder + '\\' + deck['source'][x] + '\\' + states.iloc[row]['IMAGE'])
+                image = Image.open(sourceFolder + '/' + deck['source'][x] + '/Image/' + states.iloc[row]['IMAGE'])
                 image.thumbnail((475, 475))
                 bio = io.BytesIO()
                 image.save(bio, format='PNG')
@@ -257,7 +257,7 @@ def getParts(sourceFolder, deck, x):
                   '[suf]': 'medium blue',
                   '[conj]': 'OliveDrab4'}
     
-    file = pd.read_csv(sourceFolder + '\\' + deck['source'][x] + '\\' + deck['fullFile'][x], sep='\t')
+    file = pd.read_csv(sourceFolder + '/' + deck['source'][x] + '/Text/' + deck['fullFile'][x], sep='\t')
     
     # Some timestamps will have multiple spoke lines - need to collect all of them
     parts1 = file[file['line']+1 == deck['line no'][x]].reset_index(drop=True)

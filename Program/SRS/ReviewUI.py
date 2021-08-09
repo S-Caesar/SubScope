@@ -9,6 +9,7 @@ import ast
 from Program.SRS import ManageCards as mc
 
 def reviewCards(mainOptions):
+    print(mainOptions)
     deckFolder = mainOptions['Default Paths']['Deck Folder']
     deckList = mc.getDecks(deckFolder)
     
@@ -178,7 +179,7 @@ def reviewCards(mainOptions):
                 deck.to_csv(deckFolder + '/' + deckName, sep='\t', index=False)
                 
                 # TODO: write the updated database back to the database file
-                database.to_csv(sourceFolder + '/' + 'mainDatabase.txt', sep='\t', index=False)
+                database.to_csv(sourceFolder + '/' + 'database.txt', sep='\t', index=False)
                 
             else:
                 state = event
@@ -196,7 +197,7 @@ def reviewCards(mainOptions):
             if playAudio != None:
                 mc.stopAudio(playAudio)
 
-            audioFile = sourceFolder + '/' + subDeck['source'][x] + '/' + subDeck['audioClip'][x]
+            audioFile = sourceFolder + '/' + subDeck['source'][x] + '/Audio/' + subDeck['audioClip'][x]
             playAudio = mc.playAudio(audioFile, True)
     
     wDeckMenu.close()
