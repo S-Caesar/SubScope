@@ -16,7 +16,7 @@ from Program.Parsing import SubsAnalysisUI as sau
 from Program.Options import OptionsUI as ou
 
 
-def mainMenu(buttons):
+def wMainMenu(buttons):
     columns = []
     for x in buttons:
         row = []
@@ -34,6 +34,25 @@ def mainMenu(buttons):
     
     return mainMenu
 
+
+def mainMenu(buttons):
+    uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons))
+    
+    # Start UI loop
+    while True:
+        event, values = uMainMenu.Read()
+        if event is None or event == 'Exit':
+            break
+        
+        for x in range(len(buttons)):
+            if event in buttons[x]:
+                for y in range(len(buttons[x])):
+                    if event == buttons[x][y]:
+                        uMainMenu.Hide()
+                        eval(destinations[x][y])
+             
+            uMainMenu.UnHide()
+    uMainMenu.Close()
 
 # Read in the user settings
 startPath = os.getcwd().split('\\')
@@ -68,20 +87,4 @@ destinations = [['isu.initialSetup()',            'asu.addSubs()'               
 databaseFolder = mainOptions['Default Paths']['Source Folder']
 dh.createDatabase(databaseFolder)
 
-wMainMenu = sg.Window('Main Menu', layout=mainMenu(buttons))
-
-# Start UI loop
-while True:
-    event, values = wMainMenu.Read()
-    if event is None or event == 'Exit':
-        break
-    
-    for x in range(len(buttons)):
-        if event in buttons[x]:
-            for y in range(len(buttons[x])):
-                if event == buttons[x][y]:
-                    wMainMenu.Hide()
-                    eval(destinations[x][y])
-         
-        wMainMenu.UnHide()
-wMainMenu.Close()
+mainMenu(buttons)

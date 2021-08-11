@@ -10,28 +10,27 @@ import timeit
 from Program.Processing import CardCreation as cc
 from Program.Processing import DeckFunctions as df
 
+buttonInfo = [['Create New Deck',    '-CREATE-',  False],
+              ['Add Cards',          '-ADD-',     True ],
+              ['Remove Cards',       '-REMOVE-',  True ],
+              ['Change Card Format', '-CHANGE-',  True ],
+              ['Deck Stats',         '-STATS-',   True ],
+              ['Delete Deck',        '-DELETE-',  True ]]
 
-def deckManagement(deckList):
+
+def deckManagement(deckList, buttonInfo):
     headings = [[sg.Text('Manage Decks', font='any 14')],
                 [sg.Text('Deck List', font='any 11')]]
                       
     deckList = [*[[sg.Radio(deckList[i], 1, enable_events=True, key=deckList[i])] for i in range(len(deckList))]]
     
-    buttons = [[sg.Button('Create New Deck', key='create')],
-               [sg.Button('Add Cards', key='add', disabled=True)],
-               [sg.Button('Remove Cards', key='remove', disabled=True)],
-               [sg.Button('Change Card Format', key='change', disabled=True)],
-               [sg.Button('Deck Stats', key='stats', disabled=True)],
-               [sg.Button('Delete Deck', key='delete', disabled=True)]]
+    buttons = [*[[sg.Button(buttonInfo[i][0], key=buttonInfo[i][1], disabled=buttonInfo[i][2])] for i in range(len(buttonInfo))]]
     
     deckManagement = [[sg.Column(headings)],
                       [sg.Column(deckList, size=(150,190), scrollable=True ),
                        sg.Column(buttons, vertical_alignment='top')]]
 
     return deckManagement
-
-
-#buttonsDict = 
 
 
 def manageDecks(mainOptions):
@@ -54,7 +53,7 @@ def manageDecks(mainOptions):
     database = pd.read_csv(databaseFile, sep='\t')
     
     # Main UI Window
-    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList))
+    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttonInfo))
     
     # Start UI loop
     while True:
@@ -65,11 +64,10 @@ def manageDecks(mainOptions):
         if event in deckList:
             deckName = event
             
-            buttons = ['add', 'remove', 'change', 'stats', 'delete']
-            for item in buttons:
-                wDeckManagement.Element(item).update(disabled=False)
+            for x in range(len(buttonInfo)):
+                wDeckManagement.Element(buttonInfo[x][1]).update(disabled=False)
         
-        if event == 'create':
+        if event == '-CREATE-':
             wCreateDeck = sg.Window('Deck Creation', layout=df.createDeck(cardFormats, wordSources))
             wDeckManagement.Hide()
             while True:
@@ -173,7 +171,7 @@ def manageDecks(mainOptions):
             wCreateDeck.Close()
             wDeckManagement.UnHide()
         
-        if event == 'add':
+        if event == '-ADD-':
             # Add cards to the selected deck. Show database, and allow selection.
             wAddCard = sg.Window('Add Cards', layout=df.addCard(deckName, sortOptions, wordSources, database))
             wDeckManagement.Hide()
@@ -227,7 +225,7 @@ def manageDecks(mainOptions):
             wDeckManagement.UnHide()
     
     
-        if event == 'remove':
+        if event == '-REMOVE-':
             # Remove cards from selected deck. Show cards, and allow removal
             wRemoveCard = sg.Window('Remove Cards', layout=df.removeCard(deckFolder, deckName))
             wDeckManagement.Hide()
@@ -243,7 +241,7 @@ def manageDecks(mainOptions):
             wDeckManagement.UnHide()
     
                 
-        if event == 'change':
+        if event == '-CHANGE-':
             # Change the format of all cards in the selected deck
             # TODO: all of this - will come later once the SRS side is fleshed out 
             wChangeFormat = sg.Window('Change Format', layout=df.changeFormat(deckName, cardFormats))
@@ -258,7 +256,7 @@ def manageDecks(mainOptions):
             wDeckManagement.UnHide()    
         
         
-        if event == 'stats':
+        if event == '-STATS-':
             # Display deck stats
             wStats = sg.Window('Deck Stats', layout=df.stats(deckName))
             wDeckManagement.Hide()
@@ -272,7 +270,7 @@ def manageDecks(mainOptions):
             wDeckManagement.UnHide()
         
         
-        if event == 'delete':
+        if event == '-DELETE-':
             # Delete selected deck
             wDeleteDeck = sg.Window('Delete Deck', layout=df.deleteDeck(deckName))
             wDeckManagement.Hide()
