@@ -18,86 +18,69 @@
 import subprocess
 import json
 import pandas as pd
+import numpy as np
 import re
 import timeit
+import os
+
+from Program.General import FileHandling as fh
 
 # Take the list of files, remove any that have been analysed already,
 # Then write the output files ('_justText', '_full') for the rest
-def parseWrapper(folder, files, allFiles):
+def parseWrapper(folder, files):
     # TODO: test other file types (e.g. .txt files are probably fine)
     # TODO: if the input is longer than 'x' lines, split it into multiple 
     #       temp files to avoid risk of losing progress in a crash/error
 
-    # Create a list of '_justText' files
-    justTextFiles = renameFiles(files.copy(), '_justText.txt')
-    # Check which '_justText' files exist, and remove from the list if they do
-    justText = checkFiles(folder, files.copy(), justTextFiles, allFiles)
+    # Create a list of '_justText' file names, then remove any that already exist
+    justTextFiles = fh.renameFiles(files.copy(), '_justText', '.txt')
+    justText = checkFiles(folder + '/Text', files.copy(), justTextFiles)
+    
     # Get the text lines from the files, and write to '_justText.txt' files
-    stripText(folder, justText, '_justText.txt')
+    stripText(folder, justText, '_justText', '.txt')
     
     # Create a list of '_justText' files
-    fullFiles = renameFiles(files.copy(), '_full.txt')
+    fullFiles = fh.renameFiles(files.copy(), '_full', '.txt')
     # Check which '_justText' files exist, and remove from the list if they do
-    full = checkFiles(folder, files.copy(), fullFiles, allFiles)
+    full = checkFiles(folder + '/Text', files.copy(), fullFiles)
+
     # Parse the text, and write to 'full.txt' files
     parseFiles(folder, full)
     
     return 
 
 
-def renameFiles(files, append):
-    # Take the selected list of files
-    # Then return a list for a given output file name
-    for x in range(len(files)):
-        fileName = files[x].split('.')
-        del fileName[-1]
-        fileName = '.'.join(fileName) + append
-        files[x] = fileName
-    return files
-
-
-def checkFiles(folder, files, targetFiles, allFiles):
+def checkFiles(folder, files, targetFiles):
     ''''''
-    # For each file, check for the associated output file
-    # Then remove it from the list if the output file exists
+    # Compare a list of files with files in a folder and remove matching file names
+    folderFiles = os.listdir(folder)
     for x in range(len(targetFiles)):
-        if targetFiles[x] in allFiles:
+        if targetFiles[x] in folderFiles:
             print('File skipped as it already exists: ', targetFiles[x])
-            files[x] = ''  
-    files = [x for x in files if x != ''] # remove any blank rows
+            files[x] = ''
             
+    files = [x for x in files if x != '']
+    
     return files
 
 
-def stripText(folder, files, append):
-    ''''''
-    # Read each of the files, and compile the contents into a single list
-    # Each element of the list is just the text lines for a single episode
-    parseInput = {}
+def stripText(folder, files, append, fileType=''):
+    # Read each of the files, strip out spoken lines, then write to '_justText' files
+    outFiles = fh.renameFiles(files.copy(), append, fileType)
     for x in range(len(files)):
         filepath = folder + '/' + files[x]
-        parseInput[x] = open(filepath, 'r', encoding="utf8").read().split('\n')
-    parseInput = list(parseInput.values())
-    
-    # Remove any blacklisted characters, or indications of who is speaking
-    for x in range(len(parseInput)):
-        parseInput[x] = prepParseInput(parseInput[x])
-    
-    # Write the parseInput list to a text file for use later
-    for x in range(len(files)):
         
-        # Create the output file name
-        fileName = files[x].split('.')
-        del fileName[-1]
-        fileName = '.'.join(fileName) + append
-        files[x] = fileName
+        # Need to leave in blank lines, so the 'line no' matches the original file
+        parseInput = pd.read_csv(filepath, sep='\n', names=['sentence'], skip_blank_lines=False).fillna('')
+        parseInput['sentence'] = prepParseInput(parseInput['sentence'])
         
-        # Write each line to the file
-        textfile = open(folder + '/' + files[x],'w')
-        textfile.write('line no' + '\t' + 'sentence' + '\n')
-        for y in range(len(parseInput[x])):
-            textfile.write(str(y) + '\t' + parseInput[x][y] + '\n')
-
+        parseInput.index.name = 'line no'
+        
+        parseInput['sentence'].replace('', np.nan, inplace=True)
+        parseInput.dropna(subset=['sentence'], inplace=True)
+        
+        parseInput.to_csv(folder + '/Text/' + outFiles[x], sep='\t')
+        
     return
 
 
@@ -138,6 +121,7 @@ def ichiranParse(parseInput):
     # Parse a string with ichiran-cli and return a json format list
     print(parseInput)
     
+    # TODO: made this path relative
     # Path to the location of Ichiran
     loc = 'C:/Users/Steph/quicklisp/local-projects/ichiran' 
     
@@ -253,15 +237,15 @@ def parseFiles(folder, files):
     
     # For every file, a 'justText file will need to be read in, 
     # and a '_full' file will need to be created
-    justText = renameFiles(files.copy(), '_justText.txt')
-    full = renameFiles(files.copy(), '_full.txt')
+    justText = fh.renameFiles(files.copy(), '_justText', '.txt')
+    full = fh.renameFiles(files.copy(), '_full', '.txt')
 
     for x in range(len(files)):
         # Prepare the output DataFrame
         fullTable = pd.DataFrame(columns=['line', 'reading', 'text', 'kana', 'score', 'seq', 'gloss', 'conj'])
         
         # Read in the appropriate '_justText' file for parsing
-        parseInput = pd.read_csv(folder + '/' + justText[x], delimiter = "\t")
+        parseInput = pd.read_csv(folder + '/Text/' + justText[x], delimiter = "\t")
         del parseInput['line no']
         parseInput.dropna(inplace=True)
         parseInput = parseInput.reset_index()
@@ -298,7 +282,7 @@ def parseFiles(folder, files):
                 del fullTable[item]
         
         # Write the output tables for each file to a text file with the same name
-        fullTable.to_csv(r'' + folder + '/' + full[x], index=None, sep='\t', mode='w')
+        fullTable.to_csv(folder + '/Text/' + full[x], index=None, sep='\t', mode='w')
     
         print('Files Complete:', x+1, '/', len(files))
     print('All Files Analysed. Batch Complete!')

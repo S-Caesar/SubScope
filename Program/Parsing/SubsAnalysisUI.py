@@ -34,31 +34,52 @@ statsKeys = [['Total Number of Words:',
               '-noInputCompUnk-']]
 '------------------------------------------------------------------------'
 
-def wAnalysis(fileList=[]): 
+completedFiles = 0
+totalFiles = 0
+analysisTime = 0
+
+status = ['Press \'Browse\' to select a location \nwith subtitles for analysis',
+          'Press \'Analyse Files\' once subtitle \nfiles are selected on the left',
+          ('Analysing file ', completedFiles, ' / ', totalFiles, '(Approximately ', analysisTime, 'minutes remaining)'),
+          'Updating the database',
+          'All selected files analysed']
+
+statsDisplay = [['Number:                     ', 
+                 'Unknown:                   ', 
+                 'Comprehension (%):    ', 
+                 'Number:                     ', 
+                 'Unknown:                   '],
+                ['-',        '-',          '-',      '-',        '-'         ],
+                ['-aWORDS-', '-aUNKNOWN-', '-COMP-', '-uWORDS-', '-uUNKNOWN-']]
+
+def wAnalysis(status, fileList=[]): 
     
     startPath = os.getcwd().split('\\')
     startPath = startPath[:len(startPath)-2]
-    startPath = '\\'.join(startPath) + '\\User Data\\Subtitles'
+    startPath = '/'.join(startPath) + '/User Data/Subtitles'
     
-    # set up the subtitle analysis window
     folderColumn = [[sg.Text('Select a folder containing subtitle files to be analysed.')],
                     [sg.In(size=(37, 1), enable_events=True, key='-FOLDER-'),
                      sg.FolderBrowse(initial_folder=startPath)]]
     
-    # set up the subtitle analysis window
-    subtitleListColumn = [[sg.Text('Subtitle Files')],
+    subtitleListColumn = [[sg.Text('Subtitle Files', font=('any', 10, 'bold'))],
                           *[[sg.Checkbox(fileList[i], default=True, key=f'-SUBTITLES_{i}-')] for i in range(len(fileList))]]
     
-    statisticsColumn = [[sg.Text('Statistics')],
-                        [sg.Text('Select files in the left window to analyse')],
+    statisticsColumn = [[sg.Button('Analyse Files')],
+                        [sg.Text('')],
+                        [sg.Text('Status', font=('any', 10, 'bold'))],
+                        [sg.Text(status, size=(30,2), key='-STATUS-')],
+                        [sg.Text('')],
                         
-                        [sg.Text('Comprehension:'),
-                         sg.In(default_text=70, size=(3, 1), enable_events=True, key='-COMP-'), # input for desired comprehension score
-                         sg.Text('%'),
-                         sg.Button('Update Statistics')],
+                        [sg.Text('All Words', font=('any', 10, 'bold'))],
+                        [sg.Text(statsDisplay[0][0] + str(statsDisplay[1][0]), size=(30, 1), key=statsDisplay[2][0])],
+                        [sg.Text(statsDisplay[0][1] + str(statsDisplay[1][1]), size=(30, 1), key=statsDisplay[2][1])],
+                        [sg.Text(statsDisplay[0][2] + str(statsDisplay[1][2]), size=(30, 1), key=statsDisplay[2][2])],
+                        [sg.Text('')],
                         
-                        *[[sg.Text(statsKeys[0][i]), 
-                           sg.Text(size=(10,1), key=statsKeys[1][i])] for i in range(len(statsKeys[0]))]]
+                        [sg.Text('Unique Words', font=('any', 10, 'bold'))],
+                        [sg.Text(statsDisplay[0][3] + str(statsDisplay[1][3]), size=(30, 1), key=statsDisplay[2][3])],
+                        [sg.Text(statsDisplay[0][4] + str(statsDisplay[1][4]), size=(30, 1), key=statsDisplay[2][4])]]
     
     subtitleButtons = [[sg.Button('Select All'),
                         sg.Button('Deselect All'),
@@ -74,17 +95,9 @@ def wAnalysis(fileList=[]):
     return wAnalysis
 
 
-def displayStats(window, stats):
-    # Update each of the stats lines in the UI                
-    for x in range(len(statsKeys[0])):
-        window.Element(statsKeys[1][x]).Update(value=stats[x])
-    return
-
-
 def analysis():
-    uAnalysis = sg.Window('Folder Selection', layout=wAnalysis())
+    uAnalysis = sg.Window('Folder Selection', layout=wAnalysis(status[0]))
     
-    # Start UI loop
     while True:
         event, values = uAnalysis.Read()
         if event is None or event == 'Exit':
@@ -92,11 +105,13 @@ def analysis():
 
         if event == '-FOLDER-' and values['-FOLDER-'] != '':
             folder = values['-FOLDER-']
+
+            # TODO: add support for other file types
             fileList = fh.getFiles(folder, '.srt')
             
             # Update the window with the contents of the selected folder
             uAnalysis.Close()
-            uAnalysis = sg.Window('File Analysis', layout=wAnalysis(fileList))       
+            uAnalysis = sg.Window('File Analysis', layout=wAnalysis(status[1], fileList))       
             event, values = uAnalysis.Read()             
 
         statusDict = {'Select All': True, 'Deselect All': False}
@@ -105,17 +120,16 @@ def analysis():
             for i in range(len(fileList)):
                 uAnalysis.Element(f'-SUBTITLES_{i}-').Update(value=fileStatus)
                 
-        if event == 'Update Statistics':
+        if event == 'Analyse Files':
             # Only analyse files if they are selected
             fnamesSelect = []
             for i in range(len(fileList)):
                 if values[f'-SUBTITLES_{i}-'] == True:
                     fnamesSelect.append(fileList[i])
             
-            if fnamesSelect == []:
-                print('No files have been selected.')
-            else:
-                ip.parseWrapper(folder, fnamesSelect, os.listdir(folder))
+            # TODO: add status readout to the UI
+            if fnamesSelect != []:
+                ip.parseWrapper(folder, fnamesSelect)
                 
                 # For every specified file, create a list containing the names of the analysed text files
                 dataFiles = []
@@ -129,20 +143,16 @@ def analysis():
                 # Read each of the files to be analysed and combine into a single table
                 outputTable = pd.DataFrame()
                 for x in range(len(fnamesSelect)):
-                    fullTable = pd.read_csv(folder + '/' +  fnamesSelect[x], sep='\t')
+                    fullTable = pd.read_csv(folder + '/Text/' +  fnamesSelect[x], sep='\t')
                     outputTable = outputTable.append(fullTable)
-                outputTable = outputTable.reset_index(drop=True)
-                
-                if values['-COMP-'] == '':
-                    print('Invalid comprehension. Using default value of 70.')
-                    comp = 70
-                else:
-                    comp = int(values['-COMP-'])
-
-                uAnalysis.Element('-COMP-').update(value=comp)
                     
-                stats = pa.prepStats(outputTable, 1, '==',  comp)
-                displayStats(uAnalysis, stats)
+                outputTable = outputTable.reset_index(drop=True)
+                    
+                stats = pa.simpleAnalysis(outputTable)
+
+                for x in range(len(statsDisplay[0])):
+                    uAnalysis.Element(statsDisplay[2][x]).update(statsDisplay[0][x] + str(stats[x]))
+                uAnalysis.Element('-STATUS-').update(status[4])
         
         # When the window is recreated with the selected files, the back button
         # has to be pressed twice unless I put the event trigger at the end

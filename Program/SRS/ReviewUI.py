@@ -14,7 +14,7 @@ def reviewCards(mainOptions):
     deckList = mc.getDecks(deckFolder)
     
     sourceFolder = mainOptions['Default Paths']['Source Folder']
-    database = pd.read_csv(sourceFolder + '/' + 'mainDatabase.txt', sep='\t')
+    database = pd.read_csv(sourceFolder + '/' + 'database.txt', sep='\t')
     
     # Placeholder - will be the sentence for each card
     parts = [['']*10,

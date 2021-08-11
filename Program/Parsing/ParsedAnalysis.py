@@ -130,6 +130,49 @@ def prepStats(fullTable, freqCheck, sign, compCheck):
 
     return stats
 
+
+def simpleAnalysis(fullTable):
+    # Specify the frequency to check against
+    # '_full' [fullTable] files have the following columns: 'reading', 'text', 'kana', 'score', 'seq', 'gloss', 'conj'
+    
+    '----------------------------------------------------------------------------'
+    # Stats Outputs:
+        # noWords - Total Number of Words in the Content
+        # noUnknown - The Total Number of Unknown Words in the Content
+        #
+        # noUnique - Number of Unique Words
+        # noUniqueUnk - The Number of Unique Unknown Words
+        #
+        # comprehension - The total known words divided by the total number of words
+    '----------------------------------------------------------------------------'
+
+    noWords = len(fullTable) # count the total number of words
+    
+    uniqueTable = fullTable.groupby(['text']).size().reset_index() # group any dupicate rows, counting the number of occurances
+    uniqueTable.rename(columns = {0: 'freq.'}, inplace=True)
+    uniqueTable.sort_values(by=['freq.'], ascending=False, inplace=True) # sort by word frequency, in decending order
+    uniqueTable = uniqueTable.reset_index(drop=True)
+    noUnique = len(uniqueTable) # count the number of unique words
+    
+    knownTable = pd.read_excel('C:/Users/Steph/OneDrive/App/SubScope/User Data/SRS/Known Words/Top2k-2.xlsx')
+    unknownTable = dataframeDifference(fullTable, knownTable, 'left_only').reset_index(drop=True)
+    unknownTable.drop(columns=['_merge'], inplace=True)
+    noUnknown = len(unknownTable) # count the total number of unknown words
+    
+    unknownFreq = dataframeDifference(uniqueTable, knownTable, 'left_only').reset_index(drop=True)
+    unknownFreq.drop(columns=['_merge'], inplace=True)
+    noUniqueUnk = len(unknownFreq) # count the number of unique unknown words
+    
+    comprehension = round(((noWords - noUnknown) / noWords) * 100) # calculate the current comprehension score
+    
+    stats = [noWords,
+             noUnknown,
+             comprehension,
+             noUnique,
+             noUniqueUnk]    
+
+    return stats
+
 '''
 # TODO have a list of analysed content, and have the user select the folder - then cycle through the files and analyse
 fullTable = pd.read_csv('C:/Users/steph/OneDrive/App/Subtitles/SteinsGate Subs/STEINS;GATE.S01E01.JA_full.txt', sep='\t')
