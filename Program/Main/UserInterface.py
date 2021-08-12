@@ -3,6 +3,7 @@
 import PySimpleGUI as sg
 import os
 
+from Program.Main import InitialSetup as ins
 from Program.Options import ManageOptions as mo
 from Program.Database import DataHandling as dh
 
@@ -37,6 +38,9 @@ def wMainMenu(buttons):
 
 def mainMenu(buttons):
     uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons))
+    
+    #TODO: add a window to show initialisation progress
+    ins.initialise()
     
     # Start UI loop
     while True:
