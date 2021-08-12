@@ -123,7 +123,12 @@ def ichiranParse(parseInput):
     
     # TODO: made this path relative
     # Path to the location of Ichiran
-    loc = 'C:/Users/Steph/quicklisp/local-projects/ichiran' 
+    
+    # Read in the user settings
+    ichiranPath = os.getcwd().split('\\')
+    ichiranPath = ichiranPath[:len(ichiranPath)-2]
+    ichiranPath = '/'.join(ichiranPath) + '/User Data/Settings/ichiranSettings.txt'
+    loc = open(ichiranPath).read()
     
     # Run ichiran through the console, and return the parsed json
     consoleOutput = subprocess.check_output('ichiran-cli -f ' + parseInput, shell=True, cwd=loc) 
