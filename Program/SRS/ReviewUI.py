@@ -9,7 +9,6 @@ import ast
 from Program.SRS import ManageCards as mc
 
 def reviewCards(mainOptions):
-    print(mainOptions)
     deckFolder = mainOptions['Default Paths']['Deck Folder']
     deckList = mc.getDecks(deckFolder)
     

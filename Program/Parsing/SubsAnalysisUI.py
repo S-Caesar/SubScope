@@ -10,30 +10,6 @@ from Program.Parsing import ParsedAnalysis as pa
 from Program.General import FileHandling as fh
 
 
-'------------------------------------------------------------------------'
-statsKeys = [['Total Number of Words:',
-              'Total Number of Unknown Words:',
-              'Number of Unique Words:',
-              'Number of Unique Unknown Words:',
-              'Number of Unique Words in Dictionary Form:',
-              'Number of Unique Unknown Words in Dictionary Form:',
-              'The Number of Words of the Frequency Specified:',
-              'Comprehension (%):',
-              'Total Words for Specified Comprehension:',
-              'Total Unknown Words for Specified Comprehension:'],
-         
-             ['-noWords-',
-              '-noUnknown-',
-              '-noUnique-',
-              '-noUniqueUnk-',
-              '-noUniqueDict-',
-              '-noUniqueDictUnk-',
-              '-noSpecFreq-',
-              '-comprehension-',
-              '-noInputComp-',
-              '-noInputCompUnk-']]
-'------------------------------------------------------------------------'
-
 completedFiles = 0
 totalFiles = 0
 analysisTime = 0
@@ -44,13 +20,14 @@ status = ['Press \'Browse\' to select a location \nwith subtitles for analysis',
           'Updating the database',
           'All selected files analysed']
 
-statsDisplay = [['Number:                     ', 
-                 'Unknown:                   ', 
-                 'Comprehension (%):    ', 
-                 'Number:                     ', 
-                 'Unknown:                   '],
+statsDisplay = [['Number:'              + ' '*22, 
+                 'Unknown:'             + ' '*20, 
+                 'Comprehension (%):'   + ' '*4, 
+                 'Number:'              + ' '*22, 
+                 'Unknown:'             + ' '*20],
                 ['-',        '-',          '-',      '-',        '-'         ],
                 ['-aWORDS-', '-aUNKNOWN-', '-COMP-', '-uWORDS-', '-uUNKNOWN-']]
+
 
 def wAnalysis(status, fileList=[]): 
     
@@ -72,14 +49,11 @@ def wAnalysis(status, fileList=[]):
                         [sg.Text('')],
                         
                         [sg.Text('All Words', font=('any', 10, 'bold'))],
-                        [sg.Text(statsDisplay[0][0] + str(statsDisplay[1][0]), size=(30, 1), key=statsDisplay[2][0])],
-                        [sg.Text(statsDisplay[0][1] + str(statsDisplay[1][1]), size=(30, 1), key=statsDisplay[2][1])],
-                        [sg.Text(statsDisplay[0][2] + str(statsDisplay[1][2]), size=(30, 1), key=statsDisplay[2][2])],
+                        *[[sg.Text(statsDisplay[0][i] + str(statsDisplay[1][i]), size=(30, 1), key=statsDisplay[2][i])] for i in range(0,3)],
                         [sg.Text('')],
                         
                         [sg.Text('Unique Words', font=('any', 10, 'bold'))],
-                        [sg.Text(statsDisplay[0][3] + str(statsDisplay[1][3]), size=(30, 1), key=statsDisplay[2][3])],
-                        [sg.Text(statsDisplay[0][4] + str(statsDisplay[1][4]), size=(30, 1), key=statsDisplay[2][4])]]
+                        *[[sg.Text(statsDisplay[0][i] + str(statsDisplay[1][i]), size=(30, 1), key=statsDisplay[2][i])] for i in range(3,5)]]    
     
     subtitleButtons = [[sg.Button('Select All'),
                         sg.Button('Deselect All'),
@@ -95,7 +69,7 @@ def wAnalysis(status, fileList=[]):
     return wAnalysis
 
 
-def analysis():
+def analysis(mainOptions):
     uAnalysis = sg.Window('Folder Selection', layout=wAnalysis(status[0]))
     
     while True:
@@ -148,7 +122,7 @@ def analysis():
                     
                 outputTable = outputTable.reset_index(drop=True)
                     
-                stats = pa.simpleAnalysis(outputTable)
+                stats = pa.simpleAnalysis(outputTable, mainOptions)
 
                 for x in range(len(statsDisplay[0])):
                     uAnalysis.Element(statsDisplay[2][x]).update(statsDisplay[0][x] + str(stats[x]))

@@ -4,14 +4,14 @@
 
 import os
 
-def getFiles(folder, fileEnd=''):
+def getFiles(folder, extensions=''):
     # Get a list of files in a specified folder
     fileList = [f for f in os.listdir(folder)
                 if os.path.isfile(os.path.join(folder, f))]
     
-    if fileEnd != '':
+    if extensions != '':
         fileList = [f for f in fileList
-                    if f.lower().endswith((fileEnd))]
+                    if f.lower().endswith((extensions))]
         
     return fileList
 

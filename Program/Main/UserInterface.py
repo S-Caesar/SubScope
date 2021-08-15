@@ -82,11 +82,12 @@ buttons = [['Initial Setup',      'Add Subtitles'    ],
 # NOTE: if I don't put these as strings, then the windows open when they 
 #       are assigned to the list, and then won't run later
 destinations = [['isu.initialSetup()',            'asu.addSubs()'               ],
-                ['sru.subRetime()',               'sau.analysis()'              ],
+                ['sru.subRetime()',               'sau.analysis(mainOptions)'   ],
                 ['ik.importKnown(mainOptions)',   'dmu.manageDecks(mainOptions)'],
                 ['ru.reviewCards(mainOptions)'                                  ],
                 ['ou.manageOptions(mainOptions)'                                ]]
 
+# TODO: move this into InitialSetup
 # Create a database if one does not exist
 databaseFolder = mainOptions['Default Paths']['Source Folder']
 dh.createDatabase(databaseFolder)
