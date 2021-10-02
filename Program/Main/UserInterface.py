@@ -5,7 +5,6 @@ import os
 
 from Program.Main import InitialSetup as ins
 from Program.Options import ManageOptions as mo
-from Program.Database import DataHandling as dh
 
 from Program.Subtitles import InitialSetupUI as isu
 from Program.SRS import ReviewUI as ru
@@ -27,20 +26,17 @@ def wMainMenu(buttons):
         if x != buttons[-1]:
             columns.append([[sg.Text('='*30)]])
     
-    window = []
+    mainMenu = []
     for x in columns:
-        window.append([sg.Column(x, justification='centre')])
-    
-    mainMenu = window
+        mainMenu.append([sg.Column(x, justification='centre')])
     
     return mainMenu
 
 
 def mainMenu(buttons):
-    uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons))
-    
-    #TODO: add a window to show initialisation progress
     ins.initialise()
+    
+    uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons))
     
     # Start UI loop
     while True:
@@ -86,10 +82,5 @@ destinations = [['isu.initialSetup()',            'asu.addSubs()'               
                 ['ik.importKnown(mainOptions)',   'dmu.manageDecks(mainOptions)'],
                 ['ru.reviewCards(mainOptions)'                                  ],
                 ['ou.manageOptions(mainOptions)'                                ]]
-
-# TODO: move this into InitialSetup
-# Create a database if one does not exist
-databaseFolder = mainOptions['Default Paths']['Source Folder']
-dh.createDatabase(databaseFolder)
 
 mainMenu(buttons)

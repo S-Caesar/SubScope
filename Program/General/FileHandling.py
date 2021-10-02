@@ -4,16 +4,30 @@
 
 import os
 
-def getFiles(folder, extensions=''):
+# TODO: add support for lists of extensions, if multiple file types are required (e.g. .srt, .ass)
+def getFiles(folder, fileEnd=''):
     # Get a list of files in a specified folder
     fileList = [f for f in os.listdir(folder)
                 if os.path.isfile(os.path.join(folder, f))]
     
-    if extensions != '':
+    if fileEnd != '':
         fileList = [f for f in fileList
-                    if f.lower().endswith((extensions))]
+                    if f.lower().endswith((fileEnd))]
         
     return fileList
+
+
+def getFiles_multi(folder, extensions=[]):
+    # Get a list of files in a specified folder
+    fileList = [f for f in os.listdir(folder)
+                if os.path.isfile(os.path.join(folder, f))]
+    
+    outputList = []
+    if extensions != []:
+        for item in extensions:
+            outputList.append([f for f in fileList if f.lower().endswith((item))])
+        
+    return outputList
 
 
 def getFolders(folder):

@@ -76,7 +76,8 @@ def analysis(mainOptions):
         event, values = uAnalysis.Read()
         if event is None or event == 'Exit':
             break
-
+        
+        # TODO: this only seems to run the first time a folder is selected
         if event == '-FOLDER-' and values['-FOLDER-'] != '':
             folder = values['-FOLDER-']
 
