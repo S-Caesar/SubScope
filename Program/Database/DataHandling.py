@@ -5,12 +5,12 @@ import os
 
 from Program.General import FileHandling as fh
 
-def createDatabase(folder, reset=False):
+def createDatabase(folder, rebuild=False):
      # Create a blank database file if one does not exist
      databaseFile = 'database.txt'
-     if databaseFile not in os.listdir(folder) or reset == True:
+     if databaseFile not in os.listdir(folder) or rebuild == True:
          database = pd.DataFrame(columns=['reading', 'text', 'kana', 'gloss', 'status'])
-         database.to_csv(folder + '/' + databaseFile, index=None, sep='\t', mode='w')
+         database.to_csv(folder + '/' + databaseFile, index=None, sep='\t')
      return
 
 
@@ -31,7 +31,13 @@ def writeDatabase(folder, overwrite=False):
     # Write the database DataFrame to a file
     database = database.sort_values(by=['reading'])
     database = database.fillna(0)
-    database.to_csv(folder + '/' + databaseFile, index=None, sep='\t', mode='w')
+
+    # Tidy up the formatting before writing to .csv
+    databaseStr = database.iloc[:, 0:4]
+    databaseInt = database.iloc[:, 4:].astype(int)
+    database = databaseStr.join(databaseInt)
+    
+    database.to_csv(folder + '/' + databaseFile, index=None, sep='\t')
     
     return
 
@@ -74,10 +80,8 @@ def updateDatabase(folder, fnames, database, overwrite):
                 uniqueDict = dictTable.groupby(['reading', 'text', 'kana', 'gloss']).size().reset_index()
                 uniqueDict = uniqueDict.rename({0: metaData}, axis=1)
                 
-                # Remove any lines with no 'gloss' data
+                # Remove any lines with no 'gloss' data, then append new words
                 uniqueDict = uniqueDict[uniqueDict.gloss != '0']
-
-                # Append the new words to the main database
                 database = database.append(uniqueDict)
                 
                 print(x+1, '/', str(int(len(fnames))), 'files analysed')
@@ -98,9 +102,8 @@ def updateDatabase(folder, fnames, database, overwrite):
     return database
 
 
-'''
+
 folder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles'
 
-createDatabase(folder, reset=False)
+createDatabase(folder, rebuild=False)
 writeDatabase(folder, overwrite=False)
-'''

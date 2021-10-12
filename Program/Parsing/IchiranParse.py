@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # Take the list of files, remove any that have been analysed already,
 # Then write the output files ('_justText', '_full') for the rest
 
@@ -248,9 +249,7 @@ def parseFiles(folder, files):
         
         # Read in the appropriate '_justText' file for parsing
         parseInput = pd.read_csv(folder + '/Text/' + justText[x], delimiter = "\t")
-        del parseInput['line no']
-        parseInput.dropna(inplace=True)
-        parseInput = parseInput.reset_index()
+        parseInput['line no']
 
         i=0
         # Time the processing of each block of 20 and estimate the remaining duration
@@ -258,7 +257,7 @@ def parseFiles(folder, files):
         
         for y in range(len(parseInput['sentence'])):
             # Print an update to the console to show parsing progress
-            if x > 0 and x % 20 == 0:
+            if y > 0 and y % 20 == 0:
                 passedTime = timeit.default_timer() - startTime
                 estTime = round((passedTime / i) * (len(parseInput['sentence'])-i) / 60, 1)
                    
@@ -275,7 +274,7 @@ def parseFiles(folder, files):
 
             # Add the line number for all added words
             # This can be used to locate a sentence in '_justText' files
-            fullTable['line'] = fullTable['line'].fillna(parseInput['index'][y])
+            fullTable['line'] = fullTable['line'].fillna(parseInput['line no'][y])
             
         # Remove 'conj' / 'compound' / 'components' columns if existing
         delColumns = ['conj', 'compound', 'components']
@@ -284,14 +283,15 @@ def parseFiles(folder, files):
                 del fullTable[item]
         
         # Write the output tables for each file to a text file with the same name
-        fullTable.to_csv(folder + '/Text/' + full[x], index=None, sep='\t', mode='w')
+        fullTable['line'] = fullTable['line'].astype(int)
+        fullTable.to_csv(folder + '/Text/' + full[x], index=None, sep='\t')
     
         print('Files Complete:', x+1, '/', len(files))
     print('All Files Analysed. Batch Complete!')
 
     return
 
-'''
+
 '----------------------------------------------------------------------------'
 import os
 
@@ -307,6 +307,5 @@ files = [f for f in file_list
 # get the names of all files in the folder to see if the analysis has already been completed
 allFiles = [f for f in file_list] 
 
-parseWrapper(folder, files, allFiles)
+parseWrapper(folder, files)
 '----------------------------------------------------------------------------'
-'''
