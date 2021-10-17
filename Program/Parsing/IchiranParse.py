@@ -293,19 +293,18 @@ def parseFiles(folder, files):
 
 
 '----------------------------------------------------------------------------'
-import os
-
-# will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
-folder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles/SteinsGate' 
-file_list = os.listdir(folder)
-files = [f for f in file_list
-             if os.path.isfile(os.path.join(folder, f))
-             and f.lower().endswith(('.srt'))
-             or os.path.isfile(os.path.join(folder, f))
-             and f.lower().endswith(('.ass'))]
-
-# get the names of all files in the folder to see if the analysis has already been completed
-allFiles = [f for f in file_list] 
-
-parseWrapper(folder, files)
+if __name__ == '__main__':
+    # will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
+    folder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles/SteinsGate' 
+    file_list = os.listdir(folder)
+    files = [f for f in file_list
+                 if os.path.isfile(os.path.join(folder, f))
+                 and f.lower().endswith(('.srt'))
+                 or os.path.isfile(os.path.join(folder, f))
+                 and f.lower().endswith(('.ass'))]
+    
+    # get the names of all files in the folder to see if the analysis has already been completed
+    allFiles = [f for f in file_list] 
+    
+    parseWrapper(folder, files)
 '----------------------------------------------------------------------------'

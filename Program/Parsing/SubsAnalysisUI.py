@@ -8,6 +8,7 @@ import PySimpleGUI as sg
 from Program.Parsing import IchiranParse as ip
 from Program.Parsing import ParsedAnalysis as pa
 from Program.General import FileHandling as fh
+from Program.Database import DataHandling as dh
 
 
 completedFiles = 0
@@ -128,6 +129,9 @@ def analysis(mainOptions):
                 for x in range(len(statsDisplay[0])):
                     uAnalysis.Element(statsDisplay[2][x]).update(statsDisplay[0][x] + str(stats[x]))
                 uAnalysis.Element('-STATUS-').update(status[4])
+            
+            # Update the database with the newly analysed content
+            dh.databaseWrapper(write=True)
         
         # When the window is recreated with the selected files, the back button
         # has to be pressed twice unless I put the event trigger at the end
