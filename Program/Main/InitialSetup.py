@@ -5,6 +5,7 @@ import os
 import subprocess
 
 from Program.Database import DataHandling as dh
+from Program.Options import ManageOptions as mo
 
 def initialise():
     '''
@@ -12,11 +13,16 @@ def initialise():
     '''
 
     # [StatusNo, Status, Action, Complete]
-    status = [[0, 'Setting up packages'           , None,               1],
-              [1, 'Checking database'             , dh.databaseWrapper, 0],
-              [2, 'Checking ichiran functionality', setupIchiran,       0]]
+    status = [[0, 'Setting up packages',            None,               1],
+              [1, 'Writing default paths',          mo.writePaths,      0],
+              [2, 'Checking database',              dh.databaseWrapper, 0],
+              [3, 'Checking ichiran functionality', setupIchiran,       0]]
     
-    wInitialise = [[sg.Column([[sg.Text(status[0][1], key='-INITIAL-')]], justification='centre')]]
+    readout = []
+    for x in range(len(status)):
+        readout.append([sg.Checkbox(status[x][1], default=status[x][3], key=f'-INITIAL{x}-')])
+    
+    wInitialise = [[sg.Column(readout)]]
     uInitialise = sg.Window('Initialisation', layout=wInitialise, disable_close=True)
 
     while True:
@@ -27,18 +33,17 @@ def initialise():
         # Check if the initialisation tasks are complete, and run any that aren't
         for x in range(len(status)):
             if status[x][3] == 0:
-                uInitialise.Element('-INITIAL-').Update(status[x][1])
-                uInitialise.Read(timeout=0)
-
                 if status[x][2] != None:
                     status[x][2]()
 
                 status[x][3] = 1
+                uInitialise.Element(f'-INITIAL{x}-').Update(status[x][3])
+                uInitialise.Read(timeout=0)
 
         uInitialise.Close()
   
     return
-            
+
         
 def setupIchiran():
     '''

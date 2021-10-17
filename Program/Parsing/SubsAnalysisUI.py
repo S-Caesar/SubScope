@@ -70,7 +70,7 @@ def wAnalysis(status, fileList=[]):
     return wAnalysis
 
 
-def analysis(mainOptions):
+def analysis():
     uAnalysis = sg.Window('Folder Selection', layout=wAnalysis(status[0]))
     
     while True:
@@ -124,7 +124,7 @@ def analysis(mainOptions):
                     
                 outputTable = outputTable.reset_index(drop=True)
                     
-                stats = pa.simpleAnalysis(outputTable, mainOptions)
+                stats = pa.simpleAnalysis(outputTable)
 
                 for x in range(len(statsDisplay[0])):
                     uAnalysis.Element(statsDisplay[2][x]).update(statsDisplay[0][x] + str(stats[x]))

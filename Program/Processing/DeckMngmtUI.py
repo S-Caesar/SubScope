@@ -9,14 +9,7 @@ import timeit
 
 from Program.Processing import CardCreation as cc
 from Program.Processing import DeckFunctions as df
-
-buttonInfo = [['Create New Deck',    '-CREATE-',  False],
-              ['Add Cards',          '-ADD-',     True ],
-              ['Remove Cards',       '-REMOVE-',  True ],
-              ['Change Card Format', '-CHANGE-',  True ],
-              ['Deck Stats',         '-STATS-',   True ],
-              ['Delete Deck',        '-DELETE-',  True ]]
-
+from Program.Options import ManageOptions as mo
 
 def deckManagement(deckList, buttonInfo):
     headings = [[sg.Text('Manage Decks', font='any 14')],
@@ -33,14 +26,22 @@ def deckManagement(deckList, buttonInfo):
     return deckManagement
 
 
-def manageDecks(mainOptions):
-    deckFolder = mainOptions['Default Paths']['Deck Folder']
+def manageDecks():
+    
+    buttonInfo = [['Create New Deck',    '-CREATE-',  False],
+                  ['Add Cards',          '-ADD-',     True ],
+                  ['Remove Cards',       '-REMOVE-',  True ],
+                  ['Change Card Format', '-CHANGE-',  True ],
+                  ['Deck Stats',         '-STATS-',   True ],
+                  ['Delete Deck',        '-DELETE-',  True ]]
+    
+    deckFolder = mo.readOptions('paths')['Deck Folder']
     deckList = os.listdir(deckFolder)
     
     cardFormats = ['Default', 'Alt 1', 'Alt 2']
     sortOptions = ['Hiragana', 'Alphabet', 'Part of Speech', 'Frequency', 'Fewest Unknown']
     
-    sourceFolder = mainOptions['Default Paths']['Source Folder']
+    sourceFolder = mo.readOptions('paths')['Source Folder']
     wordSources = os.listdir(sourceFolder)
     for x in range(len(wordSources)):
         path = sourceFolder + '/' + wordSources[x]
@@ -84,21 +85,15 @@ def manageDecks(mainOptions):
                     exists = cc.createDeck(deckFolder, deckName, deckFormat)
                     
                     # If the deck name isn't taken, then create the deck
+                    # TODO: probably going to be some errors here from when I changed the options files
                     if exists == 0:
                         # Add the review and new limits to the deck options file
-                        optionsFolder = mainOptions['Main Options']['Options Folder']
-                        options = open(optionsFolder + '/' + 'mainOptions.txt').read()
-                        options = options.split('\n\n')
+                        optionsFolder = mo.readOptions('paths')['Options Folder']
+                        decks = pd.read_csv(optionsFolder + '/' + 'deckSettings.txt', sep='\t')
                         
-                        for x in range(len(options)):
-                            splitOps = options[x].split('\n')
-                            if splitOps[0] == 'Deck Settings':
-                                # Set to defualt new/review limits
-                                # TODO: allow user to set limits when creating the deck
-                                options[x] = options[x] + '\n' + deckName + '\t' + '5' + '\t' + '100'
-    
-                        options = '\n\n'.join(options)
-                        open(optionsFolder + '/' + 'mainOptions.txt', 'w').write(options)
+                        # TODO: allow user to set limits when creating the deck
+                        decks = decks.append(pd.DataFrame([deckName, 5, 100]))
+                        decks.to_csv(index=False)
                         
                         # If auto is ticked, then add cards based on user selection
                         if values['-autoCheck-'] == True:
@@ -164,7 +159,7 @@ def manageDecks(mainOptions):
                     deckList = os.listdir(deckFolder)
                     
                     # Update the window to show the added deck
-                    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList), finalize=True)
+                    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttonInfo), finalize=True)
     
                     break
                 
@@ -285,36 +280,14 @@ def manageDecks(mainOptions):
                     wDeleteDeck.close()
                     
                     # Remove the deck from the options file
-                    optionsFolder = mainOptions['Main Options']['Options Folder']
-                    options = open(optionsFolder + '/' + 'mainOptions.txt').read()
-                    options = options.split('\n\n')
-                    
-                    for x in range(len(options)):
-                        splitOps = options[x].split('\n')
-                        if splitOps[0] == 'Deck Settings':
-                            # Set to defualt new/review limits
-                            # TODO: allow user to set limits when creating the deck
-                            options[x] = options[x].split('\n')
-                            
-                            for y in range(len(options[x])):
-                                splitFile = options[x][y].split('\t')
-                                if deckName in splitFile:
-                                    index1 = x
-                                    index2 = y
-                                    
-                    del options[index1][index2]
-                                
-                    for x in range(len(options)):
-                        if type(options[x]) == list:
-                            options[x] = '\n'.join(options[x])
-                    
-                    options = '\n\n'.join(options)
-                    open(optionsFolder + '/' + 'mainOptions.txt', 'w').write(options)                    
+                    optionsFolder = mo.readOptions('paths')['Options Folder']
+                    decks = pd.read_csv(optionsFolder + '/' + 'deckSettings.txt', sep='\t')
+                    decks = decks[decks.deckName != deckName]
+                    decks.to_csv(index=False)              
                     
                     # Update the deck list to remove the deleted deck
                     deckList = os.listdir(deckFolder)
-                    # Update the window so the deleted deck is no longer an option
-                    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList), finalize=True)
+                    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttonInfo), finalize=True)
                     
                     wDeckManagement.UnHide()
     
@@ -323,13 +296,14 @@ def manageDecks(mainOptions):
     return
 
 
-'''
-'----------------------------------------------------------------------------'
-from Program.Options import ManageOptions as mo
 
-# Read in the user settings
-optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptions.txt'
-mainOptions = mo.readOptions(optionsPath)
-
-manageDecks(mainOptions)
-'''
+if __name__ == '__main__':
+    
+    buttonInfo = [['Create New Deck',    '-CREATE-',  False],
+                  ['Add Cards',          '-ADD-',     True ],
+                  ['Remove Cards',       '-REMOVE-',  True ],
+                  ['Change Card Format', '-CHANGE-',  True ],
+                  ['Deck Stats',         '-STATS-',   True ],
+                  ['Delete Deck',        '-DELETE-',  True ]]   
+    
+    manageDecks()

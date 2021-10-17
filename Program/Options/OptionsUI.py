@@ -7,7 +7,11 @@ import pandas as pd
 
 from Program.Options import ManageOptions as mo
 
-def manageOptions(mainOptions):
+def manageOptions():
+    
+    # TODO: placeholder - integrate properly with the ManageOptions file
+    mainOptions = ['File']
+    
     wOptions = sg.Window('Options', layout=mo.wOptions(mainOptions))
 
     # Start UI loop
@@ -48,6 +52,5 @@ def manageOptions(mainOptions):
     return
 
 
-'''
-manageOptions(optionsPath)
-'''
+if __name__ == '__main__':
+    manageOptions()

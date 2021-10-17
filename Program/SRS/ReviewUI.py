@@ -7,12 +7,13 @@ import PySimpleGUI as sg
 import ast
 
 from Program.SRS import ManageCards as mc
+from Program.Options import ManageOptions as mo
 
-def reviewCards(mainOptions):
-    deckFolder = mainOptions['Default Paths']['Deck Folder']
+def reviewCards():
+    deckFolder = mo.readOptions('paths')['Deck Folder']
     deckList = mc.getDecks(deckFolder)
     
-    sourceFolder = mainOptions['Default Paths']['Source Folder']
+    sourceFolder = mo.readOptions('paths')['Source Folder']
     database = pd.read_csv(sourceFolder + '/' + 'database.txt', sep='\t')
     
     # Placeholder - will be the sentence for each card
@@ -54,8 +55,12 @@ def reviewCards(mainOptions):
             
             wDeckMenu.Element('-DECK-').Update(deckName)
             
-            reviewLimit = int(mainOptions['Deck Settings']['reviewLimit'][deckName])
-            newLimit = int(mainOptions['Deck Settings']['newLimit'][deckName])
+            optionsFolder = mo.readOptions('paths')['Options Folder']
+            decks = pd.read_csv(optionsFolder + '/deckSettings.txt', sep='\t')
+            decks = decks[decks.deckName == deckName]
+
+            reviewLimit = int(decks['reviewLimit'][0])
+            newLimit = int(decks['newLimit'][0])
             subDeck = mc.prepDeck(deck, reviewLimit, newLimit)
             
             # Enable flip button
@@ -71,7 +76,9 @@ def reviewCards(mainOptions):
             
             # Get the parsed line for use with the 'hover' dictionary
             parts, pos, reading, gloss = mc.getParts(sourceFolder, subDeck, x)
-            if mainOptions['UI Themes']['SRS Text Colouring'] == 'Off':
+            
+            themeSettings = mo.readOptions('themes')
+            if themeSettings['SRS Text Colouring'] == 'Off':
                 pos = [['black']*10,
                        ['black']*10]
             
@@ -202,13 +209,6 @@ def reviewCards(mainOptions):
     wDeckMenu.close()
     return
 
-'''
-'----------------------------------------------------------------------------'
-from Program.Options import ManageOptions as mo
 
-# Read in the user settings
-optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptions.txt'
-mainOptions = mo.readOptions(optionsPath)
-
-reviewCards(mainOptions)
-'''
+if __name__ == '__main__':
+    reviewCards()

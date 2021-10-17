@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import PySimpleGUI as sg
-import os
 
 from Program.Main import InitialSetup as ins
-from Program.Options import ManageOptions as mo
 
 from Program.Subtitles import InitialSetupUI as isu
 from Program.SRS import ReviewUI as ru
@@ -14,6 +12,7 @@ from Program.Subtitles import AddSubsUI as asu
 from Program.Subtitles import SubRetimerUI as sru
 from Program.Parsing import SubsAnalysisUI as sau
 from Program.Options import OptionsUI as ou
+from Program.Options import ManageOptions as mo
 
 
 def wMainMenu(buttons):
@@ -49,28 +48,15 @@ def mainMenu(buttons):
                 for y in range(len(buttons[x])):
                     if event == buttons[x][y]:
                         uMainMenu.Hide()
-                        if variables[x][y] == None:
-                            destinations[x][y]()
-                        else:
-                            destinations[x][y](variables[x][y])
+                        destinations[x][y]()
              
             uMainMenu.UnHide()
     uMainMenu.Close()
 
 
 if __name__ == '__main__':
-    # Read in the user settings
-    startPath = os.getcwd().split('\\')
-    optionsPath = '/'.join(startPath[:-2]) + '/User Data/Settings/mainOptions.txt'
-    
-    mainOptions = mo.readOptions(optionsPath)
-    # TODO: write these back into the options file - this will do for now
-    mainOptions['Main Options']['Options Folder'] = '/'.join(startPath[:-2]) + '/User Data/Settings'
-    mainOptions['Default Paths']['Deck Folder'] = '/'.join(startPath[:-2]) + '/User Data/SRS/Decks'
-    mainOptions['Default Paths']['Source Folder'] = '/'.join(startPath[:-2]) + '/User Data/Subtitles'
-    
-    
-    sg.theme(mainOptions['UI Themes']['Main Theme'])
+
+    sg.theme(mo.readOptions('themes')['Main Theme'])
     
     
     buttons = [['Initial Setup',      'Add Subtitles'    ],
@@ -79,18 +65,10 @@ if __name__ == '__main__':
                ['Review Cards'                           ],
                ['Change Settings'                        ]]
     
-    # NOTE: if I don't put these as strings, then the windows open when they 
-    #       are assigned to the list, and then won't run later
     destinations = [[isu.initialSetup,  asu.addSubs    ],
                     [sru.subRetime,     sau.analysis   ],
                     [ik.importKnown,    dmu.manageDecks],
                     [ru.reviewCards                    ],
                     [ou.manageOptions                  ]]
-    
-    variables = [[None,         None       ],
-                 [None,         mainOptions],
-                 [mainOptions,  mainOptions],
-                 [mainOptions              ],
-                 [mainOptions              ]]
 
     mainMenu(buttons)

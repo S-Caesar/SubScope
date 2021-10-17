@@ -6,6 +6,7 @@ import timeit
 
 from Program.Parsing import IchiranParse as ip
 from Program.Database import DataHandling as dh
+from Program.Options import ManageOptions as mo
 
 def importScreen(path, deckHeadings, tableHeadings, words):
     
@@ -50,7 +51,7 @@ def importScreen(path, deckHeadings, tableHeadings, words):
     return importScreen
 
 
-def importKnown(mainOptions):
+def importKnown():
     path = ''
     deck = ''
     tableHeadings = ['1', '2', '3', '4', '5', '6', '7', '8']
@@ -147,7 +148,7 @@ def importKnown(mainOptions):
             words = list(dict.fromkeys(words))
 
             # Mark the words as known in the main database
-            databasePath = mainOptions['Default Paths']['Source Folder']
+            databasePath = mo.readOptions('paths')['Source Folder']
             
             dh.writeDatabase(databasePath, False)
             database = pd.read_csv(databasePath + '/' + 'database.txt', sep='\t')

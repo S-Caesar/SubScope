@@ -4,6 +4,8 @@
 
 import PySimpleGUI as sg
 import pandas as pd
+import sys
+import os
 
 def wOptions(mainOptions):
 
@@ -29,43 +31,74 @@ def wOptions(mainOptions):
     return wOptions
 
 
-def readOptions(optionsPath):
-    # Split up an options file and store in a dictionary
-    file = open(optionsPath).read()
-    options = file.split('\n\n')
+def readOptions(group):
+    '''
+    Read in the specified options file, and format accordingly
     
-    mainOptions = {}
-    for x in range(len(options)):
-        options[x] = options[x].split('\n')
+    group: the options file group ('paths', 'decks', 'ichiran', 'themes')
+    '''
+    
+    startPath = os.getcwd().split('\\')
+    optionsPath = '/'.join(startPath[:-2]) + '/User Data/Settings/'
+    
+    # [group, file, dataType]
+    groups = [['paths',     'defaultPaths.txt',      'dict'  ],
+              ['decks',     'deckSettings.txt',      'table' ],
+              ['ichiran',   'ichiranSettings.txt',   'string'],
+              ['themes',    'themesUI.txt',          'dict'  ]]
+    
+    # Check whether the specified group exists, and get the entry if it does
+    names = []
+    for x in range(len(groups)):
+        names.append(groups[x][0])
+        if group in names:
+            optionsFile = groups[x][1]
+            optionsType = groups[x][2]
+            break
+    
+    if group not in names:
+        sys.exit('\nInvalid group name: ' + '\'' + group + '\'\nValid names: ' + str(names).strip('[').strip(']'))
+    
+    else:
+        if type == 'string':
+            file = open(optionsPath + optionsFile).read()
         
-        if options[x][1] == 'table':
-            columns = options[x][2].split('\t')
+        elif optionsType == 'table':
+            file = pd.read_csv(optionsPath + optionsFile, sep='\t')
             
-            data = []
-            if len(options[x]) > 3:
-                for y in range(3, len(options[x])):
-                    data.append(options[x][y].split('\t'))
-                
-                output = pd.DataFrame()
-                output = output.append(data)
-                output.columns = columns
-                output = output.set_index('deckName')
-                
-                mainOptions[options[x][0]] = output
+        elif optionsType == 'dict':
+            rawFile = open(optionsPath + optionsFile).read().split('\n')
             
-        if options[x][1] == 'dict':
-            optionsDict = {}
-            for y in range(2, len(options[x])):
-                data = options[x][y].split('\t')
-                optionsDict[data[0]] = data[1]
-            
-            mainOptions[options[x][0]] = optionsDict
-                
-    return mainOptions
+            file = {}
+            for x in range(len(rawFile)):
+                rawFile[x] = rawFile[x].split('\t')
+                file[rawFile[x][0]] = rawFile[x][1]
+
+    return file
 
 
-'''
-'----------------------------------------------------------------------------'
-optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/mainOptions.txt'
-mainOptions = readOptions(optionsPath)
-'''
+def writePaths():
+    # TODO: do all this properly - I hard coded it so I could mess with something else
+    paths = {}
+    startPath = os.getcwd().split('\\')
+    
+    paths['Deck Folder'] = '/'.join(startPath[:-2]) + '/User Data/SRS/Decks'
+    paths['Source Folder'] = '/'.join(startPath[:-2]) + '/User Data/Subtitles'
+    paths['Options Folder'] = '/'.join(startPath[:-2]) + '/User Data/Settings'
+    
+    file = []
+    file.append('Deck Folder' + '\t' + paths['Deck Folder'])
+    file.append('Source Folder\t' + paths['Source Folder'])
+    file.append('Options Folder\t' + paths['Options Folder'])
+    
+    with open('C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/defaultPaths.txt', 'w') as f:
+        for x in range(len(file)):
+            f.write(file[x])
+
+            if x != len(file)-1:
+                f.write('\n')
+
+if __name__ == '__main__':
+    #optionsPath = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/'
+    #mainOptions = readOptions('paths')
+    writePaths()

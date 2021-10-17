@@ -7,6 +7,7 @@
 '''
 
 import pandas as pd
+from Program.Options import ManageOptions as mo
 
 def dataframeDifference(df1, df2, column=None, dropMerge=False):
     # Compare two DataFrames and return a DataFrame with the words only in the
@@ -29,7 +30,7 @@ def dataframeDifference(df1, df2, column=None, dropMerge=False):
     return dfDiff
 
 
-def simpleAnalysis(fullTable, mainOptions):    
+def simpleAnalysis(fullTable):    
     # '_full' [fullTable] files have the following columns: 'reading', 'text', 'kana', 'score', 'seq', 'gloss', 'conj'
 
     noWords = len(fullTable)
@@ -43,7 +44,7 @@ def simpleAnalysis(fullTable, mainOptions):
     noUnique = len(uniqueTable)
     
     # Read in the database, and filter for known words (status = 1)
-    databaseLoc = mainOptions['Default Paths']['Source Folder']
+    databaseLoc = mo.readOptions('paths')['Source Folder']
     database = pd.read_csv(databaseLoc + '/database.txt', sep='\t')
     knownTable = database.loc[database['status'] == 1]
     
