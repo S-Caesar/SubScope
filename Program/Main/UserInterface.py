@@ -58,7 +58,6 @@ if __name__ == '__main__':
 
     sg.theme(mo.readOptions('themes')['Main Theme'])
     
-    
     buttons = [['Initial Setup',      'Add Subtitles'    ],
                ['Retime Subtitles',   'Analyse Subtitles'],
                ['Import Known Words', 'Manage Decks'     ],

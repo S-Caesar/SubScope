@@ -3,6 +3,7 @@
 import PySimpleGUI as sg
 import os
 import subprocess
+import pandas as pd
 
 from Program.Database import DataHandling as dh
 from Program.Options import ManageOptions as mo
@@ -14,7 +15,7 @@ def initialise():
 
     # [StatusNo, Status, Action, Complete]
     status = [[0, 'Setting up packages',            None,               1],
-              [1, 'Writing default paths',          mo.writePaths,      0],
+              [1, 'Writing default paths',          writePaths,         0],
               [2, 'Checking database',              dh.databaseWrapper, 0],
               [3, 'Checking ichiran functionality', setupIchiran,       0]]
     
@@ -44,21 +45,67 @@ def initialise():
   
     return
 
-        
+
+
+def writePaths():
+    '''
+    Check if the 'defaultPaths.txt' file exists; create it if it doesn't
+    If it does exist, check the format is correct, and overwrite if it isn't
+    '''
+    
+    startPath = os.getcwd().split('\\')
+    startPath = '/'.join(startPath[:-2]) + '/User Data/'
+    
+    path = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/'
+    file = 'defaultPaths.txt'
+    
+    groups = pd.DataFrame([['Deck Folder',    'SRS/Decks'],
+                           ['Source Folder',  'Subtitles'],
+                           ['Options Folder', 'Settings' ],
+                           ['Ichiran Path',   ''         ]])
+    
+    # Check for the file, and if it exists, check the format is correct
+    defaultPaths = []
+    if os.path.isfile(path + file) == True:
+        defaultPaths = pd.read_csv(path + file, sep='\t', header=None)
+
+        for x in range(len(defaultPaths)):
+            # If the format of the current file is wrong, just overwrite it
+            if defaultPaths[0][x] != groups[0][x]:
+                defaultPaths = []
+                break
+    
+    # If the file doesn't exist, or is incorrect, create a new file
+    if len(defaultPaths) == 0:
+        defaultPaths = groups.copy()
+        for x in range(len(groups)):
+            if defaultPaths[0][x] == 'Ichiran Path':
+                defaultPaths[1][x] = 'C:/'
+            else:
+                defaultPaths[1][x] = startPath + groups[1][x]
+
+        defaultPaths.to_csv(path + file, sep='\t', header=None, index=None)
+                
+    return
+
+
 def setupIchiran():
     '''
     Find ichiran, test its functionality, then write the path to a .txt file
     '''
+
+    optionsPath = mo.readOptions('paths')['Options Folder']
+    settingsFile = 'defaultPaths.txt'
     
-    startPath = os.getcwd().split('\\')
-    settingsPath = '/'.join(startPath[:-2]) + '/User Data/Settings'
-    settingsFile = 'ichiranSettings.txt'
+    file = pd.read_csv(optionsPath + '/' + settingsFile, sep='\t', header=None)
+    row = file[file[0] == 'Ichiran Path'].index.tolist()
+
+    # Test whether ichiran-cli has been installed properly, and can be accessed
+    if row == []:
+        file = file.append(pd.DataFrame([{0: 'Ichiran Path', 1: 'C:/'}])).reset_index(drop=True)
+        row = file[file[0] == 'Ichiran Path'].index.tolist()
     
-    if settingsFile not in os.listdir(settingsPath):
-    
-        # Test whether ichiran-cli has been installed properly, and can be accessed
-        ichiranSettings = settingsPath + '/' + settingsFile
-        
+    if file[1][row].values[0] == 'C:/':
         # Start at: 'C:/Users/'
         loc = os.getcwd().split('\\')
         loc = '/'.join(loc[0:3])
@@ -70,10 +117,6 @@ def setupIchiran():
                     try:
                         path = os.path.join(dirpath, x) + '/ichiran'
                         output = subprocess.check_output('ichiran-cli -f ' + '何しての', shell=True, cwd=path)
-                        
-                        with open(ichiranSettings, 'w') as f:
-                            f.write(path)
-                            
                         break
                     
                     except:
@@ -83,6 +126,16 @@ def setupIchiran():
             # TODO: prompt the user to find the quicklisp folder themselves
             print('No valid paths to ichiran')
         else:
+            file[1][row] = path
+            file.to_csv(optionsPath + '/' + settingsFile, sep='\t', header=None, index=None)
             print('Ichiran found')
     
-    return
+    else:
+        path = file[1][row].values
+
+    return path
+
+
+if __name__ == '__main__':
+    writePaths()
+    setupIchiran()

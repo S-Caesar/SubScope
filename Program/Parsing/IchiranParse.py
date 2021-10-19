@@ -25,6 +25,7 @@ import timeit
 import os
 
 from Program.General import FileHandling as fh
+from Program.Options import ManageOptions as mo
 
 # Take the list of files, remove any that have been analysed already,
 # Then write the output files ('_justText', '_full') for the rest
@@ -123,10 +124,7 @@ def ichiranParse(parseInput):
     print(parseInput)
 
     # Path to the location of Ichiran
-    ichiranPath = os.getcwd().split('\\')
-    ichiranPath = ichiranPath[:len(ichiranPath)-2]
-    ichiranPath = '/'.join(ichiranPath) + '/User Data/Settings/ichiranSettings.txt'
-    loc = open(ichiranPath).read()
+    loc = mo.readOptions('paths')['Ichiran Path']
     
     # Run ichiran through the console, and return the parsed json
     consoleOutput = subprocess.check_output('ichiran-cli -f ' + parseInput, shell=True, cwd=loc) 
