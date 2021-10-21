@@ -124,7 +124,7 @@ def ichiranParse(parseInput):
     print(parseInput)
 
     # Path to the location of Ichiran
-    loc = mo.readOptions('paths')['Ichiran Path']
+    loc = mo.getSetting('paths', 'Ichiran Path')
     
     # Run ichiran through the console, and return the parsed json
     consoleOutput = subprocess.check_output('ichiran-cli -f ' + parseInput, shell=True, cwd=loc) 

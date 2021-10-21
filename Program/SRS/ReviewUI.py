@@ -10,10 +10,10 @@ from Program.SRS import ManageCards as mc
 from Program.Options import ManageOptions as mo
 
 def reviewCards():
-    deckFolder = mo.readOptions('paths')['Deck Folder']
+    deckFolder = mo.getSetting('paths', 'Deck Folder')
     deckList = mc.getDecks(deckFolder)
     
-    sourceFolder = mo.readOptions('paths')['Source Folder']
+    sourceFolder = mo.getSetting('paths', 'Source Folder')
     database = pd.read_csv(sourceFolder + '/' + 'database.txt', sep='\t')
     
     # Placeholder - will be the sentence for each card
@@ -55,7 +55,7 @@ def reviewCards():
             
             wDeckMenu.Element('-DECK-').Update(deckName)
             
-            optionsFolder = mo.readOptions('paths')['Options Folder']
+            optionsFolder = mo.getSetting('paths', 'Options Folder')
             decks = pd.read_csv(optionsFolder + '/deckSettings.txt', sep='\t')
             decks = decks[decks.deckName == deckName]
 
@@ -77,8 +77,8 @@ def reviewCards():
             # Get the parsed line for use with the 'hover' dictionary
             parts, pos, reading, gloss = mc.getParts(sourceFolder, subDeck, x)
             
-            themeSettings = mo.readOptions('themes')
-            if themeSettings['SRS Text Colouring'] == 'Off':
+            themeSettings = mo.getSetting('themes', 'SRS Text Colouring')
+            if themeSettings == 'Off':
                 pos = [['black']*10,
                        ['black']*10]
             

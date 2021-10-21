@@ -148,7 +148,7 @@ def importKnown():
             words = list(dict.fromkeys(words))
 
             # Mark the words as known in the main database
-            databasePath = mo.readOptions('paths')['Source Folder']
+            databasePath = mo.getSetting('paths', 'Source Folder')
             
             dh.writeDatabase(databasePath, False)
             database = pd.read_csv(databasePath + '/' + 'database.txt', sep='\t')

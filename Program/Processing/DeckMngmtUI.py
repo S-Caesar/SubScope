@@ -35,13 +35,13 @@ def manageDecks():
                   ['Deck Stats',         '-STATS-',   True ],
                   ['Delete Deck',        '-DELETE-',  True ]]
     
-    deckFolder = mo.readOptions('paths')['Deck Folder']
+    deckFolder = mo.getSetting('paths', 'Deck Folder')
     deckList = os.listdir(deckFolder)
     
     cardFormats = ['Default', 'Alt 1', 'Alt 2']
     sortOptions = ['Hiragana', 'Alphabet', 'Part of Speech', 'Frequency', 'Fewest Unknown']
     
-    sourceFolder = mo.readOptions('paths')['Source Folder']
+    sourceFolder = mo.getSetting('paths', 'Source Folder')
     wordSources = os.listdir(sourceFolder)
     for x in range(len(wordSources)):
         path = sourceFolder + '/' + wordSources[x]
@@ -88,7 +88,7 @@ def manageDecks():
                     # TODO: probably going to be some errors here from when I changed the options files
                     if exists == 0:
                         # Add the review and new limits to the deck options file
-                        optionsFolder = mo.readOptions('paths')['Options Folder']
+                        optionsFolder = mo.getSetting('paths', 'Options Folder')
                         decks = pd.read_csv(optionsFolder + '/' + 'deckSettings.txt', sep='\t')
                         
                         # TODO: allow user to set limits when creating the deck
@@ -280,7 +280,7 @@ def manageDecks():
                     wDeleteDeck.close()
                     
                     # Remove the deck from the options file
-                    optionsFolder = mo.readOptions('paths')['Options Folder']
+                    optionsFolder = mo.getSetting('paths', 'Options Folder')
                     decks = pd.read_csv(optionsFolder + '/' + 'deckSettings.txt', sep='\t')
                     decks = decks[decks.deckName != deckName]
                     decks.to_csv(index=False)              

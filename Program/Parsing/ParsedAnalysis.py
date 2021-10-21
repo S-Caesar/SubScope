@@ -44,7 +44,7 @@ def simpleAnalysis(fullTable):
     noUnique = len(uniqueTable)
     
     # Read in the database, and filter for known words (status = 1)
-    databaseLoc = mo.readOptions('paths')['Source Folder']
+    databaseLoc = mo.getSetting('paths', 'Source Folder')
     database = pd.read_csv(databaseLoc + '/database.txt', sep='\t')
     knownTable = database.loc[database['status'] == 1]
     

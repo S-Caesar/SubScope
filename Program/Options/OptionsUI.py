@@ -44,7 +44,8 @@ def manageOptions():
     for x in range(len(groups)):
         headings.append(groups['heading'][x])
     
-    optionsPath = mo.readOptions('paths')['Options Folder']
+    optionsPath = mo.getSetting('paths', 'Options Folder')
+    
 
     uOptions = sg.Window('Options', layout=wOptions(headings))
 
@@ -61,15 +62,15 @@ def manageOptions():
             subOptions = ['',  '',  '',  '',  '',  '',  '' ]
             
             headingNo = headings.index(event)
-            # TODO: add headers to the txt file
-            options = pd.read_csv(optionsPath + groups['file'][headingNo], sep='\t', header=None)
+            options = pd.read_csv(optionsPath + groups['file'][headingNo], sep='\t')
+            headers = [options.columns[0], options.columns[1]]
             print(options)
             
             if groups['dataType'][headingNo] == 'dict':
                 for x in range(len(subOptions)):
                     if x < len(options):
-                        uOptions.Element(f'-SUBHEADINGS-{x}-').Update(value=options[0][x])
-                        uOptions.Element(f'-SUBOPTIONS-{x}-').Update(value=options[1][x])
+                        uOptions.Element(f'-SUBHEADINGS-{x}-').Update(value=options[headers[0]][x])
+                        uOptions.Element(f'-SUBOPTIONS-{x}-').Update(value=options[headers[1]][x])
                     
                     else:
                         uOptions.Element(f'-SUBHEADINGS-{x}-').Update(value='')

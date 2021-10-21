@@ -56,7 +56,7 @@ def mainMenu(buttons):
 
 if __name__ == '__main__':
 
-    sg.theme(mo.readOptions('themes')['Main Theme'])
+    sg.theme(mo.getSetting('themes', 'Main Theme'))
     
     buttons = [['Initial Setup',      'Add Subtitles'    ],
                ['Retime Subtitles',   'Analyse Subtitles'],
