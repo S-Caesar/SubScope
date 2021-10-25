@@ -35,6 +35,7 @@ def wMainMenu(buttons):
 def mainMenu(buttons):
     ins.initialise()
     
+    sg.theme(mo.getSetting('themes', 'Main Theme'))
     uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons))
     
     # Start UI loop
@@ -42,21 +43,22 @@ def mainMenu(buttons):
         event, values = uMainMenu.Read()
         if event is None or event == 'Exit':
             break
-        
+
         for x in range(len(buttons)):
             if event in buttons[x]:
                 for y in range(len(buttons[x])):
                     if event == buttons[x][y]:
                         uMainMenu.Hide()
                         destinations[x][y]()
-             
-            uMainMenu.UnHide()
+            
+        # Reread the main menu when returning in case the theme has been changed
+        uMainMenu.Close()
+        uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons), finalize=True)
+                 
     uMainMenu.Close()
 
 
 if __name__ == '__main__':
-
-    sg.theme(mo.getSetting('themes', 'Main Theme'))
     
     buttons = [['Initial Setup',      'Add Subtitles'    ],
                ['Retime Subtitles',   'Analyse Subtitles'],
