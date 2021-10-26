@@ -5,8 +5,8 @@
 import PySimpleGUI as sg
 import os
 import pandas as pd
-import timeit
 
+from Program.Processing import SubMngmtUI as sm
 from Program.Processing import CardCreation as cc
 from Program.Processing import DeckFunctions as df
 from Program.Options import ManageOptions as mo
@@ -67,9 +67,9 @@ def manageDecks():
     # Start UI loop
     while True:
         event, values = wDeckManagement.Read()
-        if event is None or event == 'Exit' or event == 'Back':
+        if event in [None, 'Exit', 'Back']:
             break
-        
+
         # If a deck is selected, enable the buttons
         if event in deckList:
             deckName = event
@@ -78,112 +78,15 @@ def manageDecks():
         
         # Move to the deck creation window
         if event == '-CREATE-':
-            wCreateDeck = sg.Window('Deck Creation', layout=df.createDeck(cardFormats, wordSources))
+            
             wDeckManagement.Hide()
-            while True:
-                event, values = wCreateDeck.Read()
-                if event is None or event == 'Exit' or event == 'Back':
-                    break
-                
-                if event == 'Create Deck':
-                    deckName = values['deckName'] + '.txt'
-                    deckFormat = values['deckFormat']
-                    
-                    # Create a new deck
-                    exists = cc.createDeck(deckFolder, deckName, deckFormat)
-                    
-                    # If the deck name isn't taken, then create the deck
-                    if exists == 0:
-                        # Add the review and new limits to the deck options file
-                        optionsFolder = mo.getSetting('paths', 'Options Folder')
-                        decks = pd.read_csv(optionsFolder + '/deckSettings.txt', sep='\t')
-                        
-                        # Set limit values after checking whether the user input is valid
-                        limits = [['newLimit', 10], ['reviewLimit', 50]]
+            
+            # Run the create cards UI
+            sm.createUI(wordSources, cardFormats)
 
-                        for x in range(len(limits)):
-                            if values[limits[x][0]] != '':
-                                try:
-                                    float(values[limits[x][0]])
-                                    limits[x][1] = values[limits[x][0]]
-                                except:
-                                    print('Invalid input: \"' + values[limits[x][0]] + '\". Values must be whole numbers')
-                                    print('Default value of ' + str(limits[x][1]) + ' used for ' + limits[x][0])
-
-                        newDeck = pd.DataFrame([[deckName,    limits[0][1], limits[1][1]]],
-                                       columns=('Deck Name', 'New Limit',  'Review Limit'))
-                        
-                        decks = decks.append(newDeck).reset_index(drop=True)
-                        # TODO: this sorts words starting with capitals above lower case
-                        decks = decks.sort_values(by=['Deck Name'], ascending=True).reset_index(drop=True)
-                        decks.to_csv(optionsFolder + '/deckSettings.txt', sep='\t', index=False)
-                        
-                        # If auto is ticked, then add cards based on user selection
-                        if values['-autoCheck-'] == True:
-                            # TODO: add option to create a deck from multiple sources
-                            source = values['-source-']
-                            sourceDatabase = database.copy()
-
-                            # Go through the database (starting at the first episode column),
-                            # sort by frequency, then get words to achieve x% comprehension
-                            words = []
-                            for col in sourceDatabase.columns:
-                                if source in col:
-                                    subDatabase = sourceDatabase[['reading', 'text', 'kana', 'gloss', 'status', col]]
-                                    subDatabase = subDatabase[subDatabase[col] != 0]
-                                    subDatabase = subDatabase.sort_values(by=[col], ascending=False, ignore_index=True)
-        
-                                    totalWords = subDatabase[col].sum()
-                                    comprehension = int(values['-comp-'])/100
-                                    targetWords = round(totalWords * comprehension)
-                                    
-                                    # Work out how many rows are required to achieve the required cmprehension
-                                    n = 0
-                                    cumTotal = 0
-                                    while cumTotal < targetWords:
-                                        cumTotal += subDatabase[col][n]
-                                        n+=1
-                                    subDatabase = subDatabase.head(n)
-                                    
-                                    i=0
-                                    j=0
-                                    # Time the processing of each block of 20 and estimate the remaining duration
-                                    startTime = timeit.default_timer()
-                                    for y in range(len(subDatabase)):
-                                        if subDatabase['status'][y] == 0:
-                                            targetWord = subDatabase['text'][y]
-                                            print(targetWord)
-                                            
-                                            # Check whether the word has already been added to the deck
-                                            # Then get card info and create the media files
-                                            if targetWord not in words:
-                                                cardInfo, wordLoc = cc.getCardInfo(targetWord, database, sourceFolder)
-                                                cc.createMedia(sourceFolder, wordLoc)
-                                                cc.addCard(deckFolder, deckName, cardInfo)
-                                                words.append(targetWord)
-                                                
-                                        if i >= 20:
-                                            passedTime = timeit.default_timer() - startTime
-                                            estTime = round((passedTime / j) * (len(subDatabase)-j) / 60, 1)
-                                            
-                                            print('===================================')
-                                            print('Rows Complete:', y, '/', len(subDatabase))
-                                            print('Estimated time remaining:', estTime, 'minutes')
-                                            print('===================================')
-                                            
-                                            i = 0
-                                        i+=1
-                                        j+=1
-                    
-                    # Update the deck list to show the new deck
-                    deckList = os.listdir(deckFolder)
-                    
-                    # Update the window to show the added deck
-                    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttonInfo), finalize=True)
-    
-                    break
-                
-            wCreateDeck.Close()
+            # Update the deck list and the window to show the new deck
+            deckList = os.listdir(deckFolder)
+            wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttonInfo), finalize=True)            
             wDeckManagement.UnHide()
         
         if event == '-ADD-':
@@ -225,13 +128,13 @@ def manageDecks():
                 
                 if event == 'Add Cards':
                     # Add cards currently highlighted in the table
-                    for x in values[1]:
+                    for x in values[0]:
                         targetWord = database['text'][x]
                         
                         # Get card info, then create the media files
-                        cardInfo, wordLoc = cc.getCardInfo(targetWord, database, sourceFolder)
+                        cardInfo, wordLoc = cc.getCardInfo(targetWord, database)
                         cc.addCard(deckFolder, deckName, cardInfo)
-                        cc.createMedia(sourceFolder, wordLoc)
+                        cc.createMedia(wordLoc)
                     
                     print('Cards successfully added to deck.')
     

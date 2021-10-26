@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 import pandas as pd
 
 def createDeck(cardFormats, wordSources):
-    # TODO: when creating a deck, add it to the deckSettings file
+    
     headings = [[sg.Text('Create Deck', font='any 14')]]
     
     deckName = [[sg.Text('Deck Name:', size=(12, 1)),

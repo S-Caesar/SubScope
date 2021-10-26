@@ -2,10 +2,22 @@
 
 import pandas as pd
 
+from Program.Database import DataHandling as dh
+from Program.Options import ManageOptions as mo
+
 # Take a word to be learned, find the episodes it occurs in, and return a dataframe
 # containing the episode reference, line number, sentence, and timestamp
 
-def findSentences(folder, database, targetWord):
+def findSentences(targetWord):
+    '''
+    Search the database to find all occurances of a given word
+    
+    folder: the folder containing the main source folders (e.g. SteinsGate)
+    database:
+    '''
+    
+    database = dh.readDatabase()
+    folder = mo.getSetting('paths', 'Source Folder')
     
     # Select the first row that matches the word
     wordRow = database[database['text']==targetWord]
@@ -83,6 +95,7 @@ def findSentences(folder, database, targetWord):
             # From the timestamp, work forwards, and add on any text lines found
             # There will be an extra '\n' at the end, so remove it when writing the line
             line = ''
+            stampLine+=1
             while stampLine < len(file[0]) and file[0][stampLine] != '':
                 line += file[0][stampLine] + '\n'
                 stampLine += 1
@@ -96,12 +109,7 @@ def findSentences(folder, database, targetWord):
 
 if __name__ == '__main__':
     
-    from Program.Options import ManageOptions as mo
-    from Program.Database import DataHandling as dh
-    
-    folder = mo.getSetting('paths', 'Source Folder')
-    database = dh.readDatabase()
-    
+    # A few different example words for testing
     #targetWord = 'あのね'
     #targetWord = 'いい'
     #targetWord = 'あっという間に'
@@ -109,4 +117,4 @@ if __name__ == '__main__':
     #targetWord = 'が'
     targetWord = '人数'
     
-    wordLoc = findSentences(folder, database, targetWord)
+    wordLoc = findSentences(targetWord)

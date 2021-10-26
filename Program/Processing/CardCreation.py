@@ -8,6 +8,7 @@ import random
 
 from Program.Processing import FindSentences as fs
 from Program.Processing import ExtractAudio as ea
+from Program.Options import ManageOptions as mo
 
 
 def getDate():
@@ -21,37 +22,63 @@ def getDate():
     return today
 
 
-def createDeck(deckFolder, deckName, deckFormat):
-    ''''''
-    # Create a blank deck
-    if deckName not in os.listdir(deckFolder):
-        # TODO: add different deckFormat options - currently just default
-        blankDeck = pd.DataFrame(columns=['state', # '1' if reviewed, and not 'again', otherwise '0'
-                                          'source',
-                                          'fullFile',
-                                          'line no',
-                                          'wordJapanese',
-                                          'partOfSpeech',
-                                          'definition',
-                                          'info',
-                                          'sentence',
-                                          'audioClip',
-                                          'screenshot',
-                                          'EF',
-                                          'lastReview',
-                                          'nextReview',
-                                          'status']) # new, learning, known, suspended
-        blankDeck.to_csv(r'' + deckFolder + '/' + deckName, index=None, sep='\t', mode='w')
-        exists = 0
-        
-    else:
-        print('Deck already exists:', deckName)
-        exists = 1
-        
-    return exists
+def createDeck(deckName, deckFormat, newLimit, reviewLimit):
+    '''
+    Create a blank deck of the specified name and format
+    
+    deckname: Name to be used for the deck filename
+    deckFormat: Format to be used for the deck (currently unused)
+    '''
+
+    # TODO: add different deckFormat options - currently just default
+    blankDeck = pd.DataFrame(columns=['state', # '1' if reviewed, and not 'again', otherwise '0'
+                                      'source',
+                                      'fullFile',
+                                      'line no',
+                                      'wordJapanese',
+                                      'partOfSpeech',
+                                      'definition',
+                                      'info',
+                                      'sentence',
+                                      'audioClip',
+                                      'screenshot',
+                                      'EF',
+                                      'lastReview',
+                                      'nextReview',
+                                      'status']) # new, learning, known, suspended
+
+    deckFolder = mo.getSetting('paths', 'Deck Folder')
+    blankDeck.to_csv(deckFolder + '/' + deckName, index=None, sep='\t')
+    
+    # Update the settings file with the new deck info
+    optionsFolder = mo.getSetting('paths', 'Options Folder')
+    decks = pd.read_csv(optionsFolder + '/deckSettings.txt', sep='\t')
+    
+    # Check if user input is valid, then set limit values
+    #         [Limit type,     user limit,  default limit]
+    limits = [['New Limit',    newLimit,    10           ],
+              ['Review Limit', reviewLimit, 50           ]]
+    
+    for x in range(len(limits)):
+        if limits[x][1] != '':
+            try:
+                float(limits[x][1])
+                limits[x][2] = limits[x][1]
+            except:
+                print('Invalid input: \"' + limits[x][1] + '\". Values must be whole numbers\n' + 
+                      'Default value of ' + str(limits[x][2]) + ' used for ' + limits[x][0])    
+
+    newDeck = pd.DataFrame([[deckName,   limits[0][2], limits[1][2]]],
+                   columns=('Deck Name', limits[0][0], limits[1][0]))
+    
+    decks = decks.append(newDeck).reset_index(drop=True)
+    decks = decks.iloc[decks['Deck Name'].str.lower().argsort()]
+    decks.to_csv(optionsFolder + '/deckSettings.txt', sep='\t', index=False)    
+
+    return
 
 
-def getCardInfo(targetWord, database, sourceFolder):
+def getCardInfo(targetWord, database):
     ''''''
     line = database[database['text']==targetWord].reset_index(drop=True)
     # from: https://stackoverflow.com/questions/1894269/how-to-convert-string-representation-of-list-to-a-list
@@ -65,7 +92,7 @@ def getCardInfo(targetWord, database, sourceFolder):
     else:
         info = 'N/A'
     
-    wordLoc = fs.findSentences(sourceFolder, database, targetWord)
+    wordLoc = fs.findSentences(targetWord)
 
     # TODO: for now, just grab a random sentence, but eventually find the one with the fewest unknown words
     # TODO: I shouldn't need to use '-1' for this, but if I don't I occasionally get index errors when setting the source
@@ -105,7 +132,8 @@ def addCard(deckFolder, deckName, cardInfo):
     return
 
 
-def createMedia(sourceFolder, wordLoc):
+def createMedia(wordLoc):
+    sourceFolder = mo.getSetting('paths', 'Source Folder')
     source = wordLoc['source'][0]
     video = wordLoc['episode'][0].replace('_full.txt','')
     lineNo = str(int(wordLoc['line no'][0]))
