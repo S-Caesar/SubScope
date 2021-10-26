@@ -9,11 +9,16 @@ def createDeck(cardFormats, wordSources):
     # TODO: when creating a deck, add it to the deckSettings file
     headings = [[sg.Text('Create Deck', font='any 14')]]
     
-    deckName = [[sg.Text('Deck Name:'),
-                sg.In(size=(20,1), key='deckName')]]
+    deckName = [[sg.Text('Deck Name:', size=(12, 1)),
+                sg.In(size=(20, 1), key='deckName')]]
     
-    cardFormat = [[sg.Text('Card Format:'),
+    cardFormat = [[sg.Text('Card Format:', size=(12, 1)),
                    sg.Combo(cardFormats, size=(20,4), enable_events=False, key='deckFormat')]]
+    
+    cardLimits = [[sg.Text('New Limit:', size=(12, 1)),
+                   sg.In(size=(5, 1), key='newLimit')],
+                  [sg.Text('Review Limit:', size=(12, 1)),
+                   sg.In(size=(5, 1), key='reviewLimit')]]
     
     spacing = [[sg.Text('='*30)]]
     
@@ -25,11 +30,13 @@ def createDeck(cardFormats, wordSources):
                  sg.In(70, size=(3,1), enable_events=True, key='-comp-')]]
     
     createButton = [[sg.Text('='*30)],
-                    [sg.Button('Create Deck')]]
+                    [sg.Button('Back'),
+                     sg.Button('Create Deck')]]
     
     createDeck = [[sg.Column(headings)],
                   [sg.Column(deckName)],
                   [sg.Column(cardFormat)],
+                  [sg.Column(cardLimits)],
                   [sg.Column(spacing)],
                   [sg.Column(autoCheck)],
                   [sg.Column(autoDeck)],
@@ -42,6 +49,9 @@ def addCard(deckName, sortOptions, wordSources, database):
     # TODO: sort the table out to show POS, definition, etc, in separate columns
     headers = list(database.columns)
     data = database.values.tolist()       
+    
+    if len(data) == 0:
+        data = ['Analyse', 'Cards', 'to', 'Add', 'Words']
     
     headings = [[sg.Text('Selected Deck:'),
                  sg.Text(deckName)]]

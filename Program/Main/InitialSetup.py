@@ -24,6 +24,8 @@ def initialise():
         readout.append([sg.Checkbox(status[x][1], default=status[x][3], key=f'-INITIAL{x}-')])
     
     wInitialise = [[sg.Column(readout)]]
+    
+    sg.theme(mo.getSetting('themes', 'Main Theme'))
     uInitialise = sg.Window('Initialisation', layout=wInitialise, disable_close=True)
 
     while True:
@@ -44,7 +46,6 @@ def initialise():
         uInitialise.Close()
   
     return
-
 
 
 def writePaths():

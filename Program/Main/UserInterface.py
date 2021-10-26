@@ -12,7 +12,6 @@ from Program.Subtitles import AddSubsUI as asu
 from Program.Subtitles import SubRetimerUI as sru
 from Program.Parsing import SubsAnalysisUI as sau
 from Program.Options import OptionsUI as ou
-from Program.Options import ManageOptions as mo
 
 
 def wMainMenu(buttons):
@@ -34,8 +33,7 @@ def wMainMenu(buttons):
 
 def mainMenu(buttons):
     ins.initialise()
-    
-    sg.theme(mo.getSetting('themes', 'Main Theme'))
+
     uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons))
     
     # Start UI loop

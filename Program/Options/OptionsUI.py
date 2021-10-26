@@ -135,7 +135,7 @@ def manageOptions():
                 if mainKey == event:
                     uOptions.Element(mainKey).Update(background_color='SteelBlue1')
                 else:
-                    uOptions.Element(mainKey).Update(background_color='SteelBlue')            
+                    uOptions.Element(mainKey).Update(background_color='SteelBlue')
             
             # Display the section for the selected option
             key = target['subKey'][0]
@@ -176,8 +176,8 @@ def manageOptions():
                 startPath = os.getcwd().split('\\')
                 optionsPath = '/'.join(startPath[:-2]) + '/User Data/Settings/'
                 fullOptions[x].to_csv(optionsPath + fileName, sep='\t', index=None)
-                
-            # Reread the theme in case it has been changed
+            
+            # Reread the theme in case it has been changed, and maintain the window appearance
             sg.theme(mo.getSetting('themes', 'Main Theme'))
             uOptions.Close()
             uOptions = sg.Window('Options', layout=wOptions(headings, keys, fullOptions), finalize=True)

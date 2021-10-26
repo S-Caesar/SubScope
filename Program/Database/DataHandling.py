@@ -4,6 +4,7 @@ import pandas as pd
 import os
 
 from Program.General import FileHandling as fh
+from Program.Options import ManageOptions as mo
 
 
 def databaseWrapper(create=True, rebuild=False, write=False, overwrite=False):
@@ -131,6 +132,18 @@ def updateDatabase(sourceDir, fullFiles, database, overwrite):
     database = database.groupby(database['reading']).aggregate(aggDict).reset_index(drop=True)
     print('All files analysed')
 
+    return database
+
+
+def readDatabase():
+    '''
+    Read the database file into a DataFrame
+    '''
+    
+    sourceFolder = mo.getSetting('paths', 'Source Folder')
+    databaseFile = sourceFolder + '/database.txt'
+    database = pd.read_csv(databaseFile, sep='\t')
+    
     return database
 
 
