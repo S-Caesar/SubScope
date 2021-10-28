@@ -78,10 +78,7 @@ def manageDecks():
         
         # Move to the deck creation window
         if event == '-CREATE-':
-            
             wDeckManagement.Hide()
-            
-            # Run the create cards UI
             sm.createUI(wordSources, cardFormats)
 
             # Update the deck list and the window to show the new deck

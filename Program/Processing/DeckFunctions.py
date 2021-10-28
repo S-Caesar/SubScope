@@ -5,45 +5,6 @@
 import PySimpleGUI as sg
 import pandas as pd
 
-def createDeck(cardFormats, wordSources):
-    
-    headings = [[sg.Text('Create Deck', font='any 14')]]
-    
-    deckName = [[sg.Text('Deck Name:', size=(12, 1)),
-                sg.In(size=(20, 1), key='deckName')]]
-    
-    cardFormat = [[sg.Text('Card Format:', size=(12, 1)),
-                   sg.Combo(cardFormats, size=(20,4), enable_events=False, key='deckFormat')]]
-    
-    cardLimits = [[sg.Text('New Limit:', size=(12, 1)),
-                   sg.In(size=(5, 1), key='newLimit')],
-                  [sg.Text('Review Limit:', size=(12, 1)),
-                   sg.In(size=(5, 1), key='reviewLimit')]]
-    
-    spacing = [[sg.Text('='*30)]]
-    
-    autoCheck = [[sg.Checkbox('Automatically add cards to the deck', key='-autoCheck-')]]
-    
-    autoDeck = [[sg.Text('Select source:'),
-                 sg.Combo(wordSources, size=(20,4), enable_events=False, key='-source-', default_value=wordSources[0])],
-                [sg.Text('Required comprehension:'),
-                 sg.In(70, size=(3,1), enable_events=True, key='-comp-')]]
-    
-    createButton = [[sg.Text('='*30)],
-                    [sg.Button('Back'),
-                     sg.Button('Create Deck')]]
-    
-    createDeck = [[sg.Column(headings)],
-                  [sg.Column(deckName)],
-                  [sg.Column(cardFormat)],
-                  [sg.Column(cardLimits)],
-                  [sg.Column(spacing)],
-                  [sg.Column(autoCheck)],
-                  [sg.Column(autoDeck)],
-                  [sg.Column(createButton)]]
-
-    return createDeck
-
 
 def addCard(deckName, sortOptions, wordSources, database):
     # TODO: sort the table out to show POS, definition, etc, in separate columns

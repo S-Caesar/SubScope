@@ -5,10 +5,12 @@ import ast
 import os
 import datetime
 import random
+import timeit
 
 from Program.Processing import FindSentences as fs
 from Program.Processing import ExtractAudio as ea
 from Program.Options import ManageOptions as mo
+from Program.Database import DataHandling as dh
 
 
 def getDate():
@@ -22,10 +24,11 @@ def getDate():
     return today
 
 
-def createDeck(deckName, deckFormat, newLimit, reviewLimit):
+def createDeck(auto, deckName, deckFormat, newLimit, reviewLimit, source, comp):
     '''
     Create a blank deck of the specified name and format
     
+    auto: True/False boolean to automatically add cards to the new deck
     deckname: Name to be used for the deck filename
     deckFormat: Format to be used for the deck (currently unused)
     '''
@@ -74,9 +77,76 @@ def createDeck(deckName, deckFormat, newLimit, reviewLimit):
     decks = decks.append(newDeck).reset_index(drop=True)
     decks = decks.iloc[decks['Deck Name'].str.lower().argsort()]
     decks.to_csv(optionsFolder + '/deckSettings.txt', sep='\t', index=False)    
-
+    
+    if auto == True:
+        autoDeck(source, deckFolder, deckName, comp)
+    
     return
 
+
+def autoDeck(source, deckFolder, deckName, comp):
+    # TODO: add option to create a deck from multiple sources
+    database = dh.readDatabase()
+    sourceDatabase = database.copy()
+
+    # Go through the database (starting at the first episode column),
+    # sort by frequency, then get words to achieve x% comprehension
+    words = []
+    for col in sourceDatabase.columns:
+        if source in col:
+            subDatabase = sourceDatabase[['reading', 'text', 'kana', 'gloss', 'status', col]]
+            subDatabase = subDatabase[subDatabase[col] != 0]
+            subDatabase = subDatabase.sort_values(by=[col], ascending=False, ignore_index=True)
+
+            totalWords = subDatabase[col].sum()
+            
+            if comp == '':
+                comp = 70
+                print('No target words value input. using default of 70%')
+            comprehension = int(comp)/100
+            
+            targetWords = round(totalWords * comprehension)
+            
+            # Work out how many rows are required to achieve the required cmprehension
+            n = 0
+            cumTotal = 0
+            while cumTotal < targetWords:
+                cumTotal += subDatabase[col][n]
+                n+=1
+            subDatabase = subDatabase.head(n)
+            
+            i=0
+            j=0
+            # Time the processing of each block of 20 and estimate the remaining duration
+            startTime = timeit.default_timer()
+            for y in range(len(subDatabase)):
+                if subDatabase['status'][y] == 0:
+                    targetWord = subDatabase['text'][y]
+                    print(targetWord)
+                    
+                    # Check whether the word has already been added to the deck
+                    # Then get card info and create the media files
+                    if targetWord not in words:
+                        cardInfo, wordLoc = getCardInfo(targetWord, database)
+                        createMedia(wordLoc)
+                        addCard(deckFolder, deckName, cardInfo)
+                        words.append(targetWord)
+                        
+                if i >= 20:
+                    passedTime = timeit.default_timer() - startTime
+                    estTime = round((passedTime / j) * (len(subDatabase)-j) / 60, 1)
+                    
+                    print('===================================')
+                    print('Rows Complete:', y, '/', len(subDatabase))
+                    print('Estimated time remaining:', estTime, 'minutes')
+                    print('===================================')
+                    
+                    i = 0
+                i+=1
+                j+=1
+                
+    return
+            
 
 def getCardInfo(targetWord, database):
     ''''''

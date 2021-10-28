@@ -2,99 +2,123 @@
 
 import PySimpleGUI as sg
 import os
-import timeit
+import pandas as pd
 
 from Program.Processing import CardCreation as cc
-from Program.Processing import DeckFunctions as df
 from Program.Options import ManageOptions as mo
-from Program.Database import DataHandling as dh
+
+
+def createColumn(table):
+    '''
+    Convert a layout table into a layout for use in a column
+    
+    table:
+        columns['type', 'content', default, 'font', 'size', 'key', 'group', 'line']
+    '''
+    
+    functions = {'text':  sg.Text, 
+                 'radio': sg.Radio,
+                 'input': sg.Input,
+                 'combo': sg.Combo}
+    
+    layout, line = [], []
+    for x in range(len(table)):
+        function = functions[table['type'][x]]
+
+        if table['type'][x] == 'radio':
+            element = function(table['content'][x],
+                               font=table['font'][x],
+                               size=table['size'][x],
+                               key=table['key'][x],
+                               default=table['default'][x],
+                               group_id=table['group'][x])            
+
+        else:
+            element = function(table['content'][x],
+                               font=table['font'][x],
+                               size=table['size'][x],
+                               key=table['key'][x])
+        
+        # Append to the line; if the next element is on a new line,
+        # append the line to the layout, and start a new line
+        line.append(element)
+        if x < len(table)-1:
+            if table['line'][x+1] == 'next' or x+1 == len(table):
+                layout.append(line)
+                line = []
+        else:
+            layout.append(line)
+    
+    return layout
+
+
+def createDeck(cardFormats, wordSources):
+    
+    main = pd.DataFrame(
+        columns=('type',    'content',          'default',  'font',     'size',         'key',          'group',    'line'),
+        data = [['text',    'Create Deck',      '',         'any 14',   (12, 1),        None,           '',         ''    ],
+                ['radio',   'Empty Deck',       True,       '',         (None, None),   '-EMPTY-',      0,          'next'],
+                ['radio',   'Autofill Deck',    '',         '',         (None, None),   '-autoCheck-',  0,          'same'],
+                ['text',    'Deck Name:',       '',         '',         (12, 1),        None,           '',         'next'],
+                ['input',   '',                 '',         '',         (12, 1),        'deckName',     '',         'same'],
+                ['text',    'Card Format:',     '',         '',         (12, 1),        None,           '',         'next'],
+                ['combo',   cardFormats,        '',         '',         (12, 1),        'deckFormat',   '',         'same'],
+                ['text',    'New Limit:',       '',         '',         (12, 1),        None,           '',         'next'],
+                ['input',   '',                 '',         '',         (5, 1),         'newLimit',     '',         'same'],
+                ['text',    'Review Limit:',    '',         '',         (12, 1),        None,           '',         'next'],
+                ['input',   '',                 '',         '',         (5, 1),         'reviewLimit',  '',         'same'],
+                ['text',    '='*30,             '',         '',         (None, None),   None,           '',         'next']])
+    mainLayout = createColumn(main)
+    
+    auto = pd.DataFrame(
+        columns=('type',    'content',          'default',  'font',     'size',         'key',          'group',    'line'),
+        data = [['text',    'Select Source:',   '',         '',         (12, 1),        None,           '',         ''    ],
+                ['combo',   wordSources,        '',         '',         (12, 4),        '-source-',     '',         'same'],
+                ['text',    'Target known:',    '',         '',         (12, 1),        None,           '',         'next'],
+                ['input',   '',                 '',         '',         (3, 1),         '-comp-',       '',         'same']])    
+    autoLayout = createColumn(auto)
+
+    createDeck = [[sg.Column(mainLayout, visible=True, key='-MAIN-')],
+                  [sg.Column(autoLayout, visible=True, key='-AUTO-')],
+                  [sg.Column([[sg.Button('Back'), sg.Button('Create Deck')]])]]
+
+    return createDeck
 
 
 def createUI(wordSources, cardFormats): 
     
-    database = dh.readDatabase()
-    
-    deckFolder = mo.getSetting('paths', 'Deck Folder')
-    
-    wCreateDeck = sg.Window('Deck Creation', layout=df.createDeck(cardFormats, wordSources))
+    wCreateDeck = sg.Window('Deck Creation', layout=createDeck(cardFormats, wordSources))
     
     while True:
         event, values = wCreateDeck.Read()
         if event in [None, 'Exit', 'Back']:
             break
         
+        wCreateDeck['-AUTO-'].update(visible=True)
+        
         if event == 'Create Deck':
             # If the deck name is taken, then skip deck creation
             deckName = values['deckName'] + '.txt'
-            if deckName in os.listdir(deckFolder):
+            deckFolder = mo.getSetting('paths', 'Deck Folder')
+            if deckName not in os.listdir(deckFolder):
+                # Create a deck and fill it with cards if auto is checked
+                if values['-autoCheck-'] == False or values['-source-'] != '':
+                    cc.createDeck(values['-autoCheck-'], deckName, values['deckFormat'], values['newLimit'], values['reviewLimit'], values['-source-'], values['-comp-'])
+                    break
+                else:
+                    if values['-source-'] == '':
+                        # TODO: display a message in the UI if the no source is selected
+                        print('No source selected for the auto deck')
+                    
+            else:                
+                # TODO: display a message in the UI if the deck already exists
                 print('Deck already exists:', deckName)
-                break
-            
-            # Create a blank deck of the specified format
-            cc.createDeck(deckName, values['deckFormat'], values['newLimit'], values['reviewLimit'])
-            
-            # If auto is ticked, then add cards based on user selection
-            if values['-autoCheck-'] == True:
-                # TODO: add option to create a deck from multiple sources
-                source = values['-source-']
-                sourceDatabase = database.copy()
 
-                # Go through the database (starting at the first episode column),
-                # sort by frequency, then get words to achieve x% comprehension
-                words = []
-                for col in sourceDatabase.columns:
-                    if source in col:
-                        subDatabase = sourceDatabase[['reading', 'text', 'kana', 'gloss', 'status', col]]
-                        subDatabase = subDatabase[subDatabase[col] != 0]
-                        subDatabase = subDatabase.sort_values(by=[col], ascending=False, ignore_index=True)
-
-                        totalWords = subDatabase[col].sum()
-                        comprehension = int(values['-comp-'])/100
-                        targetWords = round(totalWords * comprehension)
-                        
-                        # Work out how many rows are required to achieve the required cmprehension
-                        n = 0
-                        cumTotal = 0
-                        while cumTotal < targetWords:
-                            cumTotal += subDatabase[col][n]
-                            n+=1
-                        subDatabase = subDatabase.head(n)
-                        
-                        i=0
-                        j=0
-                        # Time the processing of each block of 20 and estimate the remaining duration
-                        startTime = timeit.default_timer()
-                        for y in range(len(subDatabase)):
-                            if subDatabase['status'][y] == 0:
-                                targetWord = subDatabase['text'][y]
-                                print(targetWord)
-                                
-                                # Check whether the word has already been added to the deck
-                                # Then get card info and create the media files
-                                if targetWord not in words:
-                                    cardInfo, wordLoc = cc.getCardInfo(targetWord, database)
-                                    cc.createMedia(wordLoc)
-                                    cc.addCard(deckFolder, deckName, cardInfo)
-                                    words.append(targetWord)
-                                    
-                            if i >= 20:
-                                passedTime = timeit.default_timer() - startTime
-                                estTime = round((passedTime / j) * (len(subDatabase)-j) / 60, 1)
-                                
-                                print('===================================')
-                                print('Rows Complete:', y, '/', len(subDatabase))
-                                print('Estimated time remaining:', estTime, 'minutes')
-                                print('===================================')
-                                
-                                i = 0
-                            i+=1
-                            j+=1
-            
-            break
-        
     wCreateDeck.Close()
     
     return
+
+
 
 if __name__ == '__main__':
     
