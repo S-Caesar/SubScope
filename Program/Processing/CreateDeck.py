@@ -85,7 +85,10 @@ def createDeck(cardFormats, wordSources):
     return createDeck
 
 
-def createUI(wordSources, cardFormats): 
+def createUI(wordSources): 
+        
+    # TODO: Update formats once this properly implemented
+    cardFormats = ['Default', 'Alt 1', 'Alt 2']
     
     wCreateDeck = sg.Window('Deck Creation', layout=createDeck(cardFormats, wordSources))
     
@@ -117,7 +120,6 @@ def createUI(wordSources, cardFormats):
     wCreateDeck.Close()
     
     return
-
 
 
 if __name__ == '__main__':

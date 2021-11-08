@@ -189,16 +189,11 @@ def getCardInfo(targetWord, database):
     return cardInfo, wordLoc
 
 
-def addCard(deckFolder, deckName, cardInfo):
+def addCard(deckFolder, deckName, cardInfo, deck):
     ''''''
-    deck = pd.read_csv(deckFolder + '/' + deckName, sep='\t')
-    
-    if len(deck[deck['wordJapanese']==cardInfo[0]]) == 0:
-        deck.loc[len(deck)] = cardInfo
-        deck.to_csv(r'' + deckFolder + '/' + deckName, index=None, sep='\t', mode='w')
-    else:
-        print('Card already exists in deck:', cardInfo[0])
-        # TODO: have option to change audio clip for the card
+    deck.loc[len(deck)] = cardInfo
+    deck.to_csv(r'' + deckFolder + '/' + deckName, index=None, sep='\t', mode='w')
+
     return
 
 
