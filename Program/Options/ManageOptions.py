@@ -20,7 +20,8 @@ def readOptions(group):
     # [group, file, dataType]
     groups = [['paths',     'defaultPaths.txt'],
               ['decks',     'deckSettings.txt'],
-              ['themes',    'themesUI.txt'    ]]
+              ['themes',    'themesUI.txt'    ],
+              ['formats',   'cardFormats.txt' ]]
     
     # Check whether the specified group exists, and get the entry if it does
     names = []
@@ -62,4 +63,4 @@ def getSetting(group, option):
 
 
 if __name__ == '__main__':
-    print(getSetting('paths', 'Deck Folder'))
+    print(readOptions('formats'))

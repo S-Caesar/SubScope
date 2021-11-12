@@ -9,7 +9,6 @@ import os
 from Program.Processing import CreateDeck as cd
 from Program.Processing import AddCards as ac
 from Program.Processing import RemoveCards as rc
-from Program.Processing import ChangeFormat as cf
 from Program.Processing import DeckStats as ds
 from Program.Processing import DeleteDeck as dd
 from Program.Options import ManageOptions as mo
@@ -55,7 +54,6 @@ def manageDecks():
           data=[['Create New Deck',    '-CREATE-', ''  ,       cd.createUI, wordSources],
                 ['Add Cards',          '-ADD-',    True,       ac.addUI,    wordSources],
                 ['Remove Cards',       '-REMOVE-', True,       rc.removeUI, deckFolder ],
-                ['Change Card Format', '-CHANGE-', True,       cf.changeUI, None       ],
                 ['Deck Stats',         '-STATS-',  True,       ds.statsUI,  None       ],
                 ['Delete Deck',        '-DELETE-', True,       dd.deleteUI, deckFolder ]])
                        
