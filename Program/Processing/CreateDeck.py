@@ -85,8 +85,10 @@ def createDeck(cardFormats, wordSources):
     return createDeck
 
 
-def createUI(wordSources): 
+def createUI(deckName, wordSources): 
         
+    # TODO: included deckName as an input so the UI can be simplified - ideally get rid of it
+    
     # TODO: Update formats once this properly implemented
     cardFormats = ['Default', 'Alt 1', 'Alt 2']
     
@@ -124,9 +126,11 @@ def createUI(wordSources):
 
 if __name__ == '__main__':
     
+    deckName = ''
+    
     sourceFolder = mo.getSetting('paths', 'Source Folder')
     wordSources = next(os.walk(sourceFolder))[1]
     
     cardFormats = ['Default', 'Alt 1', 'Alt 2']
     
-    createUI(wordSources, cardFormats)
+    createUI(deckName, wordSources)

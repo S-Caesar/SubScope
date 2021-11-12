@@ -14,7 +14,7 @@ from Program.Processing import DeckStats as ds
 from Program.Processing import DeleteDeck as dd
 from Program.Options import ManageOptions as mo
 
-def deckManagement(deckList, buttonInfo):
+def deckManagement(deckList, buttons):
     headings = [[sg.Text('Manage Decks', font='any 14')],
                 [sg.Text('Deck List', font='any 11')]]
                       
@@ -24,11 +24,11 @@ def deckManagement(deckList, buttonInfo):
                             key=deckList[x])]
                   for x in range(len(deckList))]]
     
-    buttons = [*[[sg.Button(buttonInfo['buttonName'][x],
+    buttons = [*[[sg.Button(buttons['name'][x],
                             size=(16,1),
-                            key=buttonInfo['key'][x],
-                            disabled=buttonInfo['disabled'][x])]
-                 for x in range(len(buttonInfo))]]
+                            key=buttons['key'][x],
+                            disabled=buttons['disabled'][x])]
+                 for x in range(len(buttons))]]
     
     backButton = [[sg.Button('Back')]]
     
@@ -41,14 +41,6 @@ def deckManagement(deckList, buttonInfo):
 
 
 def manageDecks():
-    
-    buttonInfo = pd.DataFrame([['Create New Deck',    '-CREATE-',  ''   ],
-                               ['Add Cards',          '-ADD-',     True ],
-                               ['Remove Cards',       '-REMOVE-',  True ],
-                               ['Change Card Format', '-CHANGE-',  True ],
-                               ['Deck Stats',         '-STATS-',   True ],
-                               ['Delete Deck',        '-DELETE-',  True ]],
-                       columns=('buttonName',         'key',       'disabled'))
 
     # Read in the deck list
     deckFolder = mo.getSetting('paths', 'Deck Folder')
@@ -57,9 +49,18 @@ def manageDecks():
     # Get all the source folders
     sourceFolder = mo.getSetting('paths', 'Source Folder')
     wordSources = next(os.walk(sourceFolder))[1]
-
+    
+    buttons = pd.DataFrame(
+        columns=('name',               'key',      'disabled', 'action',    'inputs'),
+          data=[['Create New Deck',    '-CREATE-', ''  ,       cd.createUI, wordSources],
+                ['Add Cards',          '-ADD-',    True,       ac.addUI,    wordSources],
+                ['Remove Cards',       '-REMOVE-', True,       rc.removeUI, deckFolder ],
+                ['Change Card Format', '-CHANGE-', True,       cf.changeUI, None       ],
+                ['Deck Stats',         '-STATS-',  True,       ds.statsUI,  None       ],
+                ['Delete Deck',        '-DELETE-', True,       dd.deleteUI, deckFolder ]])
+                       
     # Main UI Window
-    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttonInfo))
+    wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttons))
     
     while True:
         event, values = wDeckManagement.Read()
@@ -69,33 +70,23 @@ def manageDecks():
         # If a deck is selected, enable the buttons
         if event in deckList:
             deckName = event
-            for x in range(len(buttonInfo)):
-                wDeckManagement.Element(buttonInfo['key'][x]).update(disabled=False)
+            for x in range(len(buttons)):
+                wDeckManagement.Element(buttons['key'][x]).update(disabled=False)
 
-        if event in list(buttonInfo['key']):
+        # If a button is pressed, open the appropriate UI
+        if event in list(buttons['key']):
             wDeckManagement.Hide()
-
-            if event == '-CREATE-':
-                cd.createUI(wordSources)
-    
-            if event == '-ADD-':
-                ac.addUI(deckName, wordSources)
-        
-            if event == '-REMOVE-':
-                rc.removeUI(deckName, deckFolder)
-                      
-            if event == '-CHANGE-':
-                cf.changeUI(deckName)
             
-            if event == '-STATS-':
-                ds.statsUI(deckName)
-            
-            if event == '-DELETE-':
-                dd.deleteUI(deckName, deckFolder)
+            for x in range(len(buttons)):
+                if event == buttons['key'][x]:
+                    if buttons['inputs'][x] == None:
+                        buttons['action'][x](buttons['inputs'][x])
+                    else:
+                        buttons['action'][x](deckName, buttons['inputs'][x])
                 
             # Update the deck list and the window to show any changes
             deckList = os.listdir(deckFolder)
-            wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttonInfo), finalize=True)
+            wDeckManagement = sg.Window('Deck Management', layout=deckManagement(deckList, buttons), finalize=True)
             wDeckManagement.UnHide()
             
     wDeckManagement.Close()
