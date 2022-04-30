@@ -3,58 +3,54 @@
 import os
 import pandas as pd
 import subprocess
+from enum import Enum
 
 from Program.Options import ManageOptions as mo
 
+class Paths(Enum):
+    
+    DECK    = ('Deck Folder',       'SRS/Decks',    'cwd')
+    SOURCE  = ('Source Folder',     'Subtitles',    'cwd')
+    OPTIONS = ('Options Folder',    'Settings',     'cwd')
+    ICHIRAN = ('Ichiran Path',      '',             'C:/')
+    
+    def __init__(self, option, folder, start):
+        self.option = option
+        self.folder = folder
+        self.start = start
+        
+
 class InitialiseControl:
-    
-    def __init__(self):
-        pass
-    
+
     @staticmethod
-    def writePaths():
-            '''
-            Check if the 'defaultPaths.txt' file exists; create it if it doesn't
-            If it does exist, check the format is correct, and overwrite if it isn't
-            '''
-            
-            startPath = os.getcwd().split('\\')
-            startPath = '/'.join(startPath[:-2]) + '/User Data/'
-            
-            path = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Settings/'
-            file = 'defaultPaths.txt'
-            
+    def writePaths(forceRebuild=False):
+        '''
+        Check if the 'defaultPaths.txt' file exists; create it if it doesn't
+        If it does exist, check the format is correct, and overwrite if it isn't
+        '''
+        
+        # Get the root paths for the project and user data folders
+        startPath = os.getcwd().split('\\')
+        root = startPath.index('SubScope')
+        startPath = '/'.join(startPath[:root+1]) + '/User Data/'
+        settingsFile = startPath + 'Settings/defaultPaths.txt'
+        
+        # If the default paths file exists, skip it unless forced to rebuild
+        if os.path.isfile(settingsFile) == False or forceRebuild == True:
             headers = ['Option', 'Setting']
-            groups = pd.DataFrame([['Deck Folder',    'SRS/Decks'],
-                                   ['Source Folder',  'Subtitles'],
-                                   ['Options Folder', 'Settings' ],
-                                   ['Ichiran Path',   ''         ]],
-                                  columns=headers)
-            
-            # Check for the file, and if it exists, check the format is correct
             defaultPaths = []
-            if os.path.isfile(path + file) == True:
-                defaultPaths = pd.read_csv(path + file, sep='\t')
-        
-                for x in range(len(defaultPaths)):
-                    # If the format of the current file is wrong, just overwrite it
-                    if defaultPaths[headers[0]][x] != groups[headers[0]][x]:
-                        defaultPaths = pd.DataFrame(columns=headers)
-                        break
-            
-            # If the file doesn't exist, or is incorrect, create a new file
-            if len(defaultPaths) == 0:
-                defaultPaths = groups.copy()
-                for x in range(len(groups)):
-                    if defaultPaths[headers[0]][x] == 'Ichiran Path':
-                        defaultPaths[headers[1]][x] = 'C:/'
-                    else:
-                        defaultPaths[headers[1]][x] = startPath + groups[headers[1]][x]
-        
-                defaultPaths.to_csv(path + file, sep='\t', index=None)
-                        
-            return
-    
+            for path in Paths:
+                if path.start == 'cwd':
+                    default = startPath + path.folder
+                else:
+                    default = path.start + path.folder
+                    
+                defaultPaths.append([path.option, default])
+                    
+            defaultPaths = pd.DataFrame(defaultPaths, columns=headers)
+            defaultPaths.to_csv(settingsFile, sep='\t', index=None)
+
+    # TODO: tidy this up next
     @staticmethod
     def setupIchiran():
         '''

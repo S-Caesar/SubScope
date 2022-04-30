@@ -32,7 +32,7 @@ class Buttons(Enum):
 class MainMenu:
 
     def __init__(self):
-        self.name = 'Main Menu'
+        self._name = 'Main Menu'
 
     @property
     def _layout(self):
@@ -56,10 +56,9 @@ class MainMenu:
     
     @property
     def _window(self):
-        window = sg.Window(self.name, layout=self._layout, finalize=True)
+        window = sg.Window(self._name, layout=self._layout, finalize=True)
         return window
     
-
     def show(self):
         # Window has to be assigned, otherwise it won't close properly
         window = self._window

@@ -2,21 +2,17 @@
 
 import PySimpleGUI as sg
 from enum import Enum
-import os
-import subprocess
-import pandas as pd
-import time
 
-from Program.Main import InitialiseControl as ic
+from Program.Main.InitialiseControl import InitialiseControl as ic
 from Program.Database import DataHandling as dh
 from Program.Options import ManageOptions as mo
 
 class Status(Enum):
     
     PACKAGES    = (0, 'Setting up packages',            None,               1)
-    DEFAULTS    = (1, 'Writing default paths',          ic.InitialiseControl().writePaths,        0)
+    DEFAULTS    = (1, 'Writing default paths',          ic.writePaths,      0)
     DATABASE    = (2, 'Checking database',              dh.databaseWrapper, 0)
-    ICHIRAN     = (3, 'Checking ichiran functionality', ic.InitialiseControl().setupIchiran,      0)
+    ICHIRAN     = (3, 'Checking ichiran functionality', ic.setupIchiran,    0)
 
     def __init__(self, step, text, action, done):
         self.step = step
@@ -28,14 +24,16 @@ class Status(Enum):
 class Initialise:
 
     def __init__(self):
-        self.name = 'Initialisation'
+        self._name = 'Initialisation'
         return
 
     @property
     def _layout(self):
         readout = []
         for status in Status:
-            readout.append([sg.Checkbox(status.text, default=status.done, key=f'-INITIAL{status.step}-')])
+            readout.append([sg.Checkbox(status.text,
+                                        default=status.done,
+                                        key=f'-INITIAL{status.step}-')])
 
         layout = [[sg.Column(readout)]]
         return layout
@@ -43,17 +41,19 @@ class Initialise:
     @property
     def _window(self):
         sg.theme(mo.getSetting('themes', 'Main Theme'))
-        window = sg.Window(self.name, layout=self._layout, disable_close=True)
+        window = sg.Window(self._name,
+                           layout=self._layout,
+                           disable_close=True)
         return window
 
     def show(self):
         window = self._window
         while True:
             event, values = window.Read(timeout=0)
-            if event is None or event == 'Exit':
+            if event is None:
                 break
             
-            # Check if the initialisation taNo sks are complete, and run any that aren't
+            # Check if initialisation tasks are complete, and run any that aren't
             for status in Status:
                 if status.done == 0:
                     if status.action != None:
@@ -61,9 +61,6 @@ class Initialise:
                     
                     status.done = 1
                     window.Element(f'-INITIAL{status.step}-').Update(status.done)
-                    window.Read(timeout=0)                    
-
-            window.Close()        
-        pass
-    
-    
+                    window.Read(timeout=0)
+                
+            window.Close()
