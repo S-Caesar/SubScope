@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import PySimpleGUI as sg
-
-from Program.Main import InitialSetup as ins
+from enum import Enum
 
 from Program.Subtitles import InitialSetupUI as isu
 from Program.SRS import ReviewUI as ru
@@ -13,60 +12,66 @@ from Program.Subtitles import SubRetimerUI as sru
 from Program.Parsing import SubsAnalysisUI as sau
 from Program.Options import OptionsUI as ou
 
-
-def wMainMenu(buttons):
-    columns = []
-    for x in buttons:
-        row = []
-        for y in x:
-            row.append(sg.Button(y))
-        columns.append([row])
-        if x != buttons[-1]:
-            columns.append([[sg.Text('='*30)]])
+class Buttons(Enum):
     
-    mainMenu = []
-    for x in columns:
-        mainMenu.append([sg.Column(x, justification='centre')])
+    SETUP   = ('Inital Setup',          isu.initialSetup,   0)
+    ADD     = ('Add Subtitles',         asu.addSubs,        0)
+    RETIME  = ('Retime Subtitle',       sru.subRetime,      1)
+    ANALYSE = ('Analyse Subtitles',     sau.analysis,       1)
+    IMPORT  = ('Import Known Words',    ik.importKnown,     2)
+    DECKS   = ('Manage Decks',          dmu.manageDecks,    2)
+    REVIEW  = ('Review Cards',          ru.reviewCards,     3)
+    OPTIONS = ('Change Settings',       ou.manageOptions,   4)
     
-    return mainMenu
+    def __init__(self, text, action, row):
+        self.text = text
+        self.action = action
+        self.row = row
 
 
-def mainMenu(buttons):
-    ins.initialise()
+class MainMenu:
 
-    uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons))
+    def __init__(self):
+        self.name = 'Main Menu'
+
+    @property
+    def _layout(self):
+        column = []
+        offset = 0
+        for button in Buttons:
+            if offset != button.row:
+                column.append([sg.Text('='*30)])
+                offset += 1
+                
+            try:
+                column[button.row + offset].append(sg.Button(button.text))
+            except:
+                column.append([sg.Button(button.text)])
+
+        layout = []
+        for row in column:
+            layout.append([sg.Column([row], justification='centre')]) 
+          
+        return layout
     
-    # Start UI loop
-    while True:
-        event, values = uMainMenu.Read()
-        if event is None or event == 'Exit':
-            break
+    @property
+    def _window(self):
+        window = sg.Window(self.name, layout=self._layout, finalize=True)
+        return window
+    
 
-        for x in range(len(buttons)):
-            if event in buttons[x]:
-                for y in range(len(buttons[x])):
-                    if event == buttons[x][y]:
-                        uMainMenu.Close()
-                        destinations[x][y]()
+    def show(self):
+        # Window has to be assigned, otherwise it won't close properly
+        window = self._window
+        while True:
+            event, values = window.Read()
+            if event is None:
+                break
+      
+            for button in Buttons:
+                if event == button.text:
+                    window.Close()
+                    button.action()
             
-        # Reread the main menu when returning in case the theme has been changed
-        uMainMenu = sg.Window('Main Menu', layout=wMainMenu(buttons), finalize=True)
-                 
-    uMainMenu.Close()
-
-
-if __name__ == '__main__':
-    
-    buttons = [['Initial Setup',      'Add Subtitles'    ],
-               ['Retime Subtitles',   'Analyse Subtitles'],
-               ['Import Known Words', 'Manage Decks'     ],
-               ['Review Cards'                           ],
-               ['Change Settings'                        ]]
-    
-    destinations = [[isu.initialSetup,  asu.addSubs    ],
-                    [sru.subRetime,     sau.analysis   ],
-                    [ik.importKnown,    dmu.manageDecks],
-                    [ru.reviewCards                    ],
-                    [ou.manageOptions                  ]]
-
-    mainMenu(buttons)
+            # Need to close and reread the window in case the theme has changed
+            window = self._window
