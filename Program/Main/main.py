@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from Program.Main import UserInterface as ui
+from Program.Main import MainMenu as mm
 
 from Program.Main import InitialSetup as ins
 
 ins.initialise()
 
-mainMenu = ui.MainMenu()
+mainMenu = mm.MainMenu()
 mainMenu.show()
