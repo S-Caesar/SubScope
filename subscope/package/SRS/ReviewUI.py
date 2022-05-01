@@ -6,8 +6,8 @@ import pandas as pd
 import PySimpleGUI as sg
 import ast
 
-from Program.SRS import ManageCards as mc
-from Program.Options import ManageOptions as mo
+from package.SRS import ManageCards as mc
+from package.Options import ManageOptions as mo
 
 def reviewCards():
     deckFolder = mo.getSetting('paths', 'Deck Folder')

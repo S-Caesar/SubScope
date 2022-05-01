@@ -5,10 +5,10 @@ import os
 import pandas as pd
 import PySimpleGUI as sg
 
-from Program.Parsing import IchiranParse as ip
-from Program.Parsing import ParsedAnalysis as pa
-from Program.General import FileHandling as fh
-from Program.Database import DataHandling as dh
+from package.Parsing import IchiranParse as ip
+from package.Parsing import ParsedAnalysis as pa
+from package.General import FileHandling as fh
+from package.Database import DataHandling as dh
 
 
 completedFiles = 0
@@ -34,7 +34,7 @@ def wAnalysis(status, fileList=[]):
     
     startPath = os.getcwd().split('\\')
     startPath = startPath[:len(startPath)-2]
-    startPath = '/'.join(startPath) + '/User Data/Subtitles'
+    startPath = '/'.join(startPath) + '/user/subtitles'
     
     folderColumn = [[sg.Text('Select a folder containing subtitle files to be analysed.')],
                     [sg.In(size=(37, 1), enable_events=True, key='-FOLDER-'),

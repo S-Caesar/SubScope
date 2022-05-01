@@ -2,8 +2,8 @@
 
 import pandas as pd
 
-from Program.Database import DataHandling as dh
-from Program.Options import ManageOptions as mo
+from package.Database import DataHandling as dh
+from package.Options import ManageOptions as mo
 
 # Take a word to be learned, find the episodes it occurs in, and return a dataframe
 # containing the episode reference, line number, sentence, and timestamp

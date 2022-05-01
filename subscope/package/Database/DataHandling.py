@@ -3,8 +3,8 @@
 import pandas as pd
 import os
 
-from Program.General import FileHandling as fh
-from Program.Options import ManageOptions as mo
+from package.General import FileHandling as fh
+from package.Options import ManageOptions as mo
 
 
 def databaseWrapper(create=True, rebuild=False, write=False, overwrite=False):
@@ -18,7 +18,7 @@ def databaseWrapper(create=True, rebuild=False, write=False, overwrite=False):
     '''
     
     startPath = os.getcwd().split('\\')
-    folder = '/'.join(startPath) + '/User Data/Subtitles'
+    folder = '/'.join(startPath) + '/user/subtitles'
     file = 'database.txt'
     
     if create == True:

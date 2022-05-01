@@ -2,19 +2,15 @@
 import PySimpleGUI as sg
 import pandas as pd
 
-from Program.Processing import CardCreation as cc
-from Program.Database import DataHandling as dh
-from Program.Options import ManageOptions as mo
+from package.Processing import CardCreation as cc
+from package.Database import DataHandling as dh
+from package.Options import ManageOptions as mo
+from package.Parsing import SubsAnalysisUI as sau
 
 
 def addCard(deckName, sortOptions, wordSources, database):
     # TODO: sort the table out to show POS, definition, etc, in separate columns
-    headers = list(database.columns)
-    data = database.values.tolist()       
-    
-    if len(data) == 0:
-        data = ['Analyse', 'Cards', 'to', 'Add', 'Words']
-    
+
     headings = [[sg.Text('Selected Deck:'),
                  sg.Text(deckName)]]
     
@@ -27,10 +23,17 @@ def addCard(deckName, sortOptions, wordSources, database):
     
     sources = [[sg.Text('Select sources for cards:')],
               *[[sg.Checkbox(wordSources[i], key=f'wordSources {i}', enable_events=True, default=True)] for i in range(len(wordSources))]]
-
-    dataSearch = [[sg.Table(values=data, headings=headers, num_rows=15, enable_events=True)],
-                  [sg.Button('Add Cards')]]
-
+    
+    # If there is data, show the database, otherwise direct the user to subtitle analysis
+    data = database.values.tolist()
+    if len(data) != 0:
+        headers = list(database.columns)
+        dataSearch = [[sg.Table(values=data, headings=headers, num_rows=15, enable_events=True)],
+                      [sg.Button('Add Cards')]]        
+    else:
+        dataSearch = [[sg.Text('The database is empty.\nAnalyse subtitles to add words to it.', size=(100,2))],
+                      [sg.Button('Analyse Subtitles')]]
+    
     addCard = [[sg.Column(headings)],
                       
                 [sg.Column(sorting),
@@ -49,6 +52,31 @@ def addUI(deckName, wordSources):
     deckFolder = mo.getSetting('paths', 'Deck Folder')
     database = dh.readDatabase()
     
+    # Trim the database to just show the word info in the UI
+    headings = list(database)
+    dataHeadings = headings[:5]
+    for heading in headings:
+        if heading not in dataHeadings:
+            del database[heading]
+            
+    
+    
+    # TODO: split up the gloss info into proper columns
+    # TODO: Words, but very slowly...
+    import ast
+
+    for x in range(len(database['gloss'])):
+        
+        database['gloss'][x] = ast.literal_eval(database['gloss'][x])
+        if len(database['gloss'][x]) > 1:
+            database['gloss'][x] = database['gloss'][x][0]
+
+        try:
+            database['gloss'][x] = database['gloss'][x]['pos']
+        except:
+            database['gloss'][x] = database['gloss'][x][0]['pos']
+    
+    
     # Add cards to the selected deck. Show database, and allow selection.
     wAddCard = sg.Window('Add Cards', layout=addCard(deckName, sortOptions, wordSources, database))
     while True:
@@ -60,8 +88,12 @@ def addUI(deckName, wordSources):
         for x in range(len(wordSources)):
             if values[f'wordSources {x}'] == True:
                 sourceSelect.append(wordSources[x])
+                
+        if event == 'Analyse Subtitles':
+            wAddCard.close()
+            sau.analysis()
         
-        
+        # TODO: currently need to press the button twice to get the list to update
         if event == 'Refresh':
             
             refine = values['-REFINE-']
@@ -84,7 +116,6 @@ def addUI(deckName, wordSources):
             wAddCard = sg.Window('Add Cards', layout=addCard(deckName, sortOptions, wordSources, databaseRefined))
             wAddCard.Read()
         
-        # TODO: have option to change audio clip for the card
         if event == 'Add Cards':
             # Add cards currently highlighted in the table
             for x in values[0]:

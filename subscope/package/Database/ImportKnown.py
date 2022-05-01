@@ -4,9 +4,9 @@ import PySimpleGUI as sg
 import pandas as pd
 import timeit
 
-from Program.Parsing import IchiranParse as ip
-from Program.Database import DataHandling as dh
-from Program.Options import ManageOptions as mo
+from package.Parsing import IchiranParse as ip
+from package.Database import DataHandling as dh
+from package.Options import ManageOptions as mo
 
 def importScreen(path, deckHeadings, tableHeadings, words):
     

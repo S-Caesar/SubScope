@@ -6,12 +6,12 @@ import PySimpleGUI as sg
 import pandas as pd
 import os
 
-from Program.Processing import CreateDeck as cd
-from Program.Processing import AddCards as ac
-from Program.Processing import RemoveCards as rc
-from Program.Processing import DeckStats as ds
-from Program.Processing import DeleteDeck as dd
-from Program.Options import ManageOptions as mo
+from package.Processing import CreateDeck as cd
+from package.Processing import AddCards as ac
+from package.Processing import RemoveCards as rc
+from package.Processing import DeckStats as ds
+from package.Processing import DeleteDeck as dd
+from package.Options import ManageOptions as mo
 
 def deckManagement(deckList, buttons):
     headings = [[sg.Text('Manage Decks', font='any 14')],

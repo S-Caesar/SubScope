@@ -3,7 +3,7 @@
 import PySimpleGUI as sg
 import pandas as pd
 
-from Program.Options import ManageOptions as mo
+from package.Options import ManageOptions as mo
 
 
 def removeCard(deckName, deckFolder):

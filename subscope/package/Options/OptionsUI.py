@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 import pandas as pd
 import os
 
-from Program.Options import ManageOptions as mo
+from package.Options import ManageOptions as mo
 
 def wOptions(headings, keys, fullOptions):
 
@@ -101,9 +101,9 @@ def manageOptions():
     
     # Prepare the main lookup table
     mLookup = pd.DataFrame(
-        [['paths',  '-MAIN-0-', 'Default Paths', '-PATHS-',  '-PATHOPTIONS-',                 'Option',    0,      'dict',  'defaultPaths.txt' ],
-         ['decks',  '-MAIN-1-', 'Deck Settings', '-DECKS-',  ['-NEWLIMIT-', '-REVIEWLIMIT-'], 'Deck Name', 1,      'table', 'deckSettings.txt' ],
-         ['themes', '-MAIN-2-', 'UI Themes',     '-THEMES-', '-THEMEOPTIONS-',                'Option',    2,      'dict',  'themesUI.txt'     ]],
+        [['paths',  '-MAIN-0-', 'Default Paths', '-PATHS-',  '-PATHOPTIONS-',                 'Option',    0,      'dict',  'default_paths.txt' ],
+         ['decks',  '-MAIN-1-', 'Deck Settings', '-DECKS-',  ['-NEWLIMIT-', '-REVIEWLIMIT-'], 'Deck Name', 1,      'table', 'deckSettings.txt'  ],
+         ['themes', '-MAIN-2-', 'UI Themes',     '-THEMES-', '-THEMEOPTIONS-',                'Option',    2,      'dict',  'themesUI.txt'      ]],
  columns=('lookup', 'mainKey',  'mainName',      'subKey',   'subOptionKey',                  'subName',  'group', 'type',  'fileName'))
     
     headings = mLookup['mainName'].tolist()
@@ -174,7 +174,7 @@ def manageOptions():
             
                 fileName = mLookup['fileName'][x]
                 startPath = os.getcwd().split('\\')
-                optionsPath = '/'.join(startPath[:-2]) + '/User Data/Settings/'
+                optionsPath = '/'.join(startPath) + '/user/settings/'
                 fullOptions[x].to_csv(optionsPath + fileName, sep='\t', index=None)
             
             # Reread the theme in case it has been changed, and maintain the window appearance

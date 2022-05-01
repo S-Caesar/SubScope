@@ -3,8 +3,8 @@
 import PySimpleGUI as sg
 import pandas as pd
 
-from Program.Processing import CardCreation as cc
-from Program.Options import ManageOptions as mo
+from package.Processing import CardCreation as cc
+from package.Options import ManageOptions as mo
 
 def deleteDeck(deckName):
     headings = [[sg.Text('Delete ' + deckName + '?')]]

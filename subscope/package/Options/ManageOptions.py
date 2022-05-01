@@ -15,13 +15,13 @@ def readOptions(group):
     '''
     
     startPath = os.getcwd().split('\\')
-    optionsPath = '/'.join(startPath) + '/User Data/Settings/'
+    optionsPath = '/'.join(startPath) + '/user/settings/'
     
     # [group, file, dataType]
-    groups = [['paths',     'defaultPaths.txt'],
-              ['decks',     'deckSettings.txt'],
-              ['themes',    'themesUI.txt'    ],
-              ['formats',   'cardFormats.txt' ]]
+    groups = [['paths',     'default_paths.txt'],
+              ['decks',     'deckSettings.txt' ],
+              ['themes',    'themesUI.txt'     ],
+              ['formats',   'cardFormats.txt'  ]]
     
     # Check whether the specified group exists, and get the entry if it does
     names = []

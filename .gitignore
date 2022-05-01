@@ -1,0 +1,23 @@
+# Had to run the following command in the directory where the .git folder is to create a valid blank .gitignore file:
+# git config --global guitool."Add to .gitignore".cmd $'echo "\n$FILENAME" >> .gitignore & git add .gitignore'
+# From: https://stackoverflow.com/questions/22046808/how-to-ignore-files-using-git-gui-tcl-tk-application
+
+*.srt
+*.mp3
+*.mp4
+*.wav
+*.txt
+*.bak
+*.ini
+*.png
+
+**/__pycache__
+**/__init__.py
+
+**/Archive
+**/Reference Info
+**/Setup
+**/Spreadsheets
+**/user
+**/test
+**/Version History

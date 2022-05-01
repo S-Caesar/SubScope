@@ -8,9 +8,9 @@ from enum import Enum
 
 class Paths(Enum):
     
-    DECK    = ('Deck Folder',       '/SRS/Decks',    ''          )
-    SOURCE  = ('Source Folder',     '/Subtitles',    ''          )
-    OPTIONS = ('Options Folder',    '/Settings',     ''          )
+    DECK    = ('Deck Folder',       '/SRS/decks',    ''          )
+    SOURCE  = ('Source Folder',     '/subtitles',    ''          )
+    OPTIONS = ('Options Folder',    '/settings',     ''          )
     ICHIRAN = ('Ichiran Path',      '',              'C:/Users/' )
     
     def __init__(self, option, folder, start):
@@ -22,9 +22,9 @@ class Paths(Enum):
 class InitialiseControl:
 
     root            = os.getcwd()
-    userData        = 'User Data'
-    settings        = 'Settings'
-    file            = 'defaultPaths.txt'
+    userData        = 'user'
+    settings        = 'settings'
+    file            = 'default_paths.txt'
     settingsPath    = '/'.join([root, userData, settings, file])
     userDataPath    = '/'.join([root, userData])
 
@@ -61,7 +61,7 @@ class InitialiseControl:
     @staticmethod
     def writePaths(forceRebuild=False):
         '''
-        Check if the 'defaultPaths.txt' file exists; create it if it doesn't
+        Check if the 'default_paths.txt' file exists; create it if it doesn't
         forceRebuild if there is an error to overwrite an existing file
         '''
         

@@ -4,8 +4,8 @@ import PySimpleGUI as sg
 import os
 import pandas as pd
 
-from Program.Processing import CardCreation as cc
-from Program.Options import ManageOptions as mo
+from package.Processing import CardCreation as cc
+from package.Options import ManageOptions as mo
 
 
 def createColumn(table):
@@ -31,7 +31,8 @@ def createColumn(table):
                                size=table['size'][x],
                                key=table['key'][x],
                                default=table['default'][x],
-                               group_id=table['group'][x])            
+                               group_id=table['group'][x],
+                               enable_events=True)            
 
         else:
             element = function(table['content'][x],
@@ -52,72 +53,77 @@ def createColumn(table):
     return layout
 
 
-def createDeck(cardFormats, wordSources):
+def createDeck(wordSources):
+    
+    wWidth = 220
     
     main = pd.DataFrame(
         columns=('type',    'content',          'default',  'font',     'size',         'key',          'group',    'line'),
         data = [['text',    'Create Deck',      '',         'any 14',   (12, 1),        None,           '',         ''    ],
-                ['radio',   'Empty Deck',       True,       '',         (None, None),   '-EMPTY-',      0,          'next'],
+                ['radio',   'Empty Deck',       True,       '',         (None, None),   '-emptyCheck-', 0,          'next'],
                 ['radio',   'Autofill Deck',    '',         '',         (None, None),   '-autoCheck-',  0,          'same'],
                 ['text',    'Deck Name:',       '',         '',         (12, 1),        None,           '',         'next'],
                 ['input',   '',                 '',         '',         (12, 1),        'deckName',     '',         'same'],
-                ['text',    'Card Format:',     '',         '',         (12, 1),        None,           '',         'next'],
-                ['combo',   cardFormats,        '',         '',         (12, 1),        'deckFormat',   '',         'same'],
                 ['text',    'New Limit:',       '',         '',         (12, 1),        None,           '',         'next'],
                 ['input',   '',                 '',         '',         (5, 1),         'newLimit',     '',         'same'],
                 ['text',    'Review Limit:',    '',         '',         (12, 1),        None,           '',         'next'],
-                ['input',   '',                 '',         '',         (5, 1),         'reviewLimit',  '',         'same'],
-                ['text',    '='*30,             '',         '',         (None, None),   None,           '',         'next']])
+                ['input',   '',                 '',         '',         (5, 1),         'reviewLimit',  '',         'same']])
     mainLayout = createColumn(main)
     
     auto = pd.DataFrame(
-        columns=('type',    'content',          'default',  'font',     'size',         'key',          'group',    'line'),
-        data = [['text',    'Select Source:',   '',         '',         (12, 1),        None,           '',         ''    ],
-                ['combo',   wordSources,        '',         '',         (12, 4),        '-source-',     '',         'same'],
-                ['text',    'Target known:',    '',         '',         (12, 1),        None,           '',         'next'],
-                ['input',   '',                 '',         '',         (3, 1),         '-comp-',       '',         'same']])    
+        columns=('type',    'content',               'default',  'font',     'size',         'key',          'group',    'line'),
+        data = [['text',    'Source:',               '',         '',         (6, 1),         None,           '',         ''    ],
+                ['combo',   wordSources,             '',         '',         (17, 4),        '-source-',     '',         'same'],
+                ['text',    'Target Comprehension:', '',         '',         (17, 1),        None,           '',         'next'],
+                ['input',   '',                      '',         '',         (3, 1),         '-comp-',       '',         'same']])    
+    
     autoLayout = createColumn(auto)
-
-    createDeck = [[sg.Column(mainLayout, visible=True, key='-MAIN-')],
-                  [sg.Column(autoLayout, visible=True, key='-AUTO-')],
+    
+    statusBar = [[sg.Text('', key='-statusBar-', size=(wWidth, 30))]]
+    
+    createDeck = [[sg.Column(mainLayout, key='-MAIN-', size=(wWidth, 140))],
+                  [sg.Column(autoLayout, visible=False, key='-AUTO-', size=(wWidth, 50)),
+                   sg.Column([[sg.Text('')]], visible=False, key='-EMPTY-', size=(wWidth, 0))],
+                  [sg.Column(statusBar, key='-STATUS-', size=(wWidth, 30))],
                   [sg.Column([[sg.Button('Back'), sg.Button('Create Deck')]])]]
 
     return createDeck
 
 
-def createUI(deckName, wordSources): 
-        
-    # TODO: included deckName as an input so the UI can be simplified - ideally get rid of it
+# TODO: included deckName as an input so the management UI can be simplified - ideally get rid of it
+def createUI(deckName, wordSources):
     
-    # TODO: Update formats once this properly implemented
-    cardFormats = ['Default', 'Alt 1', 'Alt 2']
+    status = ['', 'Deck name already exists: ', 'No auto deck source selected']
     
-    wCreateDeck = sg.Window('Deck Creation', layout=createDeck(cardFormats, wordSources))
+    wCreateDeck = sg.Window('Deck Creation', layout=createDeck(wordSources))
     
     while True:
         event, values = wCreateDeck.Read()
         if event in [None, 'Exit', 'Back']:
             break
         
-        wCreateDeck['-AUTO-'].update(visible=True)
-        
+        # Show/hide the 'auto deck' section based on radio buttons
+        wCreateDeck['-AUTO-'].update(visible=values['-autoCheck-'])
+        wCreateDeck['-EMPTY-'].update(visible=values['-emptyCheck-'])
+
         if event == 'Create Deck':
-            # If the deck name is taken, then skip deck creation
+            # Check whether the deck name exists
             deckName = values['deckName'] + '.txt'
             deckFolder = mo.getSetting('paths', 'Deck Folder')
             if deckName not in os.listdir(deckFolder):
+                
                 # Create a deck and fill it with cards if auto is checked
                 if values['-autoCheck-'] == False or values['-source-'] != '':
-                    cc.createDeck(values['-autoCheck-'], deckName, values['deckFormat'], values['newLimit'], values['reviewLimit'], values['-source-'], values['-comp-'])
+                    cc.createDeck(values['-autoCheck-'], deckName, values['newLimit'], values['reviewLimit'], values['-source-'], values['-comp-'])
                     break
-                else:
-                    if values['-source-'] == '':
-                        # TODO: display a message in the UI if the no source is selected
-                        print('No source selected for the auto deck')
-                    
-            else:                
-                # TODO: display a message in the UI if the deck already exists
-                print('Deck already exists:', deckName)
+                
+                # Inform the user if they have not selected a source for the auto deck
+                elif values['-source-'] == '':
+                    wCreateDeck.Element('-statusBar-').Update(status[2])
+            
+            # If the deck name is taken, then skip deck creation and inform user     
+            else:
+                wCreateDeck.Element('-statusBar-').Update(status[1] + deckName.replace('.txt', ''))
 
     wCreateDeck.Close()
     
@@ -125,12 +131,8 @@ def createUI(deckName, wordSources):
 
 
 if __name__ == '__main__':
-    
-    deckName = ''
-    
+
     sourceFolder = mo.getSetting('paths', 'Source Folder')
     wordSources = next(os.walk(sourceFolder))[1]
     
-    cardFormats = ['Default', 'Alt 1', 'Alt 2']
-    
-    createUI(deckName, wordSources)
+    createUI('', wordSources)

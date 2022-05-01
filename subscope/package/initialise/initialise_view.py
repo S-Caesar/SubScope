@@ -3,9 +3,9 @@
 import PySimpleGUI as sg
 from enum import Enum
 
-from Program.Main.InitialiseControl import InitialiseControl as ic
-from Program.Database import DataHandling as dh
-from Program.Options import ManageOptions as mo
+from package.initialise.initialise_control import InitialiseControl as ic
+from package.Database import DataHandling as dh
+from package.Options import ManageOptions as mo
 
 class Status(Enum):
     
@@ -21,7 +21,7 @@ class Status(Enum):
         self.done = done
 
 
-class Initialise:
+class InitialiseView:
 
     def __init__(self):
         self._name = 'Initialisation'

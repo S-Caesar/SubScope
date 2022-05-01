@@ -7,10 +7,10 @@ import datetime
 import random
 import timeit
 
-from Program.Processing import FindSentences as fs
-from Program.Processing import ExtractAudio as ea
-from Program.Options import ManageOptions as mo
-from Program.Database import DataHandling as dh
+from package.Processing import FindSentences as fs
+from package.Processing import ExtractAudio as ea
+from package.Options import ManageOptions as mo
+from package.Database import DataHandling as dh
 
 
 def getDate():
@@ -24,16 +24,14 @@ def getDate():
     return today
 
 
-def createDeck(auto, deckName, deckFormat, newLimit, reviewLimit, source, comp):
+def createDeck(auto, deckName, newLimit, reviewLimit, source, comp):
     '''
     Create a blank deck of the specified name and format
     
     auto: True/False boolean to automatically add cards to the new deck
     deckname: Name to be used for the deck filename
-    deckFormat: Format to be used for the deck (currently unused)
     '''
 
-    # TODO: add different deckFormat options - currently just default
     blankDeck = pd.DataFrame(columns=['state', # '1' if reviewed, and not 'again', otherwise '0'
                                       'source',
                                       'fullFile',
@@ -248,14 +246,13 @@ def deleteDeck(deckFolder, deckName):
 '''
 '----------------------------------------------------------------------------'
 # Create a new deck
-deckFolder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/SRS/Decks'
+deckFolder = 'C:/Users/Steph/OneDrive/App/package/User Data/SRS/Decks'
 deckName = 'Deck1.txt'
-deckFormat = 'default'
 
-createDeck(deckFolder, deckName, deckFormat)
+createDeck(deckFolder, deckName)
 
 # Add a card to a deck
-sourceFolder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles'
+sourceFolder = 'C:/Users/Steph/OneDrive/App/package/User Data/Subtitles'
 databaseFile = 'mainDatabase.txt'
 database = pd.read_csv(sourceFolder + '/' + databaseFile, sep='\t')
 

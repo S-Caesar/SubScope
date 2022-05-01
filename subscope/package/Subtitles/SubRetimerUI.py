@@ -6,14 +6,14 @@ import PySimpleGUI as sg
 import os
 from datetime import datetime
 
-from Program.Subtitles import SubRetimer as sr
-from Program.General import FileHandling as fh
+from package.Subtitles import SubRetimer as sr
+from package.General import FileHandling as fh
 
 
 def wSubRetime(fileList=[]):
     startPath = os.getcwd().split('\\')
     startPath = startPath[:len(startPath)-2]
-    startPath = '/'.join(startPath) + '/User Data/Subtitles'
+    startPath = '/'.join(startPath) + '/user/subtitles'
     
     # set up the retiming window
     folderColumn = [[sg.Text('Select a folder containing subtitle files to be retimed.')],

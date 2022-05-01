@@ -24,8 +24,8 @@ import re
 import timeit
 import os
 
-from Program.General import FileHandling as fh
-from Program.Options import ManageOptions as mo
+from package.General import FileHandling as fh
+from package.Options import ManageOptions as mo
 
 # Take the list of files, remove any that have been analysed already,
 # Then write the output files ('_justText', '_full') for the rest
@@ -293,7 +293,7 @@ def parseFiles(folder, files):
 '----------------------------------------------------------------------------'
 if __name__ == '__main__':
     # will work with OneDrive, but best if folder is set to 'Always Keep On This Device'
-    folder = 'C:/Users/Steph/OneDrive/App/SubScope/User Data/Subtitles/SteinsGate' 
+    folder = 'C:/Users/Steph/OneDrive/App/package/user/subtitles/SteinsGate' 
     file_list = os.listdir(folder)
     files = [f for f in file_list
                  if os.path.isfile(os.path.join(folder, f))

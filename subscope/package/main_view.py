@@ -3,14 +3,14 @@
 import PySimpleGUI as sg
 from enum import Enum
 
-from Program.Subtitles import InitialSetupUI as isu
-from Program.SRS import ReviewUI as ru
-from Program.Processing import DeckMngmtUI as dmu
-from Program.Database import ImportKnown as ik
-from Program.Subtitles import AddSubsUI as asu
-from Program.Subtitles import SubRetimerUI as sru
-from Program.Parsing import SubsAnalysisUI as sau
-from Program.Options import OptionsUI as ou
+from package.Subtitles import InitialSetupUI as isu
+from package.SRS import ReviewUI as ru
+from package.Processing import DeckMngmtUI as dmu
+from package.Database import ImportKnown as ik
+from package.Subtitles import AddSubsUI as asu
+from package.Subtitles import SubRetimerUI as sru
+from package.Parsing import SubsAnalysisUI as sau
+from package.Options import OptionsUI as ou
 
 class Buttons(Enum):
     
@@ -29,7 +29,7 @@ class Buttons(Enum):
         self.row = row
 
 
-class MainMenu:
+class MainView:
 
     def __init__(self):
         self._name = 'Main Menu'
