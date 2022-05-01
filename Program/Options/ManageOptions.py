@@ -15,7 +15,7 @@ def readOptions(group):
     '''
     
     startPath = os.getcwd().split('\\')
-    optionsPath = '/'.join(startPath[:-2]) + '/User Data/Settings/'
+    optionsPath = '/'.join(startPath) + '/User Data/Settings/'
     
     # [group, file, dataType]
     groups = [['paths',     'defaultPaths.txt'],

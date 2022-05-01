@@ -10,9 +10,9 @@ from Program.Options import ManageOptions as mo
 class Status(Enum):
     
     PACKAGES    = (0, 'Setting up packages',            None,               1)
-    DEFAULTS    = (1, 'Writing default paths',          ic.writePaths,      0)
-    DATABASE    = (2, 'Checking database',              dh.databaseWrapper, 0)
-    ICHIRAN     = (3, 'Checking ichiran functionality', ic.setupIchiran,    0)
+    ICHIRAN     = (1, 'Checking ichiran functionality', ic.setupIchiran,    0)
+    DEFAULTS    = (2, 'Writing default paths',          ic.writePaths,      0)
+    DATABASE    = (3, 'Checking database',              dh.databaseWrapper, 0)
 
     def __init__(self, step, text, action, done):
         self.step = step

@@ -159,7 +159,7 @@ def manageOptions():
                 elif y < maxNo:
                     uOptions.Element(f'-SUB-{y}-').Update(value='')
                         
-        # Write the updated options back to the options files:    
+        # Write the updated options back to the options files  
         if event == 'Apply Changes':
             for x in range(len(fullOptions)):
                 groupType = mLookup['type'][x]

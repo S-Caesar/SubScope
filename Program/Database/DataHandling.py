@@ -18,7 +18,7 @@ def databaseWrapper(create=True, rebuild=False, write=False, overwrite=False):
     '''
     
     startPath = os.getcwd().split('\\')
-    folder = '/'.join(startPath[:-2]) + '/User Data/Subtitles'
+    folder = '/'.join(startPath) + '/User Data/Subtitles'
     file = 'database.txt'
     
     if create == True:
