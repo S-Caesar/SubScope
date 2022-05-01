@@ -3,25 +3,23 @@
 import PySimpleGUI as sg
 from enum import Enum
 
-from package.Subtitles import InitialSetupUI as isu
+from package.help.help_view import HelpView as hv
 from package.SRS import ReviewUI as ru
 from package.Processing import DeckMngmtUI as dmu
 from package.Database import ImportKnown as ik
-from package.Subtitles import AddSubsUI as asu
 from package.Subtitles import SubRetimerUI as sru
 from package.Parsing import SubsAnalysisUI as sau
 from package.Options import OptionsUI as ou
 
 class Buttons(Enum):
     
-    SETUP   = ('Inital Setup',          isu.initialSetup,   0)
-    ADD     = ('Add Subtitles',         asu.addSubs,        0)
-    RETIME  = ('Retime Subtitle',       sru.subRetime,      1)
-    ANALYSE = ('Analyse Subtitles',     sau.analysis,       1)
-    IMPORT  = ('Import Known Words',    ik.importKnown,     2)
-    DECKS   = ('Manage Decks',          dmu.manageDecks,    2)
-    REVIEW  = ('Review Cards',          ru.reviewCards,     3)
-    OPTIONS = ('Change Settings',       ou.manageOptions,   4)
+    RETIME  = ('Retime Subtitle',       sru.subRetime,      0)
+    ANALYSE = ('Analyse Subtitles',     sau.analysis,       0)
+    IMPORT  = ('Import Known Words',    ik.importKnown,     1)
+    DECKS   = ('Manage Decks',          dmu.manageDecks,    1)
+    REVIEW  = ('Review Cards',          ru.reviewCards,     2)
+    OPTIONS = ('Change Settings',       ou.manageOptions,   3)
+    SETUP   = ('Help',                  hv().show,          4)
     
     def __init__(self, text, action, row):
         self.text = text
