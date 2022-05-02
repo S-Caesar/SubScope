@@ -4,16 +4,16 @@ import PySimpleGUI as sg
 from enum import Enum
 
 from package.help.help_view import HelpView as hv
+from package.retime.retime_view import RetimeView as rv
 from package.SRS import ReviewUI as ru
 from package.Processing import DeckMngmtUI as dmu
 from package.Database import ImportKnown as ik
-from package.Subtitles import SubRetimerUI as sru
 from package.Parsing import SubsAnalysisUI as sau
 from package.Options import OptionsUI as ou
 
 class Buttons(Enum):
     
-    RETIME  = ('Retime Subtitle',       sru.subRetime,      0)
+    RETIME  = ('Retime Subtitles',      rv().show,          0)
     ANALYSE = ('Analyse Subtitles',     sau.analysis,       0)
     IMPORT  = ('Import Known Words',    ik.importKnown,     1)
     DECKS   = ('Manage Decks',          dmu.manageDecks,    1)

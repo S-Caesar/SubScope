@@ -7,7 +7,7 @@ import PySimpleGUI as sg
 
 from package.Parsing import IchiranParse as ip
 from package.Parsing import ParsedAnalysis as pa
-from package.General import FileHandling as fh
+from package.general.file_handling import FileHandling as fh
 from package.Database import DataHandling as dh
 
 

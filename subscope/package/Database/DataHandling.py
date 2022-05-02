@@ -3,7 +3,7 @@
 import pandas as pd
 import os
 
-from package.General import FileHandling as fh
+from package.general.file_handling import FileHandling as fh
 from package.Options import ManageOptions as mo
 
 
