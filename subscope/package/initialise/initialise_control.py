@@ -39,16 +39,25 @@ class InitialiseControl:
         output = None
         target = 'local-projects'
         ichiran = 'ichiran'
-
-        for dirpath, subdirs, files in os.walk(Paths.ICHIRAN.start):
-            if target in subdirs:
-                try:
-                    path = os.path.join(dirpath, target) + '/' + ichiran
-                    output = subprocess.check_output('ichiran-cli -f ' + '何しての', shell=True, cwd=path)
-                    break
-                
-                except:
-                    continue
+        
+        # Test whether the current path to ichiran is still valid
+        ic = InitialiseControl
+        if os.path.isfile(ic.settingsPath):
+            settings = pd.read_csv(ic.settingsPath, sep='\t', index_col=ic.headers[0])
+            path = settings[ic.headers[1]][Paths.ICHIRAN.option]
+            output = subprocess.check_output('ichiran-cli -f ' + '何しての', shell=True, cwd=path)
+        
+        # Otherwise, search for the location of ichiran
+        else:
+            for dirpath, subdirs, files in os.walk(Paths.ICHIRAN.start):
+                if target in subdirs:
+                    try:
+                        path = os.path.join(dirpath, target) + '/' + ichiran
+                        output = subprocess.check_output('ichiran-cli -f ' + '何しての', shell=True, cwd=path)
+                        break
+                    
+                    except:
+                        continue
                 
         if output == None:
             # TODO: prompt the user to find the quicklisp folder themselves
