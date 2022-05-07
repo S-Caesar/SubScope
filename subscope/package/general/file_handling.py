@@ -7,13 +7,15 @@ class FileHandling:
     @staticmethod
     # TODO: add support for lists of extensions, if multiple file types are required (e.g. .srt, .ass)
     def getFiles(folder, extn=''):
-        # Get a list of files in a specified folder
-        fileList = [f for f in os.listdir(folder)
-                    if os.path.isfile(os.path.join(folder, f))]
-        
-        if extn != '':
-            fileList = [f for f in fileList
-                        if f.lower().endswith((extn))]
+        fileList = []
+        if folder != '':
+            # Get a list of files in a specified folder
+            fileList = [f for f in os.listdir(folder)
+                        if os.path.isfile(os.path.join(folder, f))]
+
+            if extn != '':
+                fileList = [f for f in fileList
+                            if f.lower().endswith((extn))]
             
         return fileList
     
