@@ -3,13 +3,14 @@
 import PySimpleGUI as sg
 from enum import Enum
 
-from package.help.help_view import HelpView as hv
-from package.retime.retime_view import RetimeView as rv
-from package.SRS import ReviewUI as ru
-from package.Processing import DeckMngmtUI as dmu
-from package.Database import ImportKnown as ik
-from package.Parsing import SubsAnalysisUI as sau
-from package.Options import OptionsUI as ou
+from subscope.package.help.help_view import HelpView as hv
+from subscope.package.retime.retime_view import RetimeView as rv
+from subscope.package.SRS import ReviewUI as ru
+from subscope.package.Processing import DeckMngmtUI as dmu
+from subscope.package.Database import ImportKnown as ik
+from subscope.package.Parsing import SubsAnalysisUI as sau
+from subscope.package.Options import OptionsUI as ou
+
 
 class Buttons(Enum):
     
@@ -26,11 +27,14 @@ class Buttons(Enum):
         self.action = action
         self.row = row
 
+    def create(self):
+        button = sg.Button(self.text)
+        return button
+
 
 class MainView:
 
-    def __init__(self):
-        self._name = 'Main Menu'
+    _NAME = 'Main Menu'
 
     @property
     def _layout(self):
@@ -40,10 +44,11 @@ class MainView:
             if offset != button.row:
                 column.append([sg.Text('='*30)])
                 offset += 1
-                
+
+            # If a row has been created, append to it, otherwise create one
             try:
-                column[button.row + offset].append(sg.Button(button.text))
-            except:
+                column[button.row + offset].append(button.create())
+            except IndexError:
                 column.append([sg.Button(button.text)])
 
         layout = []
@@ -54,7 +59,7 @@ class MainView:
     
     @property
     def _window(self):
-        window = sg.Window(self._name, layout=self._layout, finalize=True)
+        window = sg.Window(self._NAME, layout=self._layout, finalize=True)
         return window
     
     def show(self):

@@ -78,6 +78,7 @@ class RetimeView:
 
     _NAME = 'Retime Subtitles'
     _START = os.getcwd() + '/user/subtitles'
+    _TIMEOUT = 100
 
     def _layout(self, files):
         if files is None:
@@ -109,7 +110,8 @@ class RetimeView:
         return layout
 
     def _window(self, files=None):
-        window = sg.Window(self._NAME, layout=self._layout(files))
+        window = sg.Window(self._NAME,
+                           layout=self._layout(files))
         return window
 
     def show(self):
@@ -118,7 +120,7 @@ class RetimeView:
         control = RetimeControl()
         window = self._window()
         while True:
-            event, values = window.Read(timeout=100)
+            event, values = window.Read(timeout=self._TIMEOUT)
             if event in [None, 'Back']:
                 break
 
@@ -132,7 +134,7 @@ class RetimeView:
                 if files:
                     window.Close()
                     window = self._window(files)
-                    event, values = window.Read(timeout=100)
+                    event, values = window.Read(timeout=self._TIMEOUT)
 
             # Select / deselect all files
             switch = {Buttons.SELECT.text: True,
