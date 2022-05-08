@@ -7,7 +7,7 @@
 '''
 
 import pandas as pd
-from package.Options import ManageOptions as mo
+from subscope.package.Options import ManageOptions as mo
 
 def dataframeDifference(df1, df2, column=None, dropMerge=False):
     # Compare two DataFrames and return a DataFrame with the words only in the

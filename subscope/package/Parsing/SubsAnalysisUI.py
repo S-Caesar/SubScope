@@ -5,10 +5,10 @@ import os
 import pandas as pd
 import PySimpleGUI as sg
 
-from package.Parsing import IchiranParse as ip
-from package.Parsing import ParsedAnalysis as pa
-from package.general.file_handling import FileHandling as fh
-from package.Database import DataHandling as dh
+from subscope.package.Parsing import IchiranParse as ip
+from subscope.package.Parsing import ParsedAnalysis as pa
+from subscope.package.general.file_handling import FileHandling as fh
+from subscope.package.Database import DataHandling as dh
 
 
 completedFiles = 0

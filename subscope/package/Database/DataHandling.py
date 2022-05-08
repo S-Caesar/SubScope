@@ -3,8 +3,8 @@
 import pandas as pd
 import os
 
-from package.general.file_handling import FileHandling as fh
-from package.Options import ManageOptions as mo
+from subscope.package.general.file_handling import FileHandling as fh
+from subscope.package.Options import ManageOptions as mo
 
 
 def databaseWrapper(create=True, rebuild=False, write=False, overwrite=False):
@@ -59,7 +59,7 @@ def writeDatabase(file, folder, overwrite=False):
 
     for source in sources:
         sourceDir = folder + '/' + source + '/Text'
-        fullFiles = fh.getFiles(sourceDir, fileEnd='_full.txt')
+        fullFiles = fh.getFiles(sourceDir, extn='_full.txt')
         database = updateDatabase(sourceDir, fullFiles, database, overwrite)
             
     # Sort by reading, and tidy up the formatting before writing the .txt file

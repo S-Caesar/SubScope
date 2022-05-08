@@ -24,8 +24,8 @@ import re
 import timeit
 import os
 
-from package.general.file_handling import FileHandling as fh
-from package.Options import ManageOptions as mo
+from subscope.package.general.file_handling import FileHandling as fh
+from subscope.package.Options import ManageOptions as mo
 
 # Take the list of files, remove any that have been analysed already,
 # Then write the output files ('_justText', '_full') for the rest

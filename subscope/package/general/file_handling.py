@@ -45,16 +45,15 @@ class FileHandling:
         # Add text to the end of a file name. Optionally, change the file extension.
         if type(files) == str:
             files = [files]
-        
-        for x in range(len(files)):
-            fileName = files[x].split('.')
-            fileName[-2] = fileName[-2] + append
+
+        renamed_files = []
+        for file in files:
+            file_name = file.split('.')
+            file_name[-2] = file_name[-2] + append
             
             if extn != '':
                 if '.' in extn:
                     extn = extn.replace('.', '')
-                fileName[-1] = extn
-    
-            files[x] = '.'.join(fileName)
-    
-        return files
+                file_name[-1] = extn
+            renamed_files.append('.'.join(file_name))
+        return renamed_files

@@ -134,12 +134,11 @@ class RetimeView:
                 if files:
                     window.Close()
                     window = self._window(files)
-                    event, values = window.Read(timeout=self._TIMEOUT)
 
             # Select / deselect all files
             switch = {Buttons.SELECT.text: True,
                       Buttons.DESELECT.text: False}
-            if event in switch:
+            if event in switch.keys():
                 for file in files:
                     window.Element(file).Update(value=switch[event])
 
