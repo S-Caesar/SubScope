@@ -1,13 +1,9 @@
 import os
-import pandas as pd
 import PySimpleGUI as sg
 from enum import Enum
 
 from subscope.package.Parsing.analysis_control import AnalysisControl
-from subscope.package.Parsing import IchiranParse as ip
-from subscope.package.Parsing import ParsedAnalysis as pa
 from subscope.package.general.file_handling import FileHandling as fh
-from subscope.package.Database import DataHandling as dh
 
 
 class Text(Enum):
@@ -186,8 +182,9 @@ class AnalysisView:
                 selected_files = [file for file in files if values[file]]
                 if selected_files:
                     stats = controller.analyse_subtitles(folder, selected_files)
-                    for x in range(len(self.stats_display[0])):
-                        window.Element(self.stats_display[2][x]).update(self.stats_display[0][x] + str(stats[x]))
+                    if stats:
+                        for x in range(len(self.stats_display[0])):
+                            window.Element(self.stats_display[2][x]).update(self.stats_display[0][x] + str(stats[x]))
                     status = 4
 
 
