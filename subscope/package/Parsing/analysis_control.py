@@ -5,7 +5,7 @@ import time
 
 from subscope.package.general.file_handling import FileHandling as fh
 from subscope.package.Parsing.ichiran import Ichiran
-from subscope.package.Parsing import ParsedAnalysis as pa
+from subscope.package.Options import ManageOptions as mo
 
 
 class AnalysisControl:
@@ -33,7 +33,7 @@ class AnalysisControl:
         stats = []
         if not output_table.empty:
             output_table.reset_index(drop=True)
-            stats = pa.simpleAnalysis(output_table)
+            stats = self._analyse_words(output_table)
         return stats
 
     def _analyse_files(self, input_folder, output_folder, input_files):
@@ -91,6 +91,7 @@ class AnalysisControl:
         print('All Files Analysed. Batch Complete!')
 
     def _strip_text(self, input_lines):
+        """Remove all non-Whitelisted characters from the input list of lists"""
         output_lines = []
         for line in input_lines:
             line = re.sub(r'（.+?）', '', line)
@@ -98,6 +99,57 @@ class AnalysisControl:
             line = [character for character in line if self._WHITELIST.search(character)]
             output_lines.append(''.join(line))
         return output_lines
+
+    def _analyse_words(self, data_table):
+        number_of_words = len(data_table)
+
+        # Group duplicate rows, counting the number of occurrences, then sort descending by frequency
+        unique_words = data_table.groupby(['text']).size().reset_index()
+        unique_words.rename(columns={0: 'frequency'}, inplace=True)
+        unique_words.sort_values(by=['frequency'], ascending=False, inplace=True)
+        unique_words = unique_words.reset_index(drop=True)
+        number_of_unique_words = len(unique_words)
+
+        # TODO: move reading the database into the getSettings file once it is rewritten
+        # Read the database and filter known words (status == 1)
+        database_path = mo.getSetting('paths', 'Source Folder')
+        database = pd.read_csv(database_path + '/database.txt', sep='\t')
+        known_words = database.loc[database['status'] == 1]
+
+        # Compare the known words from the database with the data_table
+        unknown_words = self._dataframe_difference(data_table, known_words, 'left_only', True)
+        number_of_unknown_words = len(unknown_words)
+
+        unknown_unique_words = self._dataframe_difference(unique_words, known_words, 'left_only', True)
+        number_of_unknown_unique_words = len(unknown_unique_words)
+
+        comprehension = round(((number_of_words - number_of_unknown_words) / number_of_words) * 100)
+
+        stats = [number_of_words,
+                 number_of_unknown_words,
+                 comprehension,
+                 number_of_unique_words,
+                 number_of_unknown_unique_words]
+
+        return stats
+
+    @staticmethod
+    def _dataframe_difference(df_1, df_2, column=None, drop_merge=True):
+        """
+        Compare two DataFrames and return lines that only appear in df_1 (column='left_only'),
+        df_2 (columns='right_only'), or both (columns='both')
+        """
+        comparison_table = df_1.merge(df_2, indicator=True, how='outer')
+        if column in ['left_only', 'right_only', 'both']:
+            difference = comparison_table[comparison_table['_merge'] == column]
+        else:
+            raise Exception('Invalid value for column. Must be one of: \'left_only\', \'right_only\', \'both\'')
+
+        if drop_merge:
+            difference = difference.reset_index(drop=True)
+            del difference['_merge']
+
+        return difference
 
 
 if __name__ == '__main__':

@@ -8,12 +8,12 @@ from subscope.package.general.file_handling import FileHandling as fh
 
 class Text(Enum):
 
-    FOLDER   = ('Select a folder containing subtitle files.', None,                None,    None      )
-    SUBTITLE = ('Subtitle Files',                             ('any', 10, 'bold'), None,    None      )
-    STATUS   = ('Status:',                                    ('any', 10, 'bold'), None,    None      )
-    MESSAGE  = ('',                                           None,                (30, 2), '-STATUS-')
-    ALL_WORDS = ('All Words',                                 ('any', 10, 'bold'), None,    None      )
-    UNIQUE_WORDS = ('Unique Words',                           ('any', 10, 'bold'), None,    None      )
+    FOLDER = ('Select a folder containing subtitle files.', None, None, None)
+    SUBTITLE = ('Subtitle Files', ('any', 10, 'bold'), None, None)
+    STATUS = ('Status:', ('any', 10, 'bold'), None, None)
+    MESSAGE = ('', None, (30, 2), '-STATUS-')
+    ALL_WORDS = ('All Words', ('any', 10, 'bold'), None, None)
+    UNIQUE_WORDS = ('Unique Words', ('any', 10, 'bold'), None, None)
 
     def __init__(self, text, font, size, key):
         self.text = text
@@ -31,7 +31,7 @@ class Text(Enum):
 
 class Input(Enum):
 
-    BROWSE = ('',     (37, 1), True, '-BROWSE-')
+    BROWSE = ('', (37, 1), True, '-BROWSE-')
 
     def __init__(self, default, size, events, key):
         self.default = default
@@ -46,10 +46,10 @@ class Input(Enum):
 
 class Buttons(Enum):
 
-    ANALYSE   = ('Analyse Files', True)
-    SELECT    = ('Select All',    True)
-    DESELECT  = ('Deselect All',  True)
-    BACK      = ('Back',          True)
+    ANALYSE = ('Analyse Files', True)
+    SELECT = ('Select All', True)
+    DESELECT = ('Deselect All', True)
+    BACK = ('Back', True)
 
     def __init__(self, text, events):
         self.text = text

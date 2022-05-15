@@ -9,19 +9,18 @@ from subscope.package.Parsing.analysis_view import AnalysisView as av
 from subscope.package.SRS import ReviewUI as ru
 from subscope.package.Processing import DeckMngmtUI as dmu
 from subscope.package.Database import ImportKnown as ik
-from subscope.package.Parsing import SubsAnalysisUI as sau
 from subscope.package.Options import OptionsUI as ou
 
 
 class Buttons(Enum):
     
-    RETIME  = ('Retime Subtitles',      rv().show,          0)
-    ANALYSE = ('Analyse Subtitles',     av().show,          0)
-    IMPORT  = ('Import Known Words',    ik.importKnown,     1)
-    DECKS   = ('Manage Decks',          dmu.manageDecks,    1)
-    REVIEW  = ('Review Cards',          ru.reviewCards,     2)
-    OPTIONS = ('Change Settings',       ou.manageOptions,   3)
-    SETUP   = ('Help',                  hv().show,          4)
+    RETIME = ('Retime Subtitles', rv().show, 0)
+    ANALYSE = ('Analyse Subtitles', av().show, 0)
+    IMPORT = ('Import Known Words', ik.importKnown, 1)
+    DECKS = ('Manage Decks', dmu.manageDecks, 1)
+    REVIEW = ('Review Cards', ru.reviewCards, 2)
+    OPTIONS = ('Change Settings', ou.manageOptions, 3)
+    SETUP = ('Help', hv().show, 4)
     
     def __init__(self, text, action, row):
         self.text = text
