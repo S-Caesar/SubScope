@@ -8,7 +8,7 @@ from subscope.package.Options import ManageOptions as mo
 class Ichiran:
 
     @staticmethod
-    def convert_line_to_table_rows(line, line_no):
+    def convert_line_to_table_rows(line, line_no, debug=False):
         json_output = Ichiran._parse_line(line)
         entries = []
         for entry in json_output[0][0][0]:
@@ -32,14 +32,14 @@ class Ichiran:
             word = Word()
             word.set_properties_with_ichiran_json(entry, line_no)
             word_list.append(word.get_list())
-            if word.invalid:
-                print('===INVALID===' + str(entry))
+            if word.invalid and debug:
+                print(line)
+                print(str(line_no) + ' ===INVALID=== ' + str(entry))
 
         return word_list
 
     @staticmethod
     def _parse_line(line):
-        print(line)
         path = mo.getSetting('paths', 'Ichiran Path')
         console_output = subprocess.check_output('ichiran-cli -f ' + line, shell=True, cwd=path)
         json_output = json.loads(console_output)

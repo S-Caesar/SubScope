@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import re
 import time
+from multiprocessing import Pool
+import tqdm
 
 from subscope.package.general.file_handling import FileHandling as fh
 from subscope.package.Parsing.ichiran import Ichiran
@@ -65,19 +67,15 @@ class AnalysisControl:
 
             # Parse the subs_only file
             start_time = time.time()
-            word_list = []
-            parse_input = output_lines[0].to_list()
-            for idx, line in enumerate(parse_input):
-                if idx > 0 and idx % 20 == 0:
-                    passed_time = time.time() - start_time
-                    est_time = round((passed_time / idx) * (len(parse_input) - idx) / 60, 1)
-                    print('===================================')
-                    print('Rows Complete:', idx, '/', len(parse_input))
-                    print('Estimated time remaining:', est_time, 'minutes')
-                    print('===================================')
-
+            lines_and_line_no = []
+            for line in output_lines[0]:
                 line_no = output_lines.index[output_lines[0] == line].tolist()[0]
-                word_list.extend(Ichiran.convert_line_to_table_rows(line, line_no))
+                lines_and_line_no.append([line, line_no])
+
+            word_list = []
+            pool = Pool(processes=16)
+            for out in pool.starmap(Ichiran.convert_line_to_table_rows, tqdm.tqdm(lines_and_line_no)):
+                word_list.extend(out)
 
             # Write the data to files
             output_lines.to_csv(output_file, sep='\t', header=False)
@@ -85,9 +83,13 @@ class AnalysisControl:
                                       columns=['line', 'reading', 'text', 'kana', 'score', 'seq',
                                                'gloss', 'conj_pos', 'conj_type', 'neg', 'dict_reading',
                                                'dict_text', 'dict_kana', 'suffix'])
+            data_table.sort_values(by='line', inplace=True)
             data_table.to_csv(output_folder + '/' + subs_only_to_data_table[subs_only_file], index=False, sep='\t')
 
+            passed_time = time.time() - start_time
+            est_time = round((passed_time / (file_no+1)) * (len(subs_only) - file_no+1) / 60, 1)
             print('Files Complete:', file_no + 1, '/', len(subs_only))
+            print('Estimated time remaining:', est_time, 'minutes')
         print('All Files Analysed. Batch Complete!')
 
     def _strip_text(self, input_lines):
