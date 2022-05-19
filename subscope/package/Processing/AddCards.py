@@ -2,10 +2,10 @@
 import PySimpleGUI as sg
 import pandas as pd
 
-from package.Processing import CardCreation as cc
-from package.Database import DataHandling as dh
-from package.Options import ManageOptions as mo
-from package.Parsing import SubsAnalysisUI as sau
+from subscope.package.Processing import CardCreation as cc
+from subscope.package.Database.database import Database as db
+from subscope.package.Options import ManageOptions as mo
+from subscope.package.Parsing import SubsAnalysisUI as sau
 
 
 def addCard(deckName, sortOptions, wordSources, database):
@@ -50,7 +50,7 @@ def addUI(deckName, wordSources):
     sortOptions = ['Hiragana', 'Alphabet', 'Part of Speech', 'Frequency', 'Fewest Unknown']
     
     deckFolder = mo.getSetting('paths', 'Deck Folder')
-    database = dh.readDatabase()
+    database = db.read_database()
     
     # Trim the database to just show the word info in the UI
     headings = list(database)

@@ -7,10 +7,10 @@ import datetime
 import random
 import timeit
 
-from package.Processing import FindSentences as fs
-from package.Processing import ExtractAudio as ea
-from package.Options import ManageOptions as mo
-from package.Database import DataHandling as dh
+from subscope.package.Processing import FindSentences as fs
+from subscope.package.Processing import ExtractAudio as ea
+from subscope.package.Options import ManageOptions as mo
+from subscope.package.Database.database import Database as db
 
 
 def getDate():
@@ -84,7 +84,7 @@ def createDeck(auto, deckName, newLimit, reviewLimit, source, comp):
 
 def autoDeck(source, deckFolder, deckName, comp):
     # TODO: add option to create a deck from multiple sources
-    database = dh.readDatabase()
+    database = db.read_database()
     sourceDatabase = database.copy()
 
     # Go through the database (starting at the first episode column),

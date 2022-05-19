@@ -58,8 +58,8 @@ def writeDatabase(file, folder, overwrite=False):
     database = pd.read_csv(folder + '/' + file, sep='\t')
 
     for source in sources:
-        sourceDir = folder + '/' + source + '/Text'
-        fullFiles = fh.getFiles(sourceDir, extn='_full.txt')
+        sourceDir = folder + '/' + source + '/text'
+        fullFiles = fh.getFiles(sourceDir, extn='_data_table.txt')
         database = updateDatabase(sourceDir, fullFiles, database, overwrite)
             
     # Sort by reading, and tidy up the formatting before writing the .txt file
@@ -84,7 +84,7 @@ def updateDatabase(sourceDir, fullFiles, database, overwrite):
     for x in range(len(fullFiles)):   
         # Split the file name up to create the ID for the column
         folderName = sourceDir.split('/')[-2]
-        fileName = fullFiles[x].replace('_full.txt','')
+        fileName = fullFiles[x].replace('_data_table.txt', '')
         
         number = str(x+1)
         while len(number) < 3:
@@ -100,22 +100,22 @@ def updateDatabase(sourceDir, fullFiles, database, overwrite):
             # Then just delete the 'dict' columns, as this info is now in the main columns  
             fullTable = pd.read_csv(sourceDir + '/' + fullFiles[x], sep='\t').fillna(0)
             dictTable = fullTable.copy()
-            cols = [['reading', 'dict-reading'], ['text', 'dict-text'], ['kana', 'dict-kana']]
+            cols = [['reading', 'dict_reading'], ['text', 'dict_text'], ['kana', 'dict_kana']]
             
             for y in range(len(dictTable)):
-                if '【' in dictTable[cols[0][1]][y]:
+                if '【' in str(dictTable[cols[0][1]][y]):
                     for col1, col2 in cols:
                         dictTable.loc[dictTable.index[y], col1] = fullTable[col2][y]   
             
             for col1, col2 in cols:
                 del dictTable[col2]
-            
+
             # Group duplicates, and store the count of each word in the metaData column
             uniqueDict = dictTable.groupby(['reading', 'text', 'kana', 'gloss']).size().reset_index()
             uniqueDict = uniqueDict.rename({0: metaData}, axis=1)
             
             # Remove any lines with no 'gloss' data, then append new words
-            uniqueDict = uniqueDict[uniqueDict.gloss != '0']
+            uniqueDict = uniqueDict[uniqueDict.gloss != 0]
             database = database.append(uniqueDict)
             
             print(x+1, '/', str(int(len(fullFiles))), 'files analysed')

@@ -4,9 +4,9 @@ import PySimpleGUI as sg
 import pandas as pd
 import timeit
 
-from package.Parsing import IchiranParse as ip
-from package.Database import DataHandling as dh
-from package.Options import ManageOptions as mo
+from subscope.package.Parsing import IchiranParse as ip
+from subscope.package.Database.database import Database as db
+from subscope.package.Options import ManageOptions as mo
 
 def importScreen(path, deckHeadings, tableHeadings, words):
     
@@ -150,14 +150,16 @@ def importKnown():
             # Mark the words as known in the main database
             databasePath = mo.getSetting('paths', 'Source Folder')
             
-            dh.writeDatabase(databasePath, False)
-            database = pd.read_csv(databasePath + '/' + 'database.txt', sep='\t')
+            db.write_database()
+            database = db.read_database()
             
             for x in range(len(words)):
-                index = database.loc[database['text']==words[x]].index
+                index = database.loc[database['text'] == words[x]].index
                 database.loc[database.index[index], 'status'] = 1
-            
+
+            # TODO: Move the updating of known words inside the Database class
             database.to_csv(databasePath + '/' + 'database.txt', index=None, sep='\t', mode='w')
+
         
     wImport.Close()
     return

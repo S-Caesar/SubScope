@@ -4,16 +4,16 @@ import PySimpleGUI as sg
 from enum import Enum
 
 from subscope.package.initialise.initialise_control import InitialiseControl as ic
-from subscope.package.Database import DataHandling as dh
+from subscope.package.Database.database import Database as db
 from subscope.package.Options import ManageOptions as mo
 
 
 class Status(Enum):
     
-    PACKAGES = (0, 'Setting up packages',            None,               1)
-    ICHIRAN  = (1, 'Checking ichiran functionality', ic.setupIchiran,    0)
-    DEFAULTS = (2, 'Writing default paths',          ic.writePaths,      0)
-    DATABASE = (3, 'Checking database',              dh.databaseWrapper, 0)
+    PACKAGES = (0, 'Setting up packages', None, 1)
+    ICHIRAN = (1, 'Checking ichiran functionality', ic.setupIchiran, 0)
+    DEFAULTS = (2, 'Writing default paths', ic.writePaths, 0)
+    DATABASE = (3, 'Checking database', db.create_database, 0)
 
     def __init__(self, step, text, action, done):
         self.step = step

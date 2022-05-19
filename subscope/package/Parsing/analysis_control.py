@@ -8,6 +8,7 @@ import tqdm
 from subscope.package.general.file_handling import FileHandling as fh
 from subscope.package.Parsing.ichiran import Ichiran
 from subscope.package.Options import ManageOptions as mo
+from subscope.package.Database.database import Database as db
 
 
 class AnalysisControl:
@@ -29,13 +30,16 @@ class AnalysisControl:
         files = fh.renameFiles(files, '_data_table', '.txt')
         for file in files:
             if file in os.listdir(output_folder):
-                data_table = pd.read_csv(output_folder + '/' + file, sep='\t')
+                data_table = pd.read_csv(output_folder + '/' + file, sep='\t').fillna(0)
                 output_table = output_table.append(data_table)
 
         stats = []
         if not output_table.empty:
             output_table.reset_index(drop=True)
             stats = self._analyse_words(output_table)
+
+            # Update the database with the newly analysed content
+            db.create_database()
         return stats
 
     def _analyse_files(self, input_folder, output_folder, input_files):
@@ -103,6 +107,8 @@ class AnalysisControl:
         return output_lines
 
     def _analyse_words(self, data_table):
+        # Remove any words that don't have a definition
+        data_table = data_table[data_table.gloss != 0]
         number_of_words = len(data_table)
 
         # Group duplicate rows, counting the number of occurrences, then sort descending by frequency
