@@ -38,8 +38,9 @@ class AnalysisControl:
             output_table.reset_index(drop=True)
             stats = self._analyse_words(output_table)
 
+            # TODO: this will update all sources, not just analysed ones, so this needs improving
             # Update the database with the newly analysed content
-            db.create_database()
+            db.populate_database()
         return stats
 
     def _analyse_files(self, input_folder, output_folder, input_files):

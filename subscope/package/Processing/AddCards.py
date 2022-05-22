@@ -5,7 +5,7 @@ import pandas as pd
 from subscope.package.Processing import CardCreation as cc
 from subscope.package.Database.database import Database as db
 from subscope.package.Options import ManageOptions as mo
-from subscope.package.Parsing import SubsAnalysisUI as sau
+from subscope.package.Parsing.analysis_view import AnalysisView
 
 
 def addCard(deckName, sortOptions, wordSources, database):
@@ -91,7 +91,7 @@ def addUI(deckName, wordSources):
                 
         if event == 'Analyse Subtitles':
             wAddCard.close()
-            sau.analysis()
+            AnalysisView().show()
         
         # TODO: currently need to press the button twice to get the list to update
         if event == 'Refresh':

@@ -19,15 +19,19 @@ class Database:
             database.to_csv(cls._START + '/' + cls._DATABASE, index=False, sep='\t')
 
         if rebuild:
-            cls.write_database()
+            cls.populate_database()
 
     @classmethod
     def read_database(cls):
-        database = pd.read_csv(cls._START + '/' + cls._DATABASE)
+        database = pd.read_csv(cls._START + '/' + cls._DATABASE, sep='\t')
         return database
 
     @classmethod
-    def write_database(cls, overwrite=False):
+    def write_database(cls, database):
+        database.to_csv(cls._START + '/' + cls._DATABASE, index=None, sep='\t')
+
+    @classmethod
+    def populate_database(cls, overwrite=False):
         """
         Go through each of the subtitle folders, and update the database with the analysed files
         """
@@ -37,8 +41,10 @@ class Database:
             path = cls._START + '/' + source + '/' + cls._TEXT_FOLDER
             analysed_files = fh.getFiles(path, extn=cls._ANALYSED_FILE)
             database = cls._update_database(path, analysed_files, database, overwrite)
+        print(database)
 
-        database.sort_values(by=['reading'], inplace=True).fillna(0)
+        database.sort_values(by=['reading'], inplace=True)
+        database = database.fillna(0)
         database.iloc[:, 4:] = database.iloc[:, 4:].astype(int)
         database.to_csv(cls._START + '/' + cls._DATABASE, index=False, sep='\t')
 
@@ -70,17 +76,16 @@ class Database:
             # Check for conjugated words, and replace the main columns with the dict form versions
             # Then just delete the 'dict' columns, as this info is now in the main columns
             if entry not in database:
-                data_table = pd.read_csv(source_path + '/' + file_name, sep='\t').fillna(0)
-                data_table = data_table.rename({0: entry})
+                data_table = pd.read_csv(source_path + '/' + file_name, sep='\t', index_col=None).fillna(0)
                 dict_form_table = data_table.copy()
                 cols = {'dict_reading': 'reading',
                         'dict_text': 'text',
                         'dict_kana': 'kana'}
 
-                for row in range(len(dict_form_table)):
+                for idx in dict_form_table.index:
                     for col in cols:
-                        if '【' in dict_form_table[col][row]:
-                            dict_form_table.loc[dict_form_table.index[row], cols[col]] = data_table[col][row]
+                        if '【' in str(dict_form_table[col][idx]):
+                            dict_form_table.loc[dict_form_table.index[idx], cols[col]] = data_table[col][idx]
 
                 for col in cols:
                     del dict_form_table[col]
@@ -89,6 +94,7 @@ class Database:
                 # then remove liens with no 'gloss' data and append new words
                 dict_form_table = dict_form_table.groupby(['reading', 'text', 'kana', 'gloss']).size().reset_index()
                 dict_form_table = dict_form_table[dict_form_table.gloss != 0]
+                dict_form_table.rename(columns={0: entry}, inplace=True)
                 database = database.append(dict_form_table)
 
                 print(file_number+1, '/', str(int(len(analysed_files))), 'files analysed')
