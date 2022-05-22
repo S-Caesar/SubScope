@@ -35,11 +35,11 @@ class Database:
         """
         Go through each of the subtitle folders, and update the database with the analysed files
         """
-        sources = fh.getFolders(cls._START)
+        sources = fh.get_folders(cls._START)
         database = pd.read_csv(cls._START + '/' + cls._DATABASE, sep='\t')
         for source in sources:
             path = cls._START + '/' + source + '/' + cls._TEXT_FOLDER
-            analysed_files = fh.getFiles(path, extn=cls._ANALYSED_FILE)
+            analysed_files = fh.get_files(path, extn=cls._ANALYSED_FILE)
             database = cls._update_database(path, analysed_files, database, overwrite)
         print(database)
 

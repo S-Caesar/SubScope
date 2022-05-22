@@ -27,7 +27,7 @@ class AnalysisControl:
         self._analyse_files(input_folder, output_folder, files)
 
         output_table = pd.DataFrame()
-        files = fh.renameFiles(files, '_data_table', '.txt')
+        files = fh.rename_files(files, '_data_table', '.txt')
         for file in files:
             if file in os.listdir(output_folder):
                 data_table = pd.read_csv(output_folder + '/' + file, sep='\t').fillna(0)
@@ -44,8 +44,8 @@ class AnalysisControl:
         return stats
 
     def _analyse_files(self, input_folder, output_folder, input_files):
-        subs_only = fh.renameFiles(input_files, '_subs_only', '.txt')
-        data_table = fh.renameFiles(input_files, '_data_table', '.txt')
+        subs_only = fh.rename_files(input_files, '_subs_only', '.txt')
+        data_table = fh.rename_files(input_files, '_data_table', '.txt')
         subs_only_to_input_file = dict(zip(subs_only, input_files))
         subs_only_to_data_table = dict(zip(subs_only, data_table))
         data_table_to_subs_only = dict(zip(data_table, subs_only))
@@ -164,7 +164,7 @@ class AnalysisControl:
 if __name__ == '__main__':
     os.chdir('C:/Users/Steph/OneDrive/App/SubScope/subscope')
     _main_folder = 'C:/Users/Steph/OneDrive/App/SubScope/subscope/user/subtitles/SteinsGate'
-    _main_files = fh.getFiles(_main_folder, '.srt')
+    _main_files = fh.get_files(_main_folder, '.srt')
     _main_files = _main_files[:2]
     print(_main_files)
     AnalysisControl().analyse_subtitles(_main_folder, _main_files)

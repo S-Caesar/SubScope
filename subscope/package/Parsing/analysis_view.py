@@ -163,7 +163,7 @@ class AnalysisView:
             if event == Input.BROWSE.key:
                 folder = values[Input.BROWSE.key]
                 if folder:
-                    files = fh.getFiles(folder, '.srt')
+                    files = fh.get_files(folder, '.srt')
 
                 # Update the window with the contents of the selected folder
                 if files:
