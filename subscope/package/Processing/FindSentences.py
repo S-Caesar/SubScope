@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from subscope.package.Database.database import Database as db
+from subscope.package.database.database import Database as db
 from subscope.package.Options import ManageOptions as mo
 
 # Take a word to be learned, find the episodes it occurs in, and return a dataframe

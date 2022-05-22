@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from enum import Enum
 
-from subscope.package.Database.import_known_control import ImportKnownControl
+from subscope.package.known.import_known_control import ImportKnownControl
 
 
 class Text(Enum):

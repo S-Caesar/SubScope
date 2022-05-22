@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 from enum import Enum
 
 from subscope.package.initialise.initialise_control import InitialiseControl as ic
-from subscope.package.Database.database import Database as db
+from subscope.package.database.database import Database as db
 from subscope.package.Options import ManageOptions as mo
 
 

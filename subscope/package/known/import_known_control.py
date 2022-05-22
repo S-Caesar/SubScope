@@ -1,5 +1,5 @@
 from subscope.package.Parsing.ichiran import Ichiran
-from subscope.package.Database.database import Database
+from subscope.package.database.database import Database
 
 
 class ImportKnownControl:

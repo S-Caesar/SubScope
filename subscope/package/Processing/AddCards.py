@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 import pandas as pd
 
 from subscope.package.Processing import CardCreation as cc
-from subscope.package.Database.database import Database as db
+from subscope.package.database.database import Database as db
 from subscope.package.Options import ManageOptions as mo
 from subscope.package.Parsing.analysis_view import AnalysisView
 

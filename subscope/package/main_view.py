@@ -8,7 +8,7 @@ from subscope.package.retime.retime_view import RetimeView as rv
 from subscope.package.Parsing.analysis_view import AnalysisView as av
 from subscope.package.SRS import ReviewUI as ru
 from subscope.package.Processing import DeckMngmtUI as dmu
-from subscope.package.Database.import_known_view import ImportKnownView as ikv
+from subscope.package.known.import_known_view import ImportKnownView as ikv
 from subscope.package.Options import OptionsUI as ou
 
 

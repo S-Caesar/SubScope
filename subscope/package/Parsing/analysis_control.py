@@ -8,7 +8,7 @@ import tqdm
 from subscope.package.general.file_handling import FileHandling as fh
 from subscope.package.Parsing.ichiran import Ichiran
 from subscope.package.Options import ManageOptions as mo
-from subscope.package.Database.database import Database as db
+from subscope.package.database.database import Database as db
 
 
 class AnalysisControl:

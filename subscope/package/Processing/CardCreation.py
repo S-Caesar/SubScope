@@ -10,7 +10,7 @@ import timeit
 from subscope.package.Processing import FindSentences as fs
 from subscope.package.Processing import ExtractAudio as ea
 from subscope.package.Options import ManageOptions as mo
-from subscope.package.Database.database import Database as db
+from subscope.package.database.database import Database as db
 
 
 def getDate():
