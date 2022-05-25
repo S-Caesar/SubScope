@@ -9,7 +9,7 @@ from subscope.package.Parsing.analysis_view import AnalysisView as av
 from subscope.package.SRS import ReviewUI as ru
 from subscope.package.Processing import DeckMngmtUI as dmu
 from subscope.package.known.import_known_view import ImportKnownView as ikv
-from subscope.package.Options import OptionsUI as ou
+from subscope.package.Options.options_view import OptionsView as ov
 
 
 class Buttons(Enum):
@@ -19,7 +19,7 @@ class Buttons(Enum):
     IMPORT = ('Import Known Words', ikv().show, 1)
     DECKS = ('Manage Decks', dmu.manageDecks, 1)
     REVIEW = ('Review Cards', ru.reviewCards, 2)
-    OPTIONS = ('Change Settings', ou.manageOptions, 3)
+    OPTIONS = ('Change Settings', ov().show, 3)
     SETUP = ('Help', hv().show, 4)
     
     def __init__(self, text, action, row):
