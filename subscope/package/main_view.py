@@ -9,7 +9,7 @@ from subscope.package.Parsing.analysis_view import AnalysisView as av
 from subscope.package.SRS import ReviewUI as ru
 from subscope.package.Processing import DeckMngmtUI as dmu
 from subscope.package.known.import_known_view import ImportKnownView as ikv
-from subscope.package.Options.options_view import OptionsView as ov
+from subscope.package.options.options_view import OptionsView as ov
 
 
 class Buttons(Enum):

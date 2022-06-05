@@ -1,19 +1,16 @@
-# -*- coding: utf-8 -*-
-
 import PySimpleGUI as sg
 from enum import Enum
 
 from subscope.package.initialise.initialise_control import InitialiseControl as ic
 from subscope.package.database.database import Database as db
-from subscope.package.Options import ManageOptions as mo
+from subscope.package.Options.options import Options
 
 
 class Status(Enum):
     
     PACKAGES = (0, 'Setting up packages', None, 1)
-    ICHIRAN = (1, 'Checking ichiran functionality', ic.setupIchiran, 0)
-    DEFAULTS = (2, 'Writing default paths', ic.writePaths, 0)
-    DATABASE = (3, 'Checking database', db.create_database, 0)
+    DEFAULTS = (1, 'Checking settings file', ic.check_settings_file, 0)
+    DATABASE = (2, 'Checking database', db.create_database, 0)
 
     def __init__(self, step, text, action, done):
         self.step = step
@@ -40,7 +37,7 @@ class InitialiseView:
     
     @property
     def _window(self):
-        sg.theme(mo.getSetting('themes', 'Main Theme'))
+        sg.theme(Options.main_theme())
         window = sg.Window(self._NAME,
                            layout=self._layout,
                            disable_close=True)

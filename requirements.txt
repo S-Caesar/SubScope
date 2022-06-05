@@ -1,0 +1,9 @@
+Pandas
+PySimpleGUI
+tqdm
+Pillow
+simpleaudio
+moviepy
+ffmpeg-python
+opencv-python
+imageio
