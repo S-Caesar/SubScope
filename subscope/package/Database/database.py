@@ -39,9 +39,8 @@ class Database:
         database = pd.read_csv(cls._START + '/' + cls._DATABASE, sep='\t')
         for source in sources:
             path = cls._START + '/' + source + '/' + cls._TEXT_FOLDER
-            analysed_files = fh.get_files(path, extn=cls._ANALYSED_FILE)
+            analysed_files = fh.get_files(path, extension=cls._ANALYSED_FILE)
             database = cls._update_database(path, analysed_files, database, overwrite)
-        print(database)
 
         database.sort_values(by=['reading'], inplace=True)
         database = database.fillna(0)
