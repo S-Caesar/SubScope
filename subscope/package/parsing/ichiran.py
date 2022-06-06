@@ -1,7 +1,7 @@
 import json
 import subprocess
 
-from subscope.package.Parsing.word import Word
+from subscope.package.parsing.word import Word
 from subscope.package.options.options import Options
 
 

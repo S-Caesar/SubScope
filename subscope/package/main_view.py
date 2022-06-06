@@ -3,7 +3,7 @@ from enum import Enum
 
 from subscope.package.help.help_view import HelpView as hv
 from subscope.package.retime.retime_view import RetimeView as rv
-from subscope.package.Parsing.analysis_view import AnalysisView as av
+from subscope.package.parsing.analysis_view import AnalysisView as av
 from subscope.package.SRS import ReviewUI as ru
 from subscope.package.Processing import DeckMngmtUI as dmu
 from subscope.package.known.import_known_view import ImportKnownView as ikv

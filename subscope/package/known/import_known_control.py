@@ -1,4 +1,4 @@
-from subscope.package.Parsing.ichiran import Ichiran
+from subscope.package.parsing.ichiran import Ichiran
 from subscope.package.database.database import Database
 
 

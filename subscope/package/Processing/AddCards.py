@@ -4,7 +4,7 @@ import pandas as pd
 from subscope.package.Processing import CardCreation as cc
 from subscope.package.database.database import Database as db
 from subscope.package.options.options import Options
-from subscope.package.Parsing.analysis_view import AnalysisView
+from subscope.package.parsing.analysis_view import AnalysisView
 
 
 def addCard(deckName, sortOptions, wordSources, database):
