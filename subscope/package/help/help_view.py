@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import PySimpleGUI as sg
 import os
 
@@ -11,23 +9,25 @@ class HelpView:
     
     @property
     def _layout(self):
-        layout = [[sg.Column(self._setupLayout),
-                   sg.Column(self._addSubsLayout)],
+        layout = [[sg.Column(self._setup_layout),
+                   sg.Column(self._add_subs_layout)],
                   [sg.Text('')],
                   [sg.Button('Back')]]
         return layout
     
     @property
-    def _setupLayout(self):
-        text = [[sg.Text('To analyse the subtitle files, the sentences must first be \nparsed into individual words.')],
+    def _setup_layout(self):
+        text = [[sg.Text('To analyse the subtitle files, the sentences must first be \n'
+                         'parsed into individual words.')],
                 [sg.Text('Navigate to the \'Setup\' file, and open \'Ichiran Setup.txt\'.')],
-                [sg.Text('Follow the instructions in this file to set up the Ichiran parser. \nThis only needs to be done once.')],
+                [sg.Text('Follow the instructions in this file to set up the Ichiran parser. \n'
+                         'This only needs to be done once.')],
                 [sg.Image(self._PATH + '/setup_1.png')]]
 
         return [[sg.Column(text)]]
     
     @property
-    def _addSubsLayout(self):
+    def _add_subs_layout(self):
         text = [[sg.Text('Navigate to the \'Subtitles\' file, and create a folder for the content')],
                 [sg.Image(self._PATH + '/addSubs_1.png')],
                 [sg.Text('')],
@@ -38,14 +38,12 @@ class HelpView:
                 [sg.Image(self._PATH + '/addSubs_3.png')]]
     
         return [[sg.Column(text)]]
-    
-    
+
     @property
     def _window(self):
-        window = sg.Window(self._name, layout=self._layout)
+        window = sg.Window(self._NAME, layout=self._layout)
         return window
-    
-    
+
     def show(self):
         window = self._window
         while True:
