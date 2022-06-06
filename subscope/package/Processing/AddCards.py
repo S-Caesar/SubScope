@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 import PySimpleGUI as sg
 import pandas as pd
 
 from subscope.package.Processing import CardCreation as cc
 from subscope.package.database.database import Database as db
-from subscope.package.Options import ManageOptions as mo
+from subscope.package.options.options import Options
 from subscope.package.Parsing.analysis_view import AnalysisView
 
 
@@ -48,8 +47,8 @@ def addCard(deckName, sortOptions, wordSources, database):
 def addUI(deckName, wordSources):
     
     sortOptions = ['Hiragana', 'Alphabet', 'Part of Speech', 'Frequency', 'Fewest Unknown']
-    
-    deckFolder = mo.getSetting('paths', 'Deck Folder')
+
+    deckFolder = Options.deck_folder_path()
     database = db.read_database()
     
     # Trim the database to just show the word info in the UI
@@ -58,11 +57,9 @@ def addUI(deckName, wordSources):
     for heading in headings:
         if heading not in dataHeadings:
             del database[heading]
-            
-    
-    
+
     # TODO: split up the gloss info into proper columns
-    # TODO: Words, but very slowly...
+    # TODO: Works, but very slowly...
     import ast
 
     for x in range(len(database['gloss'])):
@@ -141,7 +138,7 @@ if __name__ == '__main__':
     
     import os
     
-    sourceFolder = mo.getSetting('paths', 'Source Folder')
+    sourceFolder = Options.subtitles_folder_path()
     wordSources = next(os.walk(sourceFolder))[1]    
     
     deckName = 'a.txt'

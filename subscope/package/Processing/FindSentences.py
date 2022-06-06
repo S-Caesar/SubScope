@@ -3,7 +3,7 @@
 import pandas as pd
 
 from subscope.package.database.database import Database as db
-from subscope.package.Options import ManageOptions as mo
+from subscope.package.options.options import Options
 
 # Take a word to be learned, find the episodes it occurs in, and return a dataframe
 # containing the episode reference, line number, sentence, and timestamp
@@ -17,7 +17,7 @@ def findSentences(targetWord):
     '''
     
     database = db.read_database()
-    folder = mo.getSetting('paths', 'Source Folder')
+    folder = Options.subtitles_folder_path()
     
     # Select the first row that matches the word
     wordRow = database[database['text']==targetWord]

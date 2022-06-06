@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import PySimpleGUI as sg
 from enum import Enum
 

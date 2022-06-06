@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import PySimpleGUI as sg
 import pandas as pd
 
-from package.Processing import CardCreation as cc
-from package.Options import ManageOptions as mo
+from subscope.package.Processing import CardCreation as cc
+from subscope.package.options.options import Options
 
 def deleteDeck(deckName):
     headings = [[sg.Text('Delete ' + deckName + '?')]]
@@ -30,7 +28,7 @@ def deleteUI(deckName, deckFolder):
             wDeleteDeck.close()
             
             # Remove the deck from the options file
-            optionsFolder = mo.getSetting('paths', 'Options Folder')
+            optionsFolder = Options.options_folder_path()
             decks = pd.read_csv(optionsFolder + '/deckSettings.txt', sep='\t')
             decks = decks[decks['Deck Name'] != deckName]
             decks.to_csv(optionsFolder + '/deckSettings.txt', sep='\t', index=False)           
@@ -41,7 +39,7 @@ def deleteUI(deckName, deckFolder):
 
 if __name__ == '__main__':
     
-    deckFolder = mo.getSetting('paths', 'Deck Folder')
+    deckFolder = Options.deck_folder_path()
     
     deckName = 'SteinsGate.txt'    
     

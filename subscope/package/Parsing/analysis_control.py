@@ -7,7 +7,6 @@ import tqdm
 
 from subscope.package.general.file_handling import FileHandling as fh
 from subscope.package.Parsing.ichiran import Ichiran
-from subscope.package.Options import ManageOptions as mo
 from subscope.package.database.database import Database as db
 
 
@@ -119,10 +118,8 @@ class AnalysisControl:
         unique_words = unique_words.reset_index(drop=True)
         number_of_unique_words = len(unique_words)
 
-        # TODO: move reading the database into the getSettings file once it is rewritten
         # Read the database and filter known words (status == 1)
-        database_path = mo.getSetting('paths', 'Source Folder')
-        database = pd.read_csv(database_path + '/database.txt', sep='\t')
+        database = db.read_database()
         known_words = database.loc[database['status'] == 1]
 
         # Compare the known words from the database with the data_table

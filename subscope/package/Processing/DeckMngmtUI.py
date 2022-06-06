@@ -1,17 +1,13 @@
-# -*- coding: utf-8 -*-
-
-# UI for the card creation
-
 import PySimpleGUI as sg
 import pandas as pd
 import os
 
-from package.Processing import CreateDeck as cd
-from package.Processing import AddCards as ac
-from package.Processing import RemoveCards as rc
-from package.Processing import DeckStats as ds
-from package.Processing import DeleteDeck as dd
-from package.Options import ManageOptions as mo
+from subscope.package.Processing import CreateDeck as cd
+from subscope.package.Processing import AddCards as ac
+from subscope.package.Processing import RemoveCards as rc
+from subscope.package.Processing import DeckStats as ds
+from subscope.package.Processing import DeleteDeck as dd
+from subscope.package.options.options import Options
 
 def deckManagement(deckList, buttons):
     headings = [[sg.Text('Manage Decks', font='any 14')],
@@ -42,11 +38,11 @@ def deckManagement(deckList, buttons):
 def manageDecks():
 
     # Read in the deck list
-    deckFolder = mo.getSetting('paths', 'Deck Folder')
+    deckFolder = Options.deck_folder_path()
     deckList = os.listdir(deckFolder)
 
     # Get all the source folders
-    sourceFolder = mo.getSetting('paths', 'Source Folder')
+    sourceFolder = Options.subtitles_folder_path()
     wordSources = next(os.walk(sourceFolder))[1]
     
     buttons = pd.DataFrame(

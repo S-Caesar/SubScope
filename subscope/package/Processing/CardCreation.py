@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import pandas as pd
 import ast
 import os
@@ -9,7 +7,7 @@ import timeit
 
 from subscope.package.Processing import FindSentences as fs
 from subscope.package.Processing import ExtractAudio as ea
-from subscope.package.Options import ManageOptions as mo
+from subscope.package.options.options import Options
 from subscope.package.database.database import Database as db
 
 
@@ -48,11 +46,11 @@ def createDeck(auto, deckName, newLimit, reviewLimit, source, comp):
                                       'nextReview',
                                       'status']) # new, learning, known, suspended
 
-    deckFolder = mo.getSetting('paths', 'Deck Folder')
+    deckFolder = Options.deck_folder_path()
     blankDeck.to_csv(deckFolder + '/' + deckName, index=None, sep='\t')
     
     # Update the settings file with the new deck info
-    optionsFolder = mo.getSetting('paths', 'Options Folder')
+    optionsFolder = Options.options_folder_path()
     decks = pd.read_csv(optionsFolder + '/deckSettings.txt', sep='\t')
     
     # Check if user input is valid, then set limit values
@@ -196,7 +194,7 @@ def addCard(deckFolder, deckName, cardInfo, deck):
 
 
 def createMedia(wordLoc):
-    sourceFolder = mo.getSetting('paths', 'Source Folder')
+    sourceFolder = Options.subtitles_folder_path()
     source = wordLoc['source'][0]
     video = wordLoc['episode'][0].replace('_full.txt','')
     lineNo = str(int(wordLoc['line no'][0]))

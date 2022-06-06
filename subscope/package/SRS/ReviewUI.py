@@ -6,14 +6,14 @@ import pandas as pd
 import PySimpleGUI as sg
 import ast
 
-from package.SRS import ManageCards as mc
-from package.Options import ManageOptions as mo
+from subscope.package.SRS import ManageCards as mc
+from subscope.package.options.options import Options
 
 def reviewCards():
-    deckFolder = mo.getSetting('paths', 'Deck Folder')
+    deckFolder = Options.deck_folder_path()
     deckList = mc.getDecks(deckFolder)
     
-    sourceFolder = mo.getSetting('paths', 'Source Folder')
+    sourceFolder = Options.subtitles_folder_path()
     database = pd.read_csv(sourceFolder + '/' + 'database.txt', sep='\t')
     
     # Placeholder - will be the sentence for each card
@@ -55,7 +55,7 @@ def reviewCards():
             
             wDeckMenu.Element('-DECK-').Update(deckName)
             
-            optionsFolder = mo.getSetting('paths', 'Options Folder')
+            optionsFolder = Options.options_folder_path()
             decks = pd.read_csv(optionsFolder + '/deckSettings.txt', sep='\t')
             decks = decks[decks.deckName == deckName]
 
@@ -77,7 +77,7 @@ def reviewCards():
             # Get the parsed line for use with the 'hover' dictionary
             parts, pos, reading, gloss = mc.getParts(sourceFolder, subDeck, x)
             
-            themeSettings = mo.getSetting('themes', 'SRS Text Colouring')
+            themeSettings = Options.srs_colouring()
             if themeSettings == 'Off':
                 pos = [['black']*10,
                        ['black']*10]

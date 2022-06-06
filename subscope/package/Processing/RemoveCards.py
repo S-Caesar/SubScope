@@ -3,7 +3,7 @@
 import PySimpleGUI as sg
 import pandas as pd
 
-from package.Options import ManageOptions as mo
+from subscope.package.options.options import Options
 
 
 def removeCard(deckName, deckFolder):
@@ -50,7 +50,7 @@ def removeUI(deckName, deckFolder):
 
 if __name__ == '__main__':
     
-    deckFolder = mo.getSetting('paths', 'Deck Folder')
+    deckFolder = Options.deck_folder_path()
     
     deckName = 'SteinsGate.txt'
     

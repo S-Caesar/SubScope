@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 import PySimpleGUI as sg
 import os
 import pandas as pd
 
-from package.Processing import CardCreation as cc
-from package.Options import ManageOptions as mo
+from subscope.package.Processing import CardCreation as cc
+from subscope.package.options.options import Options
 
 
 def createColumn(table):
@@ -109,7 +107,7 @@ def createUI(deckName, wordSources):
         if event == 'Create Deck':
             # Check whether the deck name exists
             deckName = values['deckName'] + '.txt'
-            deckFolder = mo.getSetting('paths', 'Deck Folder')
+            deckFolder = Options.deck_folder_path()
             if deckName not in os.listdir(deckFolder):
                 
                 # Create a deck and fill it with cards if auto is checked
@@ -132,7 +130,7 @@ def createUI(deckName, wordSources):
 
 if __name__ == '__main__':
 
-    sourceFolder = mo.getSetting('paths', 'Source Folder')
+    sourceFolder = Options.subtitles_folder_path()
     wordSources = next(os.walk(sourceFolder))[1]
     
     createUI('', wordSources)

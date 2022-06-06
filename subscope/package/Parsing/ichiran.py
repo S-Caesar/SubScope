@@ -1,10 +1,8 @@
-import ast
 import json
-import os
 import subprocess
 
 from subscope.package.Parsing.word import Word
-from subscope.package.Options import ManageOptions as mo
+from subscope.package.options.options import Options
 
 
 class Ichiran:
@@ -43,7 +41,7 @@ class Ichiran:
 
     @staticmethod
     def _parse_line(line):
-        path = mo.getSetting('paths', 'Ichiran Path')
+        path = Options.ichiran_path()
         console_output = subprocess.check_output('ichiran-cli -f ' + line, shell=True, cwd=path)
         json_output = json.loads(console_output)
         json_output = json.dumps(json_output)
