@@ -5,9 +5,9 @@ from subscope.package.help.help_view import HelpView as hv
 from subscope.package.retime.retime_view import RetimeView as rv
 from subscope.package.parsing.analysis_view import AnalysisView as av
 from subscope.package.SRS import ReviewUI as ru
-from subscope.package.Processing import DeckMngmtUI as dmu
 from subscope.package.known.import_known_view import ImportKnownView as ikv
 from subscope.package.options.options_view import OptionsView as ov
+from subscope.package.decks.decks_view import DecksView as dv
 
 
 class Buttons(Enum):
@@ -15,7 +15,7 @@ class Buttons(Enum):
     RETIME = ('Retime Subtitles', rv().show, 0)
     ANALYSE = ('Analyse Subtitles', av().show, 0)
     IMPORT = ('Import Known Words', ikv().show, 1)
-    DECKS = ('Manage Decks', dmu.manageDecks, 1)
+    DECKS = ('Manage Decks', dv().show, 1)
     REVIEW = ('Review Cards', ru.reviewCards, 2)
     OPTIONS = ('Change Settings', ov().show, 3)
     SETUP = ('Help', hv().show, 4)

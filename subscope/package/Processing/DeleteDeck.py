@@ -15,7 +15,10 @@ def deleteDeck(deckName):
     return deleteDeck
 
 
-def deleteUI(deckName, deckFolder):
+def deleteUI(deckName):
+
+    deckFolder = Options.deck_folder_path()
+
     # Delete selected deck
     wDeleteDeck = sg.Window('Delete Deck', layout=deleteDeck(deckName))
     while True:

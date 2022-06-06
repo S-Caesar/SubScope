@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import PySimpleGUI as sg
 import pandas as pd
 
@@ -31,7 +29,9 @@ def removeCard(deckName, deckFolder):
     return removeCard
 
 
-def removeUI(deckName, deckFolder):
+def removeUI(deckName):
+
+    deckFolder = Options.deck_folder_path()
     
     # Remove cards from selected deck. Show cards, and allow removal
     wRemoveCard = sg.Window('Remove Cards', layout=removeCard(deckName, deckFolder))

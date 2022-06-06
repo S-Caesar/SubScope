@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 import pandas as pd
+import os
 
 from subscope.package.Processing import CardCreation as cc
 from subscope.package.database.database import Database as db
@@ -44,7 +45,10 @@ def addCard(deckName, sortOptions, wordSources, database):
     return addCard
 
 
-def addUI(deckName, wordSources):
+def addUI(deckName):
+
+    sourceFolder = Options.subtitles_folder_path()
+    wordSources = next(os.walk(sourceFolder))[1]
     
     sortOptions = ['Hiragana', 'Alphabet', 'Part of Speech', 'Frequency', 'Fewest Unknown']
 

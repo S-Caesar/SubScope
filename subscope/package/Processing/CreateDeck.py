@@ -51,7 +51,10 @@ def createColumn(table):
     return layout
 
 
-def createDeck(wordSources):
+def createDeck():
+
+    sourceFolder = Options.subtitles_folder_path()
+    wordSources = next(os.walk(sourceFolder))[1]
     
     wWidth = 220
     
@@ -89,11 +92,11 @@ def createDeck(wordSources):
 
 
 # TODO: included deckName as an input so the management UI can be simplified - ideally get rid of it
-def createUI(deckName, wordSources):
+def createUI(deckName):
     
     status = ['', 'Deck name already exists: ', 'No auto deck source selected']
     
-    wCreateDeck = sg.Window('Deck Creation', layout=createDeck(wordSources))
+    wCreateDeck = sg.Window('Deck Creation', layout=createDeck())
     
     while True:
         event, values = wCreateDeck.Read()
@@ -129,8 +132,4 @@ def createUI(deckName, wordSources):
 
 
 if __name__ == '__main__':
-
-    sourceFolder = Options.subtitles_folder_path()
-    wordSources = next(os.walk(sourceFolder))[1]
-    
-    createUI('', wordSources)
+    createUI()
