@@ -2,6 +2,7 @@ import os
 import subprocess
 import json
 from enum import Enum
+from pathlib import Path
 
 
 class Paths(Enum):
@@ -39,7 +40,7 @@ class Decks(Enum):
 
 class Options:
 
-    _SETTINGS_PATH = os.getcwd() + '/user/settings'
+    _SETTINGS_PATH = str(Path(__file__).parent.parent.parent) + '/user/settings'
     _SETTINGS_FILE = 'settings.json'
 
     # Main option groups

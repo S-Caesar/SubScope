@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from pathlib import Path
 
 from subscope.package.general.file_handling import FileHandling as fh
 
@@ -7,7 +8,7 @@ from subscope.package.general.file_handling import FileHandling as fh
 class Database:
 
     # TODO: get the database path location from the settings file once it is written as a class
-    _START = os.getcwd() + '/user/subtitles'
+    _START = str(Path(__file__).parent.parent.parent) + '/user/subtitles'
     _DATABASE = 'database.txt'
     _TEXT_FOLDER = 'text'
     _ANALYSED_FILE = '_data_table.txt'
