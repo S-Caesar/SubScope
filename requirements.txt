@@ -1,9 +1,6 @@
+# pip install -r [path]/requirements.txt
 Pandas
 PySimpleGUI
 tqdm
 Pillow
-simpleaudio
-moviepy
-ffmpeg-python
-opencv-python
-imageio
+moviepy >= 1.0.3

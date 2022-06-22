@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from pathlib import Path
+import random
 
 from subscope.package.general.file_handling import FileHandling as fh
 
@@ -11,6 +12,9 @@ class Database:
     _START = str(Path(__file__).parent.parent.parent) + '/user/subtitles'
     _DATABASE = 'database.txt'
     _TEXT_FOLDER = 'text'
+    _AUDIO_FOLDER = 'audio'
+    _IMAGE_FOLDER = 'image'
+    _SUBS_ONLY = '_subs_only.txt'
     _ANALYSED_FILE = '_data_table.txt'
 
     @classmethod
@@ -112,3 +116,79 @@ class Database:
         print('All files analysed')
 
         return database
+
+    @classmethod
+    def get_words_data_only(cls):
+        words_data = cls.read_database()
+        # All sources will end with a number, so once you get to one, stop and take the columns up to that point
+        for column_number, column_name in enumerate(words_data.columns):
+            try:
+                int(column_name[-1])
+                words_data = words_data.loc[:, :words_data.columns[column_number-1]]
+                break
+            except ValueError:
+                continue
+        return words_data
+
+    @classmethod
+    def get_words_data_headers(cls):
+        return list(cls.get_words_data_only().columns)
+
+    @classmethod
+    def get_columns_by_subtitle_source(cls, source):
+        database = cls.read_database()
+        words_data = cls.get_words_data_only()
+        subtitle_sources = database.loc[:, database.columns.str.startswith(source + '/')]
+        database = pd.concat([words_data, subtitle_sources], axis=1)
+        return database
+
+    @classmethod
+    def word_line_number(cls, word, source, episode):
+        filepath = os.path.join(cls._START + '/' + source + '/' + cls._TEXT_FOLDER + '/' + episode + cls._ANALYSED_FILE)
+        data_table = pd.read_csv(filepath, sep='\t')
+        data_table = data_table[data_table['reading'] == word]
+        line_number = random.choice(list(data_table['line']))
+        return line_number
+
+    @classmethod
+    def sentence_from_line_number(cls, source, episode, line_number):
+        filepath = os.path.join(cls._START + '/' + source + '/' + cls._TEXT_FOLDER + '/' + episode + cls._SUBS_ONLY)
+        all_lines = pd.read_csv(filepath, sep='\t', header=None)
+        sentence = str(all_lines[all_lines[0] == line_number][1].reset_index(drop=True)[0])
+        return sentence
+
+    @classmethod
+    def audio_clip(cls, source, episode, line_number):
+        source_folder = cls._START + '/' + source
+        audio_folder = source_folder + '/' + cls._AUDIO_FOLDER
+        if cls._AUDIO_FOLDER not in os.listdir(source_folder):
+            os.mkdir(source_folder + '/' + cls._AUDIO_FOLDER)
+
+        audio_clip = None
+        audio_file = episode + '_' + str(line_number)
+        for filetype in ['.mp3']:
+            if audio_file + filetype in os.listdir(audio_folder):
+                audio_clip = audio_folder + '/' + audio_file + filetype
+                break
+
+        return audio_clip
+
+    @classmethod
+    def screenshot(cls, source, episode, line_number):
+        source_folder = cls._START + '/' + source
+        screenshot_folder = source_folder + '/' + cls._IMAGE_FOLDER
+        if cls._IMAGE_FOLDER not in os.listdir(source_folder):
+            os.mkdir(source_folder + '/' + cls._IMAGE_FOLDER)
+
+        screenshot = None
+        screenshot_file = episode + '_' + str(line_number)
+        for filetype in ['.jpg']:
+            if screenshot_file + filetype in os.listdir(screenshot_folder):
+                screenshot = screenshot_folder + '/' + screenshot_file + filetype
+                break
+
+        return screenshot
+
+
+if __name__ == '__main__':
+    Database.create_database(True)

@@ -46,7 +46,7 @@ class Options:
     # Main option groups
     _DEFAULT_PATHS = 'Default Paths'
     _THEME_SETTINGS = 'UI Themes'
-    _DECK_SETTINGS = 'Deck Settings'
+    _DECK_SETTINGS = 'Decks'
     _DEFAULT_DECK = 'Default'
 
     # Cards
@@ -77,29 +77,25 @@ class Options:
         themes = {Themes.MAIN_THEME.key: Themes.MAIN_THEME.default,
                   Themes.SRS_TEXT_COLOURING.key: Themes.SRS_TEXT_COLOURING.default}
 
-        deck_settings = {cls._DEFAULT_DECK:
-                             {Decks.FORMAT.key: Decks.FORMAT.default,
-                              Decks.NEW_LIMIT.key: Decks.NEW_LIMIT.default,
-                              Decks.REVIEW_LIMIT.key: Decks.REVIEW_LIMIT.default}}
+        deck_settings = {}
 
-        card_formats = {cls._FORMAT_NAME:
-                            {cls._DEFAULT_FORMAT:
-                                 {cls._FIELD_0: cls._WORD_JAPANESE,
-                                  cls._FIELD_1: cls._PART_OF_SPEECH,
-                                  cls._FIELD_2: cls._DEFINITION,
-                                  cls._FIELD_3: cls._INFO,
-                                  cls._FIELD_4: cls._SCREENSHOT},
-                             cls._DEFAULT_SHORT_FORMAT:
-                                 {cls._FIELD_0: cls._WORD_JAPANESE,
-                                  cls._FIELD_1: cls._DEFINITION,
-                                  cls._FIELD_2: cls._SCREENSHOT}}}
+        card_formats = {cls._DEFAULT_FORMAT:
+                             {cls._FIELD_0: cls._WORD_JAPANESE,
+                              cls._FIELD_1: cls._PART_OF_SPEECH,
+                              cls._FIELD_2: cls._DEFINITION,
+                              cls._FIELD_3: cls._INFO,
+                              cls._FIELD_4: cls._SCREENSHOT},
+                         cls._DEFAULT_SHORT_FORMAT:
+                             {cls._FIELD_0: cls._WORD_JAPANESE,
+                              cls._FIELD_1: cls._DEFINITION,
+                              cls._FIELD_2: cls._SCREENSHOT}}
 
         settings_file = {cls._DEFAULT_PATHS: default_paths,
                          cls._THEME_SETTINGS: themes,
                          cls._DECK_SETTINGS: deck_settings,
                          cls._CARD_FORMATS: card_formats}
 
-        cls.write_settings_file(settings_file)
+        cls._write_settings_file(settings_file)
 
     @classmethod
     def _find_ichiran(cls):
@@ -182,7 +178,29 @@ class Options:
         return cls._read_settings_file()[cls._CARD_FORMATS]
 
     @classmethod
-    def write_settings_file(cls, settings):
+    def _write_settings_file(cls, settings):
         output_file = cls._SETTINGS_PATH + '/' + cls._SETTINGS_FILE
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(settings, f, ensure_ascii=False, indent=4)
+
+    @classmethod
+    def deck_list(cls):
+        return list(cls.deck_settings().keys())
+
+    @classmethod
+    def add_deck_to_settings(cls, deck_name, new_limit, review_limit, card_format):
+        settings = cls._read_settings_file()
+        settings[cls._DECK_SETTINGS][deck_name] = {Decks.FORMAT.key: card_format,
+                                                   Decks.NEW_LIMIT.key: new_limit,
+                                                   Decks.REVIEW_LIMIT.key: review_limit}
+        cls._write_settings_file(settings)
+
+    @classmethod
+    def remove_deck_from_settings(cls, deck_name):
+        settings = cls._read_settings_file()
+        del settings[cls._DECK_SETTINGS][deck_name]
+        cls._write_settings_file(settings)
+
+
+if __name__ == '__main__':
+    Options.add_deck_to_settings('Test', '10', '50', 'Default')
