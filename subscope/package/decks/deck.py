@@ -79,6 +79,24 @@ class Deck:
     def _add_deck_to_settings_file(deck_name, new_limit, review_limit, card_format):
         Options.add_deck_to_settings(deck_name, new_limit, review_limit, card_format)
 
+    @classmethod
+    def add_cards(cls, deck_name, words):
+        deck = cls.read_deck(deck_name)
+
+        cards = []
+        for word in words:
+            cards.append(Card(word).entry())
+        new_cards = pd.DataFrame(cards, columns=deck.columns.tolist())
+        deck = deck.append(new_cards).reset_index(drop=True)
+        cls._write_deck_to_file(deck_name, deck)
+
+    @staticmethod
+    def read_deck(deck):
+        deck_folder = Options.deck_folder_path()
+        deck = pd.read_csv(deck_folder + '/' + deck + '.txt', sep='\t')
+        return deck
+
 
 if __name__ == '__main__':
-    Deck.create('Test', '10', '50', 'Default', 'SteinsGate', '5')
+    # Deck.create('Test', '10', '50', 'Default', 'SteinsGate', '5')
+    Deck.add_cards('SteinsGate', ['の'])

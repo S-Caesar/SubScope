@@ -146,8 +146,13 @@ class Database:
     def word_line_number(cls, word, source, episode):
         filepath = os.path.join(cls._START + '/' + source + '/' + cls._TEXT_FOLDER + '/' + episode + cls._ANALYSED_FILE)
         data_table = pd.read_csv(filepath, sep='\t')
-        data_table = data_table[data_table['reading'] == word]
-        line_number = random.choice(list(data_table['line']))
+        # If the occurrence of the word was conjugated, then the check will have to be on the dict_reading column
+        try:
+            word_entries = data_table[data_table['reading'] == word]
+            line_number = random.choice(list(word_entries['line']))
+        except IndexError:
+            word_entries = data_table[data_table['dict_reading'] == word]
+            line_number = random.choice(list(word_entries['line']))
         return line_number
 
     @classmethod

@@ -20,6 +20,8 @@ class DeleteDeckView:
         return layout
 
     def events(self, event, values, window, selected_deck):
+        # TODO add something to let the main UI know something was deleted
+        deleted = False
         window.Element(self._SELECTED_DECK_DELETE).update(selected_deck)
 
         if event == Button.CONFIRM_DELETE_DECK.text:
@@ -27,6 +29,9 @@ class DeleteDeckView:
                 DecksControl.delete_deck(selected_deck)
                 self._delete_status = Text.DECK_DELETED.text
                 window.Element(self._DELETE_STATUS).update(self._delete_status)
+                deleted = True
             else:
                 self._delete_status = Text.INVALID_DECK.text
                 window.Element(self._DELETE_STATUS).update(self._delete_status)
+
+            return deleted

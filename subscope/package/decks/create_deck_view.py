@@ -49,6 +49,7 @@ class CreateDeckView:
         return layout
 
     def events(self, event, values, window):
+        created = False
         if event in [Text.EMPTY_DECK.text, Text.AUTOFILL_DECK.text]:
             window.Element(self._SUBTITLE_SOURCE).update(disabled=(event == Text.EMPTY_DECK.text))
             window.Element(InputBox.TARGET_COMP.key).update(disabled=(event == Text.EMPTY_DECK.text))
@@ -101,6 +102,9 @@ class CreateDeckView:
                                              card_format,
                                              subtitle_source,
                                              target_comprehension)
+                    created = True
 
                 except ValueError:
                     pass
+
+        return created
