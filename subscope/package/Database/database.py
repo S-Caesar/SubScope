@@ -159,8 +159,18 @@ class Database:
     def sentence_from_line_number(cls, source, episode, line_number):
         filepath = os.path.join(cls._START + '/' + source + '/' + cls._TEXT_FOLDER + '/' + episode + cls._SUBS_ONLY)
         all_lines = pd.read_csv(filepath, sep='\t', header=None)
-        sentence = str(all_lines[all_lines[0] == line_number][1].reset_index(drop=True)[0])
-        return sentence
+
+        sentences = []
+        for line in [line_number-1, line_number, line_number+1]:
+            try:
+                sentence = str(all_lines[all_lines[0] == line][1].reset_index(drop=True)[0])
+                sentences.append(sentence)
+            except KeyError:
+                continue
+
+        if len(sentences) == 1:
+            sentences.append('')
+        return sentences
 
     @classmethod
     def audio_clip(cls, source, episode, line_number):

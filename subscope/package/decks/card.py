@@ -13,7 +13,6 @@ class CardHeading(Enum):
     LINE_NUMBER = 'Line Number'
     WORD = 'Word'
     GLOSS = 'Gloss'
-    SENTENCE = 'Sentence'
     AUDIO_CLIP = 'Audio Clip'
     SCREENSHOT = 'Screenshot'
     SCORE = 'Score'
@@ -38,7 +37,7 @@ class Card:
     def entry(self):
         # TODO: At the moment, these don't tie in with the CardHeading names, so both need to be changed together
         entry = [self._review_state, self._source, self._episode, self._line_number, self.word, self._gloss,
-                 self._sentence, self.audio_clip_path, self.screenshot_path, self._score, self._last_review,
+                 self.audio_clip_path, self.screenshot_path, self._score, self._last_review,
                  self._next_review, self._status]
         return entry
 
@@ -59,7 +58,6 @@ class Card:
         self._episode = selected_source[1]
         self._line_number = Database.word_line_number(self.word, self._source, self._episode)
         self._gloss = word_data['gloss']
-        self._sentence = Database.sentence_from_line_number(self._source, self._episode, self._line_number)
         self.screenshot_path, self.audio_clip_path = MediaUseCase.screenshot_and_audio_clip(
             self._source, self._episode, self._line_number)
         self._last_review = 0

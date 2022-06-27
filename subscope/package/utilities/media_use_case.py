@@ -101,7 +101,7 @@ class MediaUseCase:
             os.mkdir(cls._START + '/' + source + '/' + cls._IMAGE)
 
         output_folder = cls._START + '/' + source + '/' + cls._IMAGE + '/'
-        output_file = episode + '_' + str(line_number) + '.jpg'
+        output_file = episode + '_' + str(line_number) + '.png'
         screenshot_path = output_folder + output_file
         if output_file not in os.listdir(output_folder):
             midpoint = (end - start) / 2
