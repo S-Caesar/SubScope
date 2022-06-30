@@ -3,5 +3,5 @@ Pandas
 PySimpleGUI
 tqdm
 Pillow
-moviepy >= 1.0.3
-playsound
+moviepy>=1.0.3
+playsound==1.2.2

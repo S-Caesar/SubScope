@@ -77,6 +77,14 @@ class ReviewControl:
         audio.start()
         return audio
 
+    @classmethod
+    def update_deck(cls, deck, deck_name):
+        deck_path = Options.deck_folder_path() + '/' + deck_name + '.txt'
+        full_deck = pd.read_csv(deck_path, sep='\t')
+        for index in deck.index.tolist():
+            full_deck.loc[index, :] = deck.loc[index, :]
+        full_deck.to_csv(deck_path, sep='\t', index=None)
+
 
 if __name__ == '__main__':
     ReviewControl.load_deck('SteinsGate')

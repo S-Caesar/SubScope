@@ -75,6 +75,9 @@ class ReviewView:
     _IMAGE = 'IMAGE'
     _REVIEWS_FINISHED = 'Reviews Finished!'
     _card_front = False
+    _REVIEW = 'Review'
+    _KNOWN = 'Known'
+    _SUSPENDED = 'Suspended'
 
     _WORD = 'Word'
     _CARD_PART = 'pos'
@@ -91,6 +94,9 @@ class ReviewView:
     _STATE = 'Review State'
     _LAST_REVIEW = 'Last Review'
     _NEXT_REVIEW = 'Next Review'
+    _STATUS = 'Status'
+
+    _active_deck = None
 
     @classmethod
     def _layout(cls):
@@ -147,33 +153,63 @@ class ReviewView:
         while True:
             event, values = window.read()
             if event in [None, 'Back']:
+                try:
+                    audio.terminate()
+                except AttributeError:
+                    pass
                 window.close()
                 break
 
             try:
                 if values[event] in ReviewControl.deck_list():
-                    deck_name = values[event]
-                    deck = ReviewControl.load_deck(deck_name)
-                    card, index = cls._load_card(deck)
-                    audio = cls._set_state_front(window, card, response_buttons)
+                    cls._active_deck = values[event]
+                    deck = ReviewControl.load_deck(cls._active_deck)
+                    audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+
+                    window.Element(Button.AUDIO.text).update(disabled=False)
+                    window.Element(Button.KNOWN.text).update(disabled=False)
+                    window.Element(Button.SUSPEND.text).update(disabled=False)
             except KeyError:
                 pass
 
             if event == Button.FLIP.text:
                 cls._set_state_back(window, card, response_buttons)
 
+            if event == Button.AUDIO.text:
+                audio.terminate()
+                audio = ReviewControl.play_audio(card[cls._SOURCE], card[cls._AUDIO])
+
+            if event == Button.KNOWN.text:
+                deck.loc[index, cls._STATE] = 1
+                deck.loc[index, cls._STATUS] = cls._KNOWN
+                audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+
+            if event == Button.SUSPEND.text:
+                deck.loc[index, cls._STATE] = 1
+                deck.loc[index, cls._STATUS] = cls._SUSPENDED
+                audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+
             if not cls._card_front:
                 for button in response_buttons:
                     if event == button.text or event == response_buttons[button]:
                         deck = cls._record_response(deck, index, button.response_score)
                         deck = cls._update_review_dates(deck, index, button.response_score)
-                        audio.terminate()
+                        audio, card, index = cls._next_card(window, deck, audio, response_buttons)
 
-                        try:
-                            card, index = cls._load_card(deck)
-                            audio = cls._set_state_front(window, card, response_buttons)
-                        except IndexError:
-                            cls._set_state_finished(window, response_buttons)
+    @classmethod
+    def _next_card(cls, window, deck, audio, response_buttons):
+        if audio is not None:
+            audio.terminate()
+
+        try:
+            card, index = cls._load_card(deck)
+            audio = cls._set_state_front(window, card, response_buttons)
+        except IndexError:
+            card = None
+            index = None
+            cls._set_state_finished(window, response_buttons)
+            cls._update_deck(deck)
+        return audio, card, index
 
     @classmethod
     def _load_card(cls, deck):
@@ -258,12 +294,16 @@ class ReviewView:
 
     @classmethod
     def _update_review_dates(cls, deck, index, response_score):
-        if deck[cls._LAST_REVIEW][index] == 0:
+        if str(deck[cls._LAST_REVIEW][index]) == '0':
             interval = 1
         else:
-            interval = deck[index, cls._NEXT_REVIEW] - deck[index, cls._LAST_REVIEW]
-            if interval < 1:
+            next_review = datetime.datetime.strptime(str(deck.loc[index, cls._NEXT_REVIEW]), '%Y-%m-%d')
+            last_review = datetime.datetime.strptime(str(deck.loc[index, cls._LAST_REVIEW]), '%Y-%m-%d')
+            interval = next_review - last_review
+            if interval.days < 1:
                 interval = 1
+            else:
+                interval = interval.days
 
         if response_score == 0:
             new_interval = 1
@@ -272,10 +312,12 @@ class ReviewView:
 
         deck.loc[index, cls._LAST_REVIEW] = datetime.date.today()
         deck.loc[index, cls._NEXT_REVIEW] = deck.loc[index, cls._LAST_REVIEW] + datetime.timedelta(days=new_interval)
+        deck.loc[index, cls._STATUS] = cls._REVIEW
         return deck
 
     @classmethod
     def _set_state_finished(cls, window, response_buttons):
+        cls._card_front = True
         window.Element(Text.WORD.key).update(cls._REVIEWS_FINISHED)
         window.Element(Text.PART.key).update('')
         window.Element(Text.DEFINITION.key).update('')
@@ -285,9 +327,15 @@ class ReviewView:
         window.Element(cls._IMAGE).Update(source=None)
         for button in response_buttons:
             window.Element(button.text).update(disabled=True)
+        window.Element(Button.AUDIO.text).update(disabled=True)
+        window.Element(Button.KNOWN.text).update(disabled=True)
+        window.Element(Button.SUSPEND.text).update(disabled=True)
 
-    def _update_deck(self):
-        pass
+    @classmethod
+    def _update_deck(cls, deck):
+        for index in deck.index.tolist():
+            deck.loc[index, cls._STATE] = 0
+        ReviewControl.update_deck(deck, cls._active_deck)
 
 
 if __name__ == '__main__':
