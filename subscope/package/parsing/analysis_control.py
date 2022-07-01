@@ -57,6 +57,7 @@ class AnalysisControl:
             if file not in subs_only:
                 subs_only.append(file)
 
+        start_time = time.time()
         for file_no, subs_only_file in enumerate(subs_only):
             # Read in the subtitle file
             input_file = input_folder + '/' + subs_only_to_input_file[subs_only_file]
@@ -70,7 +71,6 @@ class AnalysisControl:
             output_lines = output_lines[output_lines[0] != '']
 
             # Parse the subs_only file
-            start_time = time.time()
             lines_and_line_no = []
 
             # Need to use a separate list here, and remove entries in case there are duplicate lines

@@ -102,8 +102,15 @@ class ReviewView:
     _LAST_REVIEW = 'Last Review'
     _NEXT_REVIEW = 'Next Review'
     _STATUS = 'Status'
+    _NO_ENTRY = 'No Entry'
+
+    # I use this character in place of string apostrophes when dealing with the Ichiran output
+    _SUBSTITUTE = '^'
+    _APOSTROPHE = '\''
 
     _active_deck = None
+    _sentence_data_one = pd.DataFrame([])
+    _sentence_data_two = pd.DataFrame([])
 
     @classmethod
     def _layout(cls):
@@ -114,11 +121,9 @@ class ReviewView:
                 [Text.PART.create()],
                 [Text.DEFINITION.create()],
                 [Text.INFO.create()],
-                # [Text.SENTENCE.create()],
-                # [Text.SENTENCE_TWO.create()],
-                *[[sg.Text(text, enable_events=True, font='any 16', key=f'{cls._SENTENCE_ONE}_{index}')
+                *[[sg.Text(text, enable_events=True, font='any 16', key=f'{cls._SENTENCE_ONE}{index}')
                    for index, text in enumerate([''] * 10)]],
-                *[[sg.Text(text, enable_events=True, font='any 16', key=f'{cls._SENTENCE_TWO}_{index}')
+                *[[sg.Text(text, enable_events=True, font='any 16', key=f'{cls._SENTENCE_TWO}{index}')
                    for index, text in enumerate([''] * 10)]],
                 [sg.Image(key=cls._IMAGE, visible=True)]]
 
@@ -175,11 +180,14 @@ class ReviewView:
                 if values[event] in ReviewControl.deck_list():
                     cls._active_deck = values[event]
                     deck = ReviewControl.load_deck(cls._active_deck)
-                    audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+                    if len(deck.index.tolist()) == 0:
+                        cls._set_state_finished(window, response_buttons)
+                    else:
+                        audio, card, index = cls._next_card(window, deck, audio, response_buttons)
 
-                    window.Element(Button.AUDIO.text).update(disabled=False)
-                    window.Element(Button.KNOWN.text).update(disabled=False)
-                    window.Element(Button.SUSPEND.text).update(disabled=False)
+                        window.Element(Button.AUDIO.text).update(disabled=False)
+                        window.Element(Button.KNOWN.text).update(disabled=False)
+                        window.Element(Button.SUSPEND.text).update(disabled=False)
             except KeyError:
                 pass
 
@@ -206,6 +214,26 @@ class ReviewView:
                         deck = cls._record_response(deck, index, button.response_score)
                         deck = cls._update_review_dates(deck, index, button.response_score)
                         audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+
+            if cls._SENTENCE_ONE in event:
+                clicked_word = window.Element(event).get()
+                if clicked_word != '':
+                    entry = cls._sentence_data_one[cls._sentence_data_one[cls._TEXT] == clicked_word]
+                    reading = entry[cls._READING].tolist()[0]
+                    gloss = entry[cls._CARD_GLOSS].tolist()[0]
+                    gloss = cls._format_json_glossary(gloss)
+                    window.Element(Text.GLOSS_WORD.key).update(reading)
+                    window.Element(Text.GLOSSARY.key).update(gloss)
+
+            if cls._SENTENCE_TWO in event:
+                clicked_word = window.Element(event).get()
+                if clicked_word != '':
+                    entry = cls._sentence_data_two[cls._sentence_data_two[cls._TEXT] == clicked_word]
+                    reading = entry[cls._READING].tolist()[0]
+                    gloss = entry[cls._CARD_GLOSS].tolist()[0]
+                    gloss = cls._format_json_glossary(gloss)
+                    window.Element(Text.GLOSS_WORD.key).update(reading)
+                    window.Element(Text.GLOSSARY.key).update(gloss)
 
     @classmethod
     def _next_card(cls, window, deck, audio, response_buttons):
@@ -249,15 +277,22 @@ class ReviewView:
         episode = card[cls._EPISODE]
         line_number = card[cls._LINE_NUMBER]
         sentences = ReviewControl.get_sentences(source, episode, line_number)
-        # window.Element(Text.SENTENCE.key).update(sentences[0])
-        # if len(sentences) == 2:
-            # window.Element(Text.SENTENCE_TWO.key).update(sentences[1])
 
-        # TODO: Implement clickable words for definitions
         sentence_data = ReviewControl.get_sentence_data(source, episode, line_number)
         for index, data in enumerate(sentence_data):
             if len(data) != 0 and cls._TEXT in data.columns.tolist():
                 sentence_data[index] = cls._order_sentences(sentences[index], data)
+
+        try:
+            cls._sentence_data_one = sentence_data[0]
+        except IndexError:
+            cls._sentence_data_one = pd.DataFrame([])
+
+        try:
+            cls._sentence_data_two = sentence_data[1]
+        except IndexError:
+            cls._sentence_data_two = pd.DataFrame([])
+
         cls._update_sentence_text(window, sentence_data)
 
         screenshot = card[cls._SCREENSHOT]
@@ -305,20 +340,20 @@ class ReviewView:
                 sentence_data = sentence_data.append(pd.DataFrame([word], columns=[cls._TEXT]))
                 sentence_data = sentence_data.reset_index(drop=True)
 
-        return sentence_data
+        return sentence_data.fillna(cls._NO_ENTRY)
 
     @classmethod
     def _update_sentence_text(cls, window, sentence_data):
         blanks = [''] * 10
         for index, blank in enumerate(blanks):
-            window.Element(f'{cls._SENTENCE_ONE}_{index}').update(blank)
-            window.Element(f'{cls._SENTENCE_TWO}_{index}').update(blank)
+            window.Element(f'{cls._SENTENCE_ONE}{index}').update(blank)
+            window.Element(f'{cls._SENTENCE_TWO}{index}').update(blank)
 
         try:
             words = sentence_data[0][cls._TEXT].tolist()
             if len(words) > 0:
                 for index, word in enumerate(words):
-                    window.Element(f'{cls._SENTENCE_ONE}_{index}').update(word)
+                    window.Element(f'{cls._SENTENCE_ONE}{index}').update(word)
         except KeyError:
             pass
 
@@ -327,7 +362,7 @@ class ReviewView:
                 words = sentence_data[1][cls._TEXT].tolist()
                 if len(words) > 0:
                     for index, word in enumerate(words):
-                        window.Element(f'{cls._SENTENCE_TWO}_{index}').update(word)
+                        window.Element(f'{cls._SENTENCE_TWO}{index}').update(word)
             except KeyError:
                 pass
 
@@ -357,6 +392,20 @@ class ReviewView:
             if item not in gloss:
                 gloss[item] = ''
         return gloss
+
+    @classmethod
+    def _format_json_glossary(cls, gloss):
+        gloss = ast.literal_eval(gloss[1:-1])
+        if cls._CARD_PART in gloss:
+            gloss = [gloss]
+
+        str_gloss = ''
+        for definition in gloss:
+            if definition != cls._NO_ENTRY:
+                str_gloss += definition[cls._CARD_PART] + '\n' + definition[cls._CARD_GLOSS] + '\n\n'
+
+        str_gloss = str_gloss.replace(cls._SUBSTITUTE, cls._APOSTROPHE)
+        return str_gloss
 
     @classmethod
     def _record_response(cls, deck, index, response_score):
@@ -403,14 +452,19 @@ class ReviewView:
         window.Element(Text.PART.key).update('')
         window.Element(Text.DEFINITION.key).update('')
         window.Element(Text.INFO.key).update('')
-        window.Element(Text.SENTENCE.key).update('')
-        window.Element(Text.SENTENCE_TWO.key).update('')
+        window.Element(Text.GLOSS_WORD.key).update('')
+        window.Element(Text.GLOSSARY.key).update('')
         window.Element(cls._IMAGE).Update(source=None)
         for button in response_buttons:
             window.Element(button.text).update(disabled=True)
         window.Element(Button.AUDIO.text).update(disabled=True)
         window.Element(Button.KNOWN.text).update(disabled=True)
         window.Element(Button.SUSPEND.text).update(disabled=True)
+
+        blanks = [''] * 10
+        for index, blank in enumerate(blanks):
+            window.Element(f'{cls._SENTENCE_ONE}{index}').update(blank)
+            window.Element(f'{cls._SENTENCE_TWO}{index}').update(blank)
 
     @classmethod
     def _update_deck(cls, deck):

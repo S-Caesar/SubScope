@@ -3,6 +3,7 @@ import multiprocessing
 from playsound import playsound
 from PIL import Image
 import io
+from datetime import datetime
 
 from subscope.package.options.options import Options
 from subscope.package.database.database import Database
@@ -54,7 +55,10 @@ class ReviewControl:
 
     @classmethod
     def _select_review_cards(cls, deck, review_limit):
-        return deck[deck[cls._STATUS] == cls._REVIEW].head(review_limit)
+        today = datetime.today()
+        to_review = deck[deck[cls._STATUS] == cls._REVIEW]
+        review_cards = to_review[to_review[cls._NEXT_REVIEW].astype('datetime64[D]') <= today].head(review_limit)
+        return review_cards
 
     @classmethod
     def get_sentences(cls, source, episode, line_number):
