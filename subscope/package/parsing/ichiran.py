@@ -17,12 +17,10 @@ class Ichiran:
                 if 'alternative' in entry[1] or 'components' in entry[1]:
                     if 'alternative' in entry[1]:
                         entries.append(entry[1]['alternative'][0])
-                        break
                     # If there are multiple components, take each of the 'components' as separate entries
                     if 'components' in entry[1]:
                         for component in entry[1]['components']:
                             entries.append(component)
-                            break
                 else:
                     # Otherwise, it's a normal entry, so just append it
                     entries.append(entry[1])

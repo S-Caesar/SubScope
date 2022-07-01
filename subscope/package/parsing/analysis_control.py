@@ -72,9 +72,13 @@ class AnalysisControl:
             # Parse the subs_only file
             start_time = time.time()
             lines_and_line_no = []
-            for line in output_lines[0]:
-                line_no = output_lines.index[output_lines[0] == line].tolist()[0]
+
+            # Need to use a separate list here, and remove entries in case there are duplicate lines
+            temp_output_lines = output_lines.copy()
+            for index, line in enumerate(temp_output_lines[0]):
+                line_no = temp_output_lines.index[temp_output_lines[0] == line].tolist()[0]
                 lines_and_line_no.append([line, line_no])
+                temp_output_lines.iloc[index, 0] = ''
 
             word_list = []
             pool = Pool(processes=16)

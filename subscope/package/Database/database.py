@@ -16,6 +16,7 @@ class Database:
     _IMAGE_FOLDER = 'image'
     _SUBS_ONLY = '_subs_only.txt'
     _ANALYSED_FILE = '_data_table.txt'
+    _LINE_NUMBER = 'line'
 
     @classmethod
     def create_database(cls, rebuild=False):
@@ -168,9 +169,24 @@ class Database:
             except KeyError:
                 continue
 
-        if len(sentences) == 1:
-            sentences.append('')
         return sentences
+
+    @classmethod
+    def sentence_data_from_line_number(cls, source, episode, line_number):
+        filepath = os.path.join(cls._START + '/' + source + '/' + cls._TEXT_FOLDER + '/' + episode + cls._ANALYSED_FILE)
+        data_table = pd.read_csv(filepath, sep='\t')
+
+        sentence_data = []
+        for line in [line_number-1, line_number, line_number+1]:
+            try:
+                data = data_table[data_table[cls._LINE_NUMBER] == line]
+                if len(data.index.tolist()) != 0:
+                    data = data.reset_index(drop=True)
+                    sentence_data.append(data)
+            except KeyError:
+                continue
+
+        return sentence_data
 
     @classmethod
     def audio_clip(cls, source, episode, line_number):
@@ -206,4 +222,4 @@ class Database:
 
 
 if __name__ == '__main__':
-    Database.create_database(True)
+    Database.sentence_data_from_line_number('SteinsGate', 'STEINS;GATE.S01E01.JA', 23)

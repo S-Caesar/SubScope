@@ -62,6 +62,11 @@ class ReviewControl:
         return sentences
 
     @classmethod
+    def get_sentence_data(cls, source, episode, line_number):
+        sentence_data = Database.sentence_data_from_line_number(source, episode, line_number)
+        return sentence_data
+
+    @classmethod
     def load_screenshot(cls, source, screenshot):
         image_file_path = Options.subtitles_folder_path() + '/' + source + '/' + cls._IMAGE + '/' + screenshot
         image = Image.open(image_file_path)

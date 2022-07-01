@@ -121,7 +121,7 @@ class AnalysisView:
                            Buttons.BACK.create()]]
 
         layout = [[sg.Column(folder_column, size=(335, 60))],
-                  [sg.Column(subtitle_column, size=(300, 300), scrollable=True),
+                  [sg.Column(subtitle_column, size=(300, 300), scrollable=True, vertical_scroll_only=True),
                    sg.VSeperator(),
                    sg.Column(statistics_column)],
                   [sg.Column(buttons_column)]]

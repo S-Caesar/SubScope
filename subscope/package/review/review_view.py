@@ -3,6 +3,8 @@ from enum import Enum
 import ast
 import datetime
 
+import pandas as pd
+
 from subscope.package.review.review_control import ReviewControl
 
 
@@ -79,7 +81,12 @@ class ReviewView:
     _KNOWN = 'Known'
     _SUSPENDED = 'Suspended'
 
+    _SENTENCE_ONE = 'SENTENCE_ONE'
+    _SENTENCE_TWO = 'SENTENCE_TWO'
+
     _WORD = 'Word'
+    _READING = 'reading'
+    _TEXT = 'text'
     _CARD_PART = 'pos'
     _GLOSS = 'Gloss'
     _CARD_GLOSS = 'gloss'
@@ -107,8 +114,12 @@ class ReviewView:
                 [Text.PART.create()],
                 [Text.DEFINITION.create()],
                 [Text.INFO.create()],
-                [Text.SENTENCE.create()],
-                [Text.SENTENCE_TWO.create()],
+                # [Text.SENTENCE.create()],
+                # [Text.SENTENCE_TWO.create()],
+                *[[sg.Text(text, enable_events=True, font='any 16', key=f'{cls._SENTENCE_ONE}_{index}')
+                   for index, text in enumerate([''] * 10)]],
+                *[[sg.Text(text, enable_events=True, font='any 16', key=f'{cls._SENTENCE_TWO}_{index}')
+                   for index, text in enumerate([''] * 10)]],
                 [sg.Image(key=cls._IMAGE, visible=True)]]
 
         button_row = []
@@ -116,11 +127,11 @@ class ReviewView:
         for button in response_buttons:
             button_row.append(button.create())
         card.extend([button_row,
-                    [Button.AUDIO.create()],
-                    [Button.KNOWN.create(), Button.SUSPEND.create()]])
+                     [Button.AUDIO.create()],
+                     [Button.KNOWN.create(), Button.SUSPEND.create()]])
 
         glossary = [[Text.CLICK_WORD.create()],
-                    [sg.Text('_'*27)],
+                    [sg.Text('_' * 27)],
                     [Text.GLOSS_WORD.create()],
                     [Text.GLOSSARY.create()]]
 
@@ -209,6 +220,7 @@ class ReviewView:
             index = None
             cls._set_state_finished(window, response_buttons)
             cls._update_deck(deck)
+
         return audio, card, index
 
     @classmethod
@@ -237,8 +249,16 @@ class ReviewView:
         episode = card[cls._EPISODE]
         line_number = card[cls._LINE_NUMBER]
         sentences = ReviewControl.get_sentences(source, episode, line_number)
-        window.Element(Text.SENTENCE.key).update(sentences[0])
-        window.Element(Text.SENTENCE_TWO.key).update(sentences[1])
+        # window.Element(Text.SENTENCE.key).update(sentences[0])
+        # if len(sentences) == 2:
+            # window.Element(Text.SENTENCE_TWO.key).update(sentences[1])
+
+        # TODO: Implement clickable words for definitions
+        sentence_data = ReviewControl.get_sentence_data(source, episode, line_number)
+        for index, data in enumerate(sentence_data):
+            if len(data) != 0 and cls._TEXT in data.columns.tolist():
+                sentence_data[index] = cls._order_sentences(sentences[index], data)
+        cls._update_sentence_text(window, sentence_data)
 
         screenshot = card[cls._SCREENSHOT]
         screenshot = ReviewControl.load_screenshot(source, screenshot)
@@ -249,6 +269,67 @@ class ReviewView:
 
         window.Element(Button.FLIP.text).update(disabled=False)
         return audio
+
+    @classmethod
+    def _order_sentences(cls, sentence, sentence_data):
+        ordered_sentence = []
+        word_list = sentence_data[cls._TEXT].tolist()
+        while len(sentence) > 0:
+            added = False
+            for index, word in enumerate(word_list):
+                if word[:len(word)] == sentence[:len(word)]:
+                    ordered_sentence.append(word)
+                    sentence = sentence[len(word):]
+                    del word_list[index]
+                    added = True
+                    break
+
+            if not added:
+                if len(sentence) > 1:
+                    ordered_sentence.append(sentence[0])
+                    sentence = sentence[1:]
+                elif len(sentence) == 1:
+                    ordered_sentence.append(sentence[0])
+                    break
+
+        for word in ordered_sentence:
+            target_index = sentence_data[sentence_data[cls._TEXT] == word].index.tolist()
+            if len(target_index) != 0:
+                if len(target_index) > 1:
+                    target_index = [target_index[0]]
+                index = sentence_data.index.tolist()
+                index.pop(target_index[0])
+                sentence_data = sentence_data.reindex(index + target_index)
+                sentence_data = sentence_data.reset_index(drop=True)
+            else:
+                sentence_data = sentence_data.append(pd.DataFrame([word], columns=[cls._TEXT]))
+                sentence_data = sentence_data.reset_index(drop=True)
+
+        return sentence_data
+
+    @classmethod
+    def _update_sentence_text(cls, window, sentence_data):
+        blanks = [''] * 10
+        for index, blank in enumerate(blanks):
+            window.Element(f'{cls._SENTENCE_ONE}_{index}').update(blank)
+            window.Element(f'{cls._SENTENCE_TWO}_{index}').update(blank)
+
+        try:
+            words = sentence_data[0][cls._TEXT].tolist()
+            if len(words) > 0:
+                for index, word in enumerate(words):
+                    window.Element(f'{cls._SENTENCE_ONE}_{index}').update(word)
+        except KeyError:
+            pass
+
+        if len(sentence_data) == 2:
+            try:
+                words = sentence_data[1][cls._TEXT].tolist()
+                if len(words) > 0:
+                    for index, word in enumerate(words):
+                        window.Element(f'{cls._SENTENCE_TWO}_{index}').update(word)
+            except KeyError:
+                pass
 
     @classmethod
     def _set_state_back(cls, window, card, response_buttons):
