@@ -6,6 +6,7 @@ import datetime
 import pandas as pd
 
 from subscope.package.review.review_control import ReviewControl
+from subscope.package.options.options import Options
 
 
 class Text(Enum):
@@ -13,16 +14,15 @@ class Text(Enum):
     CLICK_WORD = ('Click on a word in the example sentence to display glossary information below', None, None, (25, 3))
 
     # Card Details
-    WORD = ('', 'WORD', 'any 18', (34, 1), 'c')
-    SENTENCE = ('', 'SENTENCE', 'any 16', (40, 1), 'c')
-    SENTENCE_TWO = ('', 'SENTENCE_TWO', 'any 16', (40, 1), 'c')
-    PART = ('', 'PART', 'any 12', (53, 1), 'c')
-    DEFINITION = ('', 'DEFINITION', 'any 16', (39, 2), 'c')
-    INFO = ('', 'INFO', 'any 12', (43, 2), 'c')
+    WORD = ('', 'WORD', 'any 18', (34, 1), 'c', 'black')
+    PART = ('', 'PART', 'any 12', (53, 1), 'c', 'black')
+    DEFINITION = ('', 'DEFINITION', 'any 16', (39, 2), 'c', 'black')
+    INFO = ('', 'INFO', 'any 12', (43, 2), 'c', 'black')
     GLOSS_WORD = ('', 'GLOSS_WORD', 'any 16', (18, 2))
     GLOSSARY = ('', 'GLOSSARY', 'any 12', (21, 40))
 
-    def __init__(self, text, key=None, font=None, size=None, justification=None):
+    def __init__(self, text, key=None, font=None, size=None, justification=None, background_colour=None,
+                 text_colour='white'):
         self.text = text
         self.key = key
         self.font = font
@@ -31,13 +31,17 @@ class Text(Enum):
         else:
             self.size = size
         self.justification = justification
+        self.background_colour = background_colour
+        self.text_colour = text_colour
 
     def create(self):
         return sg.Text(self.text,
                        key=self.key,
                        font=self.font,
                        size=self.size,
-                       justification=self.justification)
+                       justification=self.justification,
+                       background_color=self.background_colour,
+                       text_color=self.text_colour)
 
 
 class Button(Enum):
@@ -112,6 +116,22 @@ class ReviewView:
     _sentence_data_one = pd.DataFrame([])
     _sentence_data_two = pd.DataFrame([])
 
+    _PART_COLOURING = {'n': 'green4',
+                       'pn': 'DarkOrange1',
+                       'prt': 'purple3',
+                       'adv': 'red3',
+                       'v': 'DarkGoldenrod4',
+                       'int': 'gray',
+                       'cop': 'maroon3',
+                       'suf': 'medium blue',
+                       'conj': 'OliveDrab4'}
+    _VERB_TYPES = ['v1', 'v5r', 'v5r-i', 'v5u', 'v5s', 'v5k-s', 'vi', 'vt', 'vs', 'vs-i', 'vk']
+    _VERB = 'v'
+    _ADJECTIVE_TYPES = ['adj-no']
+    _ADJECTIVE = 'adj'
+    _BLACK = 'black'
+    _WHITE = 'white'
+
     @classmethod
     def _layout(cls):
         select = [[Text.SELECT_DECK.create()],
@@ -121,9 +141,17 @@ class ReviewView:
                 [Text.PART.create()],
                 [Text.DEFINITION.create()],
                 [Text.INFO.create()],
-                *[[sg.Text(text, enable_events=True, font='any 16', key=f'{cls._SENTENCE_ONE}{index}')
+                *[[sg.Text(text,
+                           enable_events=True,
+                           font='bold 18',
+                           key=f'{cls._SENTENCE_ONE}{index}',
+                           background_color=cls._BLACK)
                    for index, text in enumerate([''] * 10)]],
-                *[[sg.Text(text, enable_events=True, font='any 16', key=f'{cls._SENTENCE_TWO}{index}')
+                *[[sg.Text(text,
+                           enable_events=True,
+                           font='bold 18',
+                           key=f'{cls._SENTENCE_TWO}{index}',
+                           background_color=cls._BLACK)
                    for index, text in enumerate([''] * 10)]],
                 [sg.Image(key=cls._IMAGE, visible=True)]]
 
@@ -145,7 +173,7 @@ class ReviewView:
         window_height = 650
         layout = [[sg.Column(select, size=(150, window_height), vertical_alignment='top'),
                    sg.VSeparator(),
-                   sg.Column(card, size=(500, window_height), element_justification='c'),
+                   sg.Column(card, size=(500, window_height), element_justification='c', background_color=cls._BLACK),
                    sg.VSeparator(),
                    sg.Column(glossary, size=(200, window_height))],
                   [sg.Column(back_button)]]
@@ -347,13 +375,19 @@ class ReviewView:
         blanks = [''] * 10
         for index, blank in enumerate(blanks):
             window.Element(f'{cls._SENTENCE_ONE}{index}').update(blank)
+            window.Element(f'{cls._SENTENCE_ONE}{index}').update(text_color=cls._WHITE)
             window.Element(f'{cls._SENTENCE_TWO}{index}').update(blank)
+            window.Element(f'{cls._SENTENCE_TWO}{index}').update(text_color=cls._WHITE)
 
         try:
             words = sentence_data[0][cls._TEXT].tolist()
             if len(words) > 0:
                 for index, word in enumerate(words):
                     window.Element(f'{cls._SENTENCE_ONE}{index}').update(word)
+
+                    gloss_json = sentence_data[0][cls._CARD_GLOSS][index]
+                    text_colour = cls._text_colour_for_part_of_speech(gloss_json)
+                    window.Element(f'{cls._SENTENCE_ONE}{index}').update(text_color=text_colour)
         except KeyError:
             pass
 
@@ -367,11 +401,36 @@ class ReviewView:
                 pass
 
     @classmethod
+    def _text_colour_for_part_of_speech(cls, gloss_json):
+        text_colour = cls._WHITE
+        if Options.srs_colouring() == 'On':
+            if gloss_json != cls._NO_ENTRY:
+                gloss = ast.literal_eval(gloss_json)
+                if cls._CARD_PART in gloss:
+                    gloss = [gloss]
+
+                part_of_speech = gloss[0][cls._CARD_PART].replace('[', '').replace(']', '')
+                if ',' in part_of_speech:
+                    part_of_speech = part_of_speech.split(',')[0]
+
+                if part_of_speech in cls._VERB_TYPES:
+                    part_of_speech = cls._VERB
+
+                if part_of_speech in cls._ADJECTIVE_TYPES:
+                    part_of_speech = cls._ADJECTIVE
+
+                if part_of_speech in cls._PART_COLOURING:
+                    text_colour = cls._PART_COLOURING[part_of_speech]
+                else:
+                    print(part_of_speech)
+        return text_colour
+
+    @classmethod
     def _set_state_back(cls, window, card, response_buttons):
         cls._card_front = False
 
         gloss = cls._split_glossary(card)
-        card_gloss = gloss[cls._CARD_GLOSS]
+        card_gloss = gloss[cls._CARD_GLOSS].replace(cls._SUBSTITUTE, cls._APOSTROPHE)
         info = gloss[cls._CARD_INFO]
         window.Element(Text.DEFINITION.key).update(card_gloss)
         window.Element(Text.INFO.key).update(info)
@@ -395,16 +454,19 @@ class ReviewView:
 
     @classmethod
     def _format_json_glossary(cls, gloss):
-        gloss = ast.literal_eval(gloss[1:-1])
-        if cls._CARD_PART in gloss:
-            gloss = [gloss]
+        if cls._NO_ENTRY not in gloss:
+            gloss = ast.literal_eval(gloss[1:-1])
+            if cls._CARD_PART in gloss:
+                gloss = [gloss]
 
-        str_gloss = ''
-        for definition in gloss:
-            if definition != cls._NO_ENTRY:
-                str_gloss += definition[cls._CARD_PART] + '\n' + definition[cls._CARD_GLOSS] + '\n\n'
+            str_gloss = ''
+            for definition in gloss:
+                if definition != cls._NO_ENTRY:
+                    str_gloss += definition[cls._CARD_PART] + '\n' + definition[cls._CARD_GLOSS] + '\n\n'
 
-        str_gloss = str_gloss.replace(cls._SUBSTITUTE, cls._APOSTROPHE)
+            str_gloss = str_gloss.replace(cls._SUBSTITUTE, cls._APOSTROPHE)
+        else:
+            str_gloss = cls._NO_ENTRY
         return str_gloss
 
     @classmethod

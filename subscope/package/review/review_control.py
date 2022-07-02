@@ -28,7 +28,7 @@ class ReviewControl:
     def load_deck(cls, deck_name):
         deck_path = Options.deck_folder_path() + '/' + deck_name + '.txt'
         deck = pd.read_csv(deck_path, sep='\t')
-        deck = deck.sort_values(by=cls._NEXT_REVIEW).reset_index(drop=True)
+        deck = deck.sort_values(by=cls._NEXT_REVIEW)
         selected_cards = cls._select_cards(deck, deck_name)
         return selected_cards
 
