@@ -14,7 +14,7 @@ class Text(Enum):
     CLICK_WORD = ('Click on a word in the example sentence to display glossary information below', None, None, (25, 3))
 
     # Card Details
-    WORD = ('', 'WORD', 'any 18', (34, 1), 'c', 'black')
+    WORD = ('', 'WORD', 'any 18', (41, 1), 'c', 'black')
     PART = ('', 'PART', 'any 12', (53, 1), 'c', 'black')
     DEFINITION = ('', 'DEFINITION', 'any 16', (39, 2), 'c', 'black')
     INFO = ('', 'INFO', 'any 12', (43, 2), 'c', 'black')
@@ -91,6 +91,7 @@ class ReviewView:
     _WORD = 'Word'
     _READING = 'reading'
     _TEXT = 'text'
+    _DICT_TEXT = 'dict_text'
     _CARD_PART = 'pos'
     _GLOSS = 'Gloss'
     _CARD_GLOSS = 'gloss'
@@ -106,6 +107,7 @@ class ReviewView:
     _LAST_REVIEW = 'Last Review'
     _NEXT_REVIEW = 'Next Review'
     _STATUS = 'Status'
+    _SUFFIX = 'suffix'
     _NO_ENTRY = 'No Entry'
 
     # I use this character in place of string apostrophes when dealing with the Ichiran output
@@ -120,14 +122,16 @@ class ReviewView:
                        'pn': 'DarkOrange1',
                        'prt': 'purple3',
                        'adv': 'red3',
+                       'adj': 'deep sky blue',
                        'v': 'DarkGoldenrod4',
                        'int': 'gray',
                        'cop': 'maroon3',
                        'suf': 'medium blue',
-                       'conj': 'OliveDrab4'}
-    _VERB_TYPES = ['v1', 'v5r', 'v5r-i', 'v5u', 'v5s', 'v5k-s', 'vi', 'vt', 'vs', 'vs-i', 'vk']
+                       'conj': 'OliveDrab4',
+                       'exp': 'NavajoWhite'}
+    _VERB_TYPES = ['v1', 'v5r', 'v5t', 'v5r-i', 'v5u', 'v5s', 'v5n', 'v5k-s', 'vi', 'vt', 'vs', 'vs-i', 'vk', 'aux-v']
     _VERB = 'v'
-    _ADJECTIVE_TYPES = ['adj-no']
+    _ADJECTIVE_TYPES = ['adj-no', 'adj-pn', 'adj-i', 'adj-na', 'adj-f']
     _ADJECTIVE = 'adj'
     _BLACK = 'black'
     _WHITE = 'white'
@@ -153,7 +157,7 @@ class ReviewView:
                            key=f'{cls._SENTENCE_TWO}{index}',
                            background_color=cls._BLACK)
                    for index, text in enumerate([''] * 10)]],
-                [sg.Image(key=cls._IMAGE, visible=True)]]
+                [sg.Image(key=cls._IMAGE, visible=True, background_color=cls._BLACK)]]
 
         button_row = []
         response_buttons = [Button.FLIP, Button.AGAIN, Button.HARD, Button.GOOD, Button.EASY]
@@ -173,7 +177,7 @@ class ReviewView:
         window_height = 650
         layout = [[sg.Column(select, size=(150, window_height), vertical_alignment='top'),
                    sg.VSeparator(),
-                   sg.Column(card, size=(500, window_height), element_justification='c', background_color=cls._BLACK),
+                   sg.Column(card, size=(591, window_height), element_justification='c', background_color=cls._BLACK),
                    sg.VSeparator(),
                    sg.Column(glossary, size=(200, window_height))],
                   [sg.Column(back_button)]]
@@ -250,6 +254,8 @@ class ReviewView:
                     reading = entry[cls._READING].tolist()[0]
                     gloss = entry[cls._CARD_GLOSS].tolist()[0]
                     gloss = cls._format_json_glossary(gloss)
+                    if gloss == cls._NO_ENTRY:
+                        gloss = str(entry[cls._SUFFIX].to_list()[0])
                     window.Element(Text.GLOSS_WORD.key).update(reading)
                     window.Element(Text.GLOSSARY.key).update(gloss)
 
@@ -356,7 +362,7 @@ class ReviewView:
                     break
 
         for word in ordered_sentence:
-            target_index = sentence_data[sentence_data[cls._TEXT] == word].index.tolist()
+            target_index = sentence_data[(sentence_data[cls._TEXT] == word)].index.tolist()
             if len(target_index) != 0:
                 if len(target_index) > 1:
                     target_index = [target_index[0]]
@@ -365,7 +371,7 @@ class ReviewView:
                 sentence_data = sentence_data.reindex(index + target_index)
                 sentence_data = sentence_data.reset_index(drop=True)
             else:
-                sentence_data = sentence_data.append(pd.DataFrame([word], columns=[cls._TEXT]))
+                sentence_data = pd.concat([sentence_data, pd.DataFrame([word], columns=[cls._TEXT])])
                 sentence_data = sentence_data.reset_index(drop=True)
 
         return sentence_data.fillna(cls._NO_ENTRY)
@@ -397,6 +403,10 @@ class ReviewView:
                 if len(words) > 0:
                     for index, word in enumerate(words):
                         window.Element(f'{cls._SENTENCE_TWO}{index}').update(word)
+
+                        gloss_json = sentence_data[1][cls._CARD_GLOSS][index]
+                        text_colour = cls._text_colour_for_part_of_speech(gloss_json)
+                        window.Element(f'{cls._SENTENCE_TWO}{index}').update(text_color=text_colour)
             except KeyError:
                 pass
 
@@ -415,8 +425,7 @@ class ReviewView:
 
                 if part_of_speech in cls._VERB_TYPES:
                     part_of_speech = cls._VERB
-
-                if part_of_speech in cls._ADJECTIVE_TYPES:
+                elif part_of_speech in cls._ADJECTIVE_TYPES:
                     part_of_speech = cls._ADJECTIVE
 
                 if part_of_speech in cls._PART_COLOURING:
@@ -516,7 +525,7 @@ class ReviewView:
         window.Element(Text.INFO.key).update('')
         window.Element(Text.GLOSS_WORD.key).update('')
         window.Element(Text.GLOSSARY.key).update('')
-        window.Element(cls._IMAGE).Update(source=None)
+        window.Element(cls._IMAGE).Update(None)
         for button in response_buttons:
             window.Element(button.text).update(disabled=True)
         window.Element(Button.AUDIO.text).update(disabled=True)
