@@ -105,8 +105,6 @@ class ReviewView:
     def show(cls):
         cls._window = cls._create_window()
         cls._controller = ReviewControl()
-        card = None
-        index = None
 
         while True:
             event, values = cls._window.read()
@@ -120,29 +118,28 @@ class ReviewView:
                 if cls._controller.remaining_cards() == 0:
                     cls._set_state_finished()
                 else:
-                    card, index = cls._next_card()
-
                     for button in cls._AUX_BUTTONS:
                         button.enable(cls._window)
+                    cls._next_card()
 
             if event == Button.FLIP.text:
-                cls._set_state_back(card)
+                cls._set_state_back()
 
             if event == Button.AUDIO.text:
-                cls._controller.play_audio(card[cls._SOURCE], card[cls._AUDIO])
+                cls._controller.play_audio()
 
             if event in [Button.KNOWN.text, Button.SUSPEND.text]:
                 if event == Button.KNOWN.text:
-                    cls._controller.mark_known(index)
+                    cls._controller.mark_known()
                 elif event == Button.SUSPEND.text:
-                    cls._controller.mark_suspended(index)
-                card, index = cls._next_card()
+                    cls._controller.mark_suspended()
+                cls._next_card()
 
             if not cls._card_front:
                 for button in cls._RESPONSE_BUTTONS:
                     if event == button.text or event == cls._RESPONSE_BUTTONS[button]:
-                        cls._controller.record_response(index, button.response_score)
-                        card, index = cls._next_card()
+                        cls._controller.record_response(button.response_score)
+                        cls._next_card()
 
             for sentence_index, sentence in enumerate([IterText.SENTENCE_ONE, IterText.SENTENCE_TWO]):
                 if sentence.key in event:
@@ -160,42 +157,31 @@ class ReviewView:
 
     @classmethod
     def _next_card(cls):
-        card, index = cls._load_card()
-        if card is not None and index is not None:
-            cls._set_state_front(card)
+        cls._controller.load_card()
+        if cls._controller.card is not None:
+            cls._set_state_front()
         else:
             cls._set_state_finished()
             cls._controller.update_deck()
 
-        return card, index
-
     @classmethod
-    def _load_card(cls):
-        try:
-            card, index = cls._controller.load_card()
-        except IndexError:
-            card = None
-            index = None
-        return card, index
-
-    @classmethod
-    def _set_state_front(cls, card):
+    def _set_state_front(cls):
         cls._card_front = True
 
         Button.FLIP.enable(cls._window)
         for button in cls._RESPONSE_BUTTONS:
             button.disable(cls._window)
 
-        gloss = cls._split_glossary(card)
+        gloss = cls._split_glossary()
         part = gloss[cls._CARD_PART]
-        cls._window.Element(Text.WORD.key).update(card[cls._WORD])
+        cls._window.Element(Text.WORD.key).update(cls._controller.card.word)
         cls._window.Element(Text.PART.key).update(part)
         cls._window.Element(Text.DEFINITION.key).update('')
         cls._window.Element(Text.INFO.key).update('')
 
-        source = card[cls._SOURCE]
-        episode = card[cls._EPISODE]
-        line_number = card[cls._LINE_NUMBER]
+        source = cls._controller.card.source
+        episode = cls._controller.card.episode
+        line_number = cls._controller.card.line_number
         sentences = cls._controller.get_sentences(source, episode, line_number)
 
         sentence_data = cls._controller.get_sentence_data(source, episode, line_number)
@@ -207,12 +193,10 @@ class ReviewView:
 
         cls._update_sentence_text(cls._sentence_data)
 
-        screenshot = card[cls._SCREENSHOT]
+        screenshot = cls._controller.card.screenshot
         screenshot = cls._controller.load_screenshot(source, screenshot)
         cls._window.Element(Image.CARD.key).Update(screenshot.getvalue())
-
-        audio_file = card[cls._AUDIO]
-        cls._controller.play_audio(source, audio_file)
+        cls._controller.play_audio()
 
         Button.FLIP.enable(cls._window)
 
@@ -293,10 +277,10 @@ class ReviewView:
         return text_colour
 
     @classmethod
-    def _set_state_back(cls, card):
+    def _set_state_back(cls):
         cls._card_front = False
 
-        gloss = cls._split_glossary(card)
+        gloss = cls._split_glossary()
         card_gloss = gloss[cls._CARD_GLOSS].replace(cls._SUBSTITUTE, cls._APOSTROPHE)
         info = gloss[cls._CARD_INFO]
         cls._window.Element(Text.DEFINITION.key).update(card_gloss)
@@ -307,8 +291,8 @@ class ReviewView:
             button.enable(cls._window)
 
     @classmethod
-    def _split_glossary(cls, card):
-        gloss = card[cls._GLOSS]
+    def _split_glossary(cls):
+        gloss = cls._controller.card.gloss
         gloss = ast.literal_eval(gloss[1:-1])
         # TODO: Provide all definitions, instead of just one - maybe with arrow buttons to change display
         if cls._CARD_PART not in gloss:

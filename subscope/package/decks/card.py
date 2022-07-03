@@ -9,7 +9,7 @@ from subscope.package.utilities.media_use_case import MediaUseCase
 class CardHeading(Enum):
     REVIEW_STATE = 'Review State'
     SOURCE = 'Source'
-    ANALYSED_OUTPUT = 'Analysed Output'
+    EPISODE = 'Analysed Output'
     LINE_NUMBER = 'Line Number'
     WORD = 'Word'
     GLOSS = 'Gloss'
@@ -32,7 +32,7 @@ class Card:
         if word is not None:
             self._create_from_word()
         else:
-            self._create_from_deck_entry()
+            self._create_from_deck_entry(deck_entry)
 
     def entry(self):
         # TODO: At the moment, these don't tie in with the CardHeading names, so both need to be changed together
@@ -67,8 +67,19 @@ class Card:
         # TODO: Use this to decode the 'gloss' entry to a tuple of dictionaries with 'pos' and 'gloss' keys
         # gloss = ast.literal_eval(word_entry['gloss'][1:-1])
 
-    def _create_from_deck_entry(self):
-        pass
+    def _create_from_deck_entry(self, deck_entry):
+        self.review_state = deck_entry[CardHeading.REVIEW_STATE.text]
+        self.source = deck_entry[CardHeading.SOURCE.text]
+        self.episode = deck_entry[CardHeading.EPISODE.text]
+        self.line_number = deck_entry[CardHeading.LINE_NUMBER.text]
+        self.word = deck_entry[CardHeading.WORD.text]
+        self.gloss = deck_entry[CardHeading.GLOSS.text]
+        self.audio_clip = deck_entry[CardHeading.AUDIO_CLIP.text]
+        self.screenshot = deck_entry[CardHeading.SCREENSHOT.text]
+        self.score = deck_entry[CardHeading.SCORE.text]
+        self.last_review = deck_entry[CardHeading.LAST_REVIEW.text]
+        self.next_review = deck_entry[CardHeading.NEXT_REVIEW.text]
+        self.status = deck_entry[CardHeading.STATUS.text]
 
 
 if __name__ == '__main__':

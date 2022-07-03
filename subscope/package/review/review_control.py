@@ -7,6 +7,7 @@ from datetime import datetime, date, timedelta
 
 from subscope.package.options.options import Options
 from subscope.package.database.database import Database
+from subscope.package.decks.card import Card
 
 
 class ReviewControl:
@@ -22,11 +23,15 @@ class ReviewControl:
     _REVIEW = 'Review'
     _LAST_REVIEW = 'Last Review'
     _NEXT_REVIEW = 'Next Review'
-    _AUDIO = 'audio'
+    _AUDIO_FOLDER = 'audio'
+    _AUDIO = 'Audio Clip'
     _IMAGE = 'image'
+    _SOURCE = 'Source'
 
     deck_name = None
     deck = None
+    card = None
+    card_index = None
     _audio = None
 
     @staticmethod
@@ -70,9 +75,12 @@ class ReviewControl:
 
     def load_card(self):
         cards = self.deck[self.deck[self._STATE] == 0]
-        index = cards.index.tolist()[0]
-        card = cards.iloc[0]
-        return card, index
+        if len(cards.index) > 0:
+            self.card_index = cards.index.tolist()[0]
+            self.card = Card(deck_entry=cards.iloc[0].to_dict())
+        else:
+            self.card = None
+            self.card_index = None
 
     def remaining_cards(self):
         return len(self.deck.index)
@@ -98,9 +106,11 @@ class ReviewControl:
         image.save(bio, format='PNG')
         return bio
 
-    def play_audio(self, source, audio_file):
+    def play_audio(self):
+        source = self.card.source
+        audio_file = self.card.audio_clip
         self.stop_audio()
-        audio_file_path = Options.subtitles_folder_path() + '/' + source + '/' + self._AUDIO + '/' + audio_file
+        audio_file_path = Options.subtitles_folder_path() + '/' + source + '/' + self._AUDIO_FOLDER + '/' + audio_file
         self._audio = multiprocessing.Process(target=playsound, args=(audio_file_path,))
         self._audio.start()
 
@@ -108,20 +118,20 @@ class ReviewControl:
         if self._audio:
             self._audio.terminate()
 
-    def record_response(self, index, response_score):
-        self.deck.loc[index, self._STATE] = 1
+    def record_response(self, response_score):
+        self.deck.loc[self.card_index, self._STATE] = 1
 
-        current_score = self.deck[self._SCORE][index]
-        self.deck.loc[index, self._SCORE] = self._adjust_score(response_score, current_score)
+        current_score = self.deck[self._SCORE][self.card_index]
+        self.deck.loc[self.card_index, self._SCORE] = self._adjust_score(response_score, current_score)
 
-        self._update_review_dates(index, response_score)
+        self._update_review_dates(response_score)
 
-    def _update_review_dates(self, index, response_score):
-        if str(self.deck[self._LAST_REVIEW][index]) == '0':
+    def _update_review_dates(self, response_score):
+        if str(self.deck[self._LAST_REVIEW][self.card_index]) == '0':
             interval = 1
         else:
-            next_review = datetime.strptime(str(self.deck.loc[index, self._NEXT_REVIEW]), '%Y-%m-%d')
-            last_review = datetime.strptime(str(self.deck.loc[index, self._LAST_REVIEW]), '%Y-%m-%d')
+            next_review = datetime.strptime(str(self.deck.loc[self.card_index, self._NEXT_REVIEW]), '%Y-%m-%d')
+            last_review = datetime.strptime(str(self.deck.loc[self.card_index, self._LAST_REVIEW]), '%Y-%m-%d')
             interval = next_review - last_review
             if interval.days < 1:
                 interval = 1
@@ -131,11 +141,12 @@ class ReviewControl:
         if response_score == 0:
             new_interval = 1
         else:
-            new_interval = round(interval * self.deck[self._SCORE][index])
+            new_interval = round(interval * self.deck[self._SCORE][self.card_index])
 
-        self.deck.loc[index, self._LAST_REVIEW] = date.today()
-        self.deck.loc[index, self._NEXT_REVIEW] = self.deck.loc[index, self._LAST_REVIEW] + timedelta(days=new_interval)
-        self.deck.loc[index, self._STATUS] = self._REVIEW
+        self.deck.loc[self.card_index, self._LAST_REVIEW] = date.today()
+        self.deck.loc[self.card_index, self._NEXT_REVIEW] = self.deck.loc[self.card_index, self._LAST_REVIEW] \
+                                                            + timedelta(days=new_interval)
+        self.deck.loc[self.card_index, self._STATUS] = self._REVIEW
 
     def update_deck(self):
         deck_path = Options.deck_folder_path() + '/' + self.deck_name + '.txt'
@@ -152,10 +163,10 @@ class ReviewControl:
             updated_score = 1.3
         return updated_score
 
-    def mark_known(self, index):
-        self.deck.loc[index, self._STATE] = 1
-        self.deck.loc[index, self._STATUS] = self._KNOWN
+    def mark_known(self):
+        self.deck.loc[self.card_index, self._STATE] = 1
+        self.deck.loc[self.card_index, self._STATUS] = self._KNOWN
 
-    def mark_suspended(self, index):
-        self.deck.loc[index, self._STATE] = 1
-        self.deck.loc[index, self._STATUS] = self._SUSPENDED
+    def mark_suspended(self):
+        self.deck.loc[self.card_index, self._STATE] = 1
+        self.deck.loc[self.card_index, self._STATUS] = self._SUSPENDED
