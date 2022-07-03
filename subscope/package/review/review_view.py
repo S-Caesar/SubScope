@@ -1,86 +1,21 @@
 import PySimpleGUI as sg
-from enum import Enum
 import ast
 import datetime
-
 import pandas as pd
 
 from subscope.package.review.review_control import ReviewControl
 from subscope.package.options.options import Options
-
-
-class Text(Enum):
-    SELECT_DECK = 'Select deck to review'
-    CLICK_WORD = ('Click on a word in the example sentence to display glossary information below', None, None, (25, 3))
-
-    # Card Details
-    WORD = ('', 'WORD', 'any 18', (41, 1), 'c', 'black')
-    PART = ('', 'PART', 'any 12', (53, 1), 'c', 'black')
-    DEFINITION = ('', 'DEFINITION', 'any 16', (39, 2), 'c', 'black')
-    INFO = ('', 'INFO', 'any 12', (43, 2), 'c', 'black')
-    GLOSS_WORD = ('', 'GLOSS_WORD', 'any 16', (18, 2))
-    GLOSSARY = ('', 'GLOSSARY', 'any 12', (21, 40))
-
-    def __init__(self, text, key=None, font=None, size=None, justification=None, background_colour=None,
-                 text_colour='white'):
-        self.text = text
-        self.key = key
-        self.font = font
-        if size is None:
-            self.size = (None, None)
-        else:
-            self.size = size
-        self.justification = justification
-        self.background_colour = background_colour
-        self.text_colour = text_colour
-
-    def create(self):
-        return sg.Text(self.text,
-                       key=self.key,
-                       font=self.font,
-                       size=self.size,
-                       justification=self.justification,
-                       background_color=self.background_colour,
-                       text_color=self.text_colour)
-
-
-class Button(Enum):
-    FLIP = ('Flip', 'grey99', 'grey30', '', (10, 2))
-    AGAIN = ('Again', 'grey99', 'red2', 0, (10, 2))
-    HARD = ('Hard', 'grey99', 'dark orange', 1, (10, 2))
-    GOOD = ('Good', 'grey99', 'green3', 2, (10, 2))
-    EASY = ('Easy', 'grey99', 'DeepSkyBlue3', 3, (10, 2))
-    AUDIO = ('Audio', None, None, None, (10, 2))
-    KNOWN = ('Known', None, None, None, (10, 1))
-    SUSPEND = ('Suspend', None, None, None, (10, 1))
-    BACK = ('Back', None, None, None, None, False)
-
-    def __init__(self, text, text_colour=None, button_colour=None, response_score=None, size=None,
-                 disabled=True):
-        self.text = text
-        self.text_colour = text_colour
-        self.button_colour = button_colour
-        self.response_score = response_score
-        if size is None:
-            self.size = (None, None)
-        else:
-            self.size = size
-        self.disabled = disabled
-
-    def create(self):
-        return sg.Button(self.text,
-                         size=self.size,
-                         disabled=self.disabled,
-                         button_color=(self.text_colour, self.button_colour))
+from subscope.package.parsing.elements import Text, IterText, Button, Image
 
 
 class ReviewView:
+    _window = None
+    _controller = None
+
     _REVIEW_TITLE = 'Review Decks'
     _DECK_LIST = ReviewControl.deck_list()
     _SELECTED_DECK = 'SELECTED_DECK'
-    _IMAGE = 'IMAGE'
     _REVIEWS_FINISHED = 'Reviews Finished!'
-    _card_front = False
     _REVIEW = 'Review'
     _KNOWN = 'Known'
     _SUSPENDED = 'Suspended'
@@ -115,8 +50,14 @@ class ReviewView:
     _APOSTROPHE = '\''
 
     _active_deck = None
-    _sentence_data_one = pd.DataFrame([])
-    _sentence_data_two = pd.DataFrame([])
+    _card_front = False
+    _sentence_data = [pd.DataFrame([]), pd.DataFrame([])]
+
+    _RESPONSE_BUTTONS = {Button.AGAIN: '1',
+                         Button.HARD: '2',
+                         Button.GOOD: '3',
+                         Button.EASY: '4'}
+    _AUX_BUTTONS = [Button.AUDIO, Button.KNOWN, Button.SUSPEND]
 
     _PART_COLOURING = {'n': 'green4',
                        'pn': 'DarkOrange1',
@@ -137,7 +78,7 @@ class ReviewView:
     _WHITE = 'white'
 
     @classmethod
-    def _layout(cls):
+    def _create_layout(cls):
         select = [[Text.SELECT_DECK.create()],
                   [sg.Combo(cls._DECK_LIST, key=cls._SELECTED_DECK, size=(15, 1), enable_events=True, readonly=True)]]
 
@@ -145,23 +86,12 @@ class ReviewView:
                 [Text.PART.create()],
                 [Text.DEFINITION.create()],
                 [Text.INFO.create()],
-                *[[sg.Text(text,
-                           enable_events=True,
-                           font='bold 18',
-                           key=f'{cls._SENTENCE_ONE}{index}',
-                           background_color=cls._BLACK)
-                   for index, text in enumerate([''] * 10)]],
-                *[[sg.Text(text,
-                           enable_events=True,
-                           font='bold 18',
-                           key=f'{cls._SENTENCE_TWO}{index}',
-                           background_color=cls._BLACK)
-                   for index, text in enumerate([''] * 10)]],
-                [sg.Image(key=cls._IMAGE, visible=True, background_color=cls._BLACK)]]
+                *IterText.SENTENCE_ONE.create(),
+                *IterText.SENTENCE_TWO.create(),
+                [Image.CARD.create()]]
 
         button_row = []
-        response_buttons = [Button.FLIP, Button.AGAIN, Button.HARD, Button.GOOD, Button.EASY]
-        for button in response_buttons:
+        for button in [Button.FLIP] + list(cls._RESPONSE_BUTTONS.keys()):
             button_row.append(button.create())
         card.extend([button_row,
                      [Button.AUDIO.create()],
@@ -184,160 +114,133 @@ class ReviewView:
         return layout
 
     @classmethod
-    def _window(cls):
-        return sg.Window(cls._REVIEW_TITLE, layout=cls._layout(), return_keyboard_events=True)
+    def _create_window(cls):
+        return sg.Window(cls._REVIEW_TITLE, layout=cls._create_layout(), return_keyboard_events=True)
 
     @classmethod
     def show(cls):
-        window = cls._window()
+        cls._window = cls._create_window()
+        cls._controller = ReviewControl()
         deck = None
         card = None
         index = None
-        audio = None
-        response_buttons = {Button.AGAIN: '1',
-                            Button.HARD: '2',
-                            Button.GOOD: '3',
-                            Button.EASY: '4'}
+
         while True:
-            event, values = window.read()
+            event, values = cls._window.read()
             if event in [None, 'Back']:
-                try:
-                    audio.terminate()
-                except AttributeError:
-                    pass
-                window.close()
+                cls._controller.stop_audio()
+                cls._window.close()
                 break
 
             try:
-                if values[event] in ReviewControl.deck_list():
-                    cls._active_deck = values[event]
-                    deck = ReviewControl.load_deck(cls._active_deck)
-                    if len(deck.index.tolist()) == 0:
-                        cls._set_state_finished(window, response_buttons)
+                if values[event] in cls._controller.deck_list():
+                    deck = cls._controller.load_deck(values[event])
+                    if cls._controller.remaining_cards() == 0:
+                        cls._set_state_finished()
                     else:
-                        audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+                        card, index = cls._next_card(deck)
 
-                        window.Element(Button.AUDIO.text).update(disabled=False)
-                        window.Element(Button.KNOWN.text).update(disabled=False)
-                        window.Element(Button.SUSPEND.text).update(disabled=False)
+                        for button in cls._AUX_BUTTONS:
+                            button.enable(cls._window)
             except KeyError:
                 pass
 
             if event == Button.FLIP.text:
-                cls._set_state_back(window, card, response_buttons)
+                cls._set_state_back(card)
 
             if event == Button.AUDIO.text:
-                audio.terminate()
-                audio = ReviewControl.play_audio(card[cls._SOURCE], card[cls._AUDIO])
+                cls._controller.play_audio(card[cls._SOURCE], card[cls._AUDIO])
 
             if event == Button.KNOWN.text:
                 deck.loc[index, cls._STATE] = 1
                 deck.loc[index, cls._STATUS] = cls._KNOWN
-                audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+                card, index = cls._next_card(deck)
 
             if event == Button.SUSPEND.text:
                 deck.loc[index, cls._STATE] = 1
                 deck.loc[index, cls._STATUS] = cls._SUSPENDED
-                audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+                card, index = cls._next_card(deck)
 
             if not cls._card_front:
-                for button in response_buttons:
-                    if event == button.text or event == response_buttons[button]:
+                for button in cls._RESPONSE_BUTTONS:
+                    if event == button.text or event == cls._RESPONSE_BUTTONS[button]:
                         deck = cls._record_response(deck, index, button.response_score)
                         deck = cls._update_review_dates(deck, index, button.response_score)
-                        audio, card, index = cls._next_card(window, deck, audio, response_buttons)
+                        card, index = cls._next_card(deck)
 
-            if cls._SENTENCE_ONE in event:
-                clicked_word = window.Element(event).get()
-                if clicked_word != '':
-                    entry = cls._sentence_data_one[cls._sentence_data_one[cls._TEXT] == clicked_word]
-                    reading = entry[cls._READING].tolist()[0]
-                    gloss = entry[cls._CARD_GLOSS].tolist()[0]
-                    gloss = cls._format_json_glossary(gloss)
-                    if gloss == cls._NO_ENTRY:
-                        gloss = str(entry[cls._SUFFIX].to_list()[0])
-                    window.Element(Text.GLOSS_WORD.key).update(reading)
-                    window.Element(Text.GLOSSARY.key).update(gloss)
-
-            if cls._SENTENCE_TWO in event:
-                clicked_word = window.Element(event).get()
-                if clicked_word != '':
-                    entry = cls._sentence_data_two[cls._sentence_data_two[cls._TEXT] == clicked_word]
-                    reading = entry[cls._READING].tolist()[0]
-                    gloss = entry[cls._CARD_GLOSS].tolist()[0]
-                    gloss = cls._format_json_glossary(gloss)
-                    window.Element(Text.GLOSS_WORD.key).update(reading)
-                    window.Element(Text.GLOSSARY.key).update(gloss)
+            for sentence_index, sentence in enumerate([IterText.SENTENCE_ONE, IterText.SENTENCE_TWO]):
+                if sentence.key in event:
+                    clicked_word = cls._window.Element(event).get()
+                    if clicked_word != '':
+                        sentence_data = cls._sentence_data[sentence_index]
+                        entry = sentence_data[sentence_data[cls._TEXT] == clicked_word]
+                        reading = entry[cls._READING].tolist()[0]
+                        gloss = entry[cls._CARD_GLOSS].tolist()[0]
+                        gloss = cls._format_json_glossary(gloss)
+                        if gloss == cls._NO_ENTRY and cls._SUFFIX in entry:
+                            gloss = str(entry[cls._SUFFIX].to_list()[0])
+                        cls._window.Element(Text.GLOSS_WORD.key).update(reading)
+                        cls._window.Element(Text.GLOSSARY.key).update(gloss)
 
     @classmethod
-    def _next_card(cls, window, deck, audio, response_buttons):
-        if audio is not None:
-            audio.terminate()
-
-        try:
-            card, index = cls._load_card(deck)
-            audio = cls._set_state_front(window, card, response_buttons)
-        except IndexError:
-            card = None
-            index = None
-            cls._set_state_finished(window, response_buttons)
+    def _next_card(cls, deck):
+        card, index = cls._load_card(deck)
+        if card is not None and index is not None:
+            cls._set_state_front(card)
+        else:
+            cls._set_state_finished()
             cls._update_deck(deck)
 
-        return audio, card, index
-
-    @classmethod
-    def _load_card(cls, deck):
-        cards = deck[deck[cls._STATE] == 0]
-        index = cards.index.tolist()[0]
-        card = cards.iloc[0]
         return card, index
 
     @classmethod
-    def _set_state_front(cls, window, card, response_buttons):
+    def _load_card(cls, deck):
+        try:
+            cards = deck[deck[cls._STATE] == 0]
+            index = cards.index.tolist()[0]
+            card = cards.iloc[0]
+        except IndexError:
+            card = None
+            index = None
+        return card, index
+
+    @classmethod
+    def _set_state_front(cls, card):
         cls._card_front = True
 
-        window.Element(Button.FLIP.text).update(disabled=False)
-        for button in response_buttons:
-            window.Element(button.text).update(disabled=True)
+        Button.FLIP.enable(cls._window)
+        for button in cls._RESPONSE_BUTTONS:
+            button.disable(cls._window)
 
         gloss = cls._split_glossary(card)
         part = gloss[cls._CARD_PART]
-        window.Element(Text.WORD.key).update(card[cls._WORD])
-        window.Element(Text.PART.key).update(part)
-        window.Element(Text.DEFINITION.key).update('')
-        window.Element(Text.INFO.key).update('')
+        cls._window.Element(Text.WORD.key).update(card[cls._WORD])
+        cls._window.Element(Text.PART.key).update(part)
+        cls._window.Element(Text.DEFINITION.key).update('')
+        cls._window.Element(Text.INFO.key).update('')
 
         source = card[cls._SOURCE]
         episode = card[cls._EPISODE]
         line_number = card[cls._LINE_NUMBER]
-        sentences = ReviewControl.get_sentences(source, episode, line_number)
+        sentences = cls._controller.get_sentences(source, episode, line_number)
 
-        sentence_data = ReviewControl.get_sentence_data(source, episode, line_number)
+        sentence_data = cls._controller.get_sentence_data(source, episode, line_number)
         for index, data in enumerate(sentence_data):
             if len(data) != 0 and cls._TEXT in data.columns.tolist():
-                sentence_data[index] = cls._order_sentences(sentences[index], data)
+                cls._sentence_data[index] = cls._order_sentences(sentences[index], data)
+            else:
+                cls._sentence_data[index] = pd.DataFrame([])
 
-        try:
-            cls._sentence_data_one = sentence_data[0]
-        except IndexError:
-            cls._sentence_data_one = pd.DataFrame([])
-
-        try:
-            cls._sentence_data_two = sentence_data[1]
-        except IndexError:
-            cls._sentence_data_two = pd.DataFrame([])
-
-        cls._update_sentence_text(window, sentence_data)
+        cls._update_sentence_text(cls._sentence_data)
 
         screenshot = card[cls._SCREENSHOT]
-        screenshot = ReviewControl.load_screenshot(source, screenshot)
-        window.Element(cls._IMAGE).Update(screenshot.getvalue())
+        screenshot = cls._controller.load_screenshot(source, screenshot)
+        cls._window.Element(Image.CARD.key).Update(screenshot.getvalue())
 
         audio_file = card[cls._AUDIO]
-        audio = ReviewControl.play_audio(source, audio_file)
+        cls._controller.play_audio(source, audio_file)
 
-        window.Element(Button.FLIP.text).update(disabled=False)
-        return audio
+        Button.FLIP.enable(cls._window)
 
     @classmethod
     def _order_sentences(cls, sentence, sentence_data):
@@ -377,38 +280,19 @@ class ReviewView:
         return sentence_data.fillna(cls._NO_ENTRY)
 
     @classmethod
-    def _update_sentence_text(cls, window, sentence_data):
-        blanks = [''] * 10
-        for index, blank in enumerate(blanks):
-            window.Element(f'{cls._SENTENCE_ONE}{index}').update(blank)
-            window.Element(f'{cls._SENTENCE_ONE}{index}').update(text_color=cls._WHITE)
-            window.Element(f'{cls._SENTENCE_TWO}{index}').update(blank)
-            window.Element(f'{cls._SENTENCE_TWO}{index}').update(text_color=cls._WHITE)
+    def _update_sentence_text(cls, sentence_data):
+        sentence_elements = [IterText.SENTENCE_ONE, IterText.SENTENCE_TWO]
+        for index, sentence in enumerate(sentence_data):
+            if cls._TEXT in sentence:
+                words = sentence[cls._TEXT].tolist()
+            else:
+                words = []
 
-        try:
-            words = sentence_data[0][cls._TEXT].tolist()
-            if len(words) > 0:
-                for index, word in enumerate(words):
-                    window.Element(f'{cls._SENTENCE_ONE}{index}').update(word)
-
-                    gloss_json = sentence_data[0][cls._CARD_GLOSS][index]
-                    text_colour = cls._text_colour_for_part_of_speech(gloss_json)
-                    window.Element(f'{cls._SENTENCE_ONE}{index}').update(text_color=text_colour)
-        except KeyError:
-            pass
-
-        if len(sentence_data) == 2:
-            try:
-                words = sentence_data[1][cls._TEXT].tolist()
-                if len(words) > 0:
-                    for index, word in enumerate(words):
-                        window.Element(f'{cls._SENTENCE_TWO}{index}').update(word)
-
-                        gloss_json = sentence_data[1][cls._CARD_GLOSS][index]
-                        text_colour = cls._text_colour_for_part_of_speech(gloss_json)
-                        window.Element(f'{cls._SENTENCE_TWO}{index}').update(text_color=text_colour)
-            except KeyError:
-                pass
+            colours = []
+            for word_no, word in enumerate(words):
+                gloss_json = sentence[cls._CARD_GLOSS][word_no]
+                colours.append(cls._text_colour_for_part_of_speech(gloss_json))
+            sentence_elements[index].update(cls._window, words, colours)
 
     @classmethod
     def _text_colour_for_part_of_speech(cls, gloss_json):
@@ -435,18 +319,18 @@ class ReviewView:
         return text_colour
 
     @classmethod
-    def _set_state_back(cls, window, card, response_buttons):
+    def _set_state_back(cls, card):
         cls._card_front = False
 
         gloss = cls._split_glossary(card)
         card_gloss = gloss[cls._CARD_GLOSS].replace(cls._SUBSTITUTE, cls._APOSTROPHE)
         info = gloss[cls._CARD_INFO]
-        window.Element(Text.DEFINITION.key).update(card_gloss)
-        window.Element(Text.INFO.key).update(info)
+        cls._window.Element(Text.DEFINITION.key).update(card_gloss)
+        cls._window.Element(Text.INFO.key).update(info)
 
-        window.Element(Button.FLIP.text).update(disabled=True)
-        for button in response_buttons:
-            window.Element(button.text).update(disabled=False)
+        Button.FLIP.disable(cls._window)
+        for button in cls._RESPONSE_BUTTONS:
+            button.enable(cls._window)
 
     @classmethod
     def _split_glossary(cls, card):
@@ -517,31 +401,28 @@ class ReviewView:
         return deck
 
     @classmethod
-    def _set_state_finished(cls, window, response_buttons):
+    def _set_state_finished(cls):
         cls._card_front = True
-        window.Element(Text.WORD.key).update(cls._REVIEWS_FINISHED)
-        window.Element(Text.PART.key).update('')
-        window.Element(Text.DEFINITION.key).update('')
-        window.Element(Text.INFO.key).update('')
-        window.Element(Text.GLOSS_WORD.key).update('')
-        window.Element(Text.GLOSSARY.key).update('')
-        window.Element(cls._IMAGE).Update(None)
-        for button in response_buttons:
-            window.Element(button.text).update(disabled=True)
-        window.Element(Button.AUDIO.text).update(disabled=True)
-        window.Element(Button.KNOWN.text).update(disabled=True)
-        window.Element(Button.SUSPEND.text).update(disabled=True)
+        cls._controller.stop_audio()
+        cls._window.Element(Text.WORD.key).update(cls._REVIEWS_FINISHED)
+        cls._window.Element(Text.PART.key).update('')
+        cls._window.Element(Text.DEFINITION.key).update('')
+        cls._window.Element(Text.INFO.key).update('')
+        cls._window.Element(Text.GLOSS_WORD.key).update('')
+        cls._window.Element(Text.GLOSSARY.key).update('')
+        cls._window.Element(Image.CARD.key).Update(None)
 
-        blanks = [''] * 10
-        for index, blank in enumerate(blanks):
-            window.Element(f'{cls._SENTENCE_ONE}{index}').update(blank)
-            window.Element(f'{cls._SENTENCE_TWO}{index}').update(blank)
+        for button in list(cls._RESPONSE_BUTTONS.keys()) + cls._AUX_BUTTONS:
+            button.disable(cls._window)
+
+        IterText.SENTENCE_ONE.clear(cls._window)
+        IterText.SENTENCE_TWO.clear(cls._window)
 
     @classmethod
     def _update_deck(cls, deck):
         for index in deck.index.tolist():
             deck.loc[index, cls._STATE] = 0
-        ReviewControl.update_deck(deck, cls._active_deck)
+        cls._controller.update_deck(deck)
 
 
 if __name__ == '__main__':

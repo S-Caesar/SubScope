@@ -20,30 +20,34 @@ class ReviewControl:
     _AUDIO = 'audio'
     _IMAGE = 'image'
 
+    deck_name = None
+    deck = None
+    _audio = None
+
     @staticmethod
     def deck_list():
         return Options.deck_list()
 
-    @classmethod
-    def load_deck(cls, deck_name):
-        deck_path = Options.deck_folder_path() + '/' + deck_name + '.txt'
+    def load_deck(self, deck_name):
+        self.deck_name = deck_name
+        deck_path = Options.deck_folder_path() + '/' + self.deck_name + '.txt'
         deck = pd.read_csv(deck_path, sep='\t')
-        deck = deck.sort_values(by=cls._NEXT_REVIEW)
-        selected_cards = cls._select_cards(deck, deck_name)
-        return selected_cards
+        deck = deck.sort_values(by=self._NEXT_REVIEW)
+        selected_cards = self._select_cards(deck)
+        self.deck = selected_cards
+        return self.deck
 
-    @classmethod
-    def _select_cards(cls, deck, deck_name):
-        deck_settings = Options.deck_settings()[deck_name]
+    def _select_cards(self, deck):
+        deck_settings = Options.deck_settings()[self.deck_name]
 
         # TODO: Remove columns based on format settings
-        card_format = deck_settings[cls._REVIEW_LIMIT]
+        card_format = deck_settings[self._REVIEW_LIMIT]
 
-        new_limit = int(deck_settings[cls._NEW_LIMIT])
-        new_cards = cls._select_new_cards(deck, new_limit)
+        new_limit = int(deck_settings[self._NEW_LIMIT])
+        new_cards = self._select_new_cards(deck, new_limit)
 
-        review_limit = int(deck_settings[cls._REVIEW_LIMIT])
-        review_cards = cls._select_review_cards(deck, review_limit)
+        review_limit = int(deck_settings[self._REVIEW_LIMIT])
+        review_cards = self._select_review_cards(deck, review_limit)
 
         selected_cards = pd.concat([new_cards, review_cards])
         # Return the cards as a full sample, so they are shuffled
@@ -60,6 +64,9 @@ class ReviewControl:
         review_cards = to_review[to_review[cls._NEXT_REVIEW].astype('datetime64[D]') <= today].head(review_limit)
         return review_cards
 
+    def remaining_cards(self):
+        return len(self.deck.index)
+
     @classmethod
     def get_sentences(cls, source, episode, line_number):
         sentences = Database.sentence_from_line_number(source, episode, line_number)
@@ -68,6 +75,8 @@ class ReviewControl:
     @classmethod
     def get_sentence_data(cls, source, episode, line_number):
         sentence_data = Database.sentence_data_from_line_number(source, episode, line_number)
+        if len(sentence_data) == 1:
+            sentence_data.append('')
         return sentence_data
 
     @classmethod
@@ -79,21 +88,19 @@ class ReviewControl:
         image.save(bio, format='PNG')
         return bio
 
-    @classmethod
-    def play_audio(cls, source, audio_file):
-        audio_file_path = Options.subtitles_folder_path() + '/' + source + '/' + cls._AUDIO + '/' + audio_file
-        audio = multiprocessing.Process(target=playsound, args=(audio_file_path,))
-        audio.start()
-        return audio
+    def play_audio(self, source, audio_file):
+        self.stop_audio()
+        audio_file_path = Options.subtitles_folder_path() + '/' + source + '/' + self._AUDIO + '/' + audio_file
+        self._audio = multiprocessing.Process(target=playsound, args=(audio_file_path,))
+        self._audio.start()
 
-    @classmethod
-    def update_deck(cls, deck, deck_name):
-        deck_path = Options.deck_folder_path() + '/' + deck_name + '.txt'
+    def stop_audio(self):
+        if self._audio:
+            self._audio.terminate()
+
+    def update_deck(self, deck):
+        deck_path = Options.deck_folder_path() + '/' + self.deck_name + '.txt'
         full_deck = pd.read_csv(deck_path, sep='\t')
         for index in deck.index.tolist():
             full_deck.loc[index, :] = deck.loc[index, :]
         full_deck.to_csv(deck_path, sep='\t', index=None)
-
-
-if __name__ == '__main__':
-    ReviewControl.load_deck('SteinsGate')
