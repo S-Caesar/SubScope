@@ -1,11 +1,10 @@
 import PySimpleGUI as sg
 import ast
-import datetime
 import pandas as pd
 
 from subscope.package.review.review_control import ReviewControl
 from subscope.package.options.options import Options
-from subscope.package.parsing.elements import Text, IterText, Button, Image
+from subscope.package.parsing.elements import Text, IterText, Button, Image, Combo
 
 
 class ReviewView:
@@ -14,34 +13,20 @@ class ReviewView:
 
     _REVIEW_TITLE = 'Review Decks'
     _DECK_LIST = ReviewControl.deck_list()
-    _SELECTED_DECK = 'SELECTED_DECK'
     _REVIEWS_FINISHED = 'Reviews Finished!'
-    _REVIEW = 'Review'
-    _KNOWN = 'Known'
-    _SUSPENDED = 'Suspended'
-
-    _SENTENCE_ONE = 'SENTENCE_ONE'
-    _SENTENCE_TWO = 'SENTENCE_TWO'
 
     _WORD = 'Word'
     _READING = 'reading'
     _TEXT = 'text'
-    _DICT_TEXT = 'dict_text'
     _CARD_PART = 'pos'
     _GLOSS = 'Gloss'
     _CARD_GLOSS = 'gloss'
     _CARD_INFO = 'info'
-    _SENTENCE = 'Sentence'
     _AUDIO = 'Audio Clip'
     _SCREENSHOT = 'Screenshot'
-    _SCORE = 'Score'
     _SOURCE = 'Source'
     _EPISODE = 'Analysed Output'
     _LINE_NUMBER = 'Line Number'
-    _STATE = 'Review State'
-    _LAST_REVIEW = 'Last Review'
-    _NEXT_REVIEW = 'Next Review'
-    _STATUS = 'Status'
     _SUFFIX = 'suffix'
     _NO_ENTRY = 'No Entry'
 
@@ -49,7 +34,6 @@ class ReviewView:
     _SUBSTITUTE = '^'
     _APOSTROPHE = '\''
 
-    _active_deck = None
     _card_front = False
     _sentence_data = [pd.DataFrame([]), pd.DataFrame([])]
 
@@ -80,7 +64,7 @@ class ReviewView:
     @classmethod
     def _create_layout(cls):
         select = [[Text.SELECT_DECK.create()],
-                  [sg.Combo(cls._DECK_LIST, key=cls._SELECTED_DECK, size=(15, 1), enable_events=True, readonly=True)]]
+                  [Combo.DECK_SELECTION.create(ReviewControl.deck_list())]]
 
         card = [[Text.WORD.create()],
                 [Text.PART.create()],
@@ -121,29 +105,25 @@ class ReviewView:
     def show(cls):
         cls._window = cls._create_window()
         cls._controller = ReviewControl()
-        deck = None
         card = None
         index = None
 
         while True:
             event, values = cls._window.read()
-            if event in [None, 'Back']:
+            if event in [None, Button.BACK.text]:
                 cls._controller.stop_audio()
                 cls._window.close()
                 break
 
-            try:
-                if values[event] in cls._controller.deck_list():
-                    deck = cls._controller.load_deck(values[event])
-                    if cls._controller.remaining_cards() == 0:
-                        cls._set_state_finished()
-                    else:
-                        card, index = cls._next_card(deck)
+            if event == Combo.DECK_SELECTION.key:
+                cls._controller.load_deck(values[event])
+                if cls._controller.remaining_cards() == 0:
+                    cls._set_state_finished()
+                else:
+                    card, index = cls._next_card()
 
-                        for button in cls._AUX_BUTTONS:
-                            button.enable(cls._window)
-            except KeyError:
-                pass
+                    for button in cls._AUX_BUTTONS:
+                        button.enable(cls._window)
 
             if event == Button.FLIP.text:
                 cls._set_state_back(card)
@@ -151,22 +131,18 @@ class ReviewView:
             if event == Button.AUDIO.text:
                 cls._controller.play_audio(card[cls._SOURCE], card[cls._AUDIO])
 
-            if event == Button.KNOWN.text:
-                deck.loc[index, cls._STATE] = 1
-                deck.loc[index, cls._STATUS] = cls._KNOWN
-                card, index = cls._next_card(deck)
-
-            if event == Button.SUSPEND.text:
-                deck.loc[index, cls._STATE] = 1
-                deck.loc[index, cls._STATUS] = cls._SUSPENDED
-                card, index = cls._next_card(deck)
+            if event in [Button.KNOWN.text, Button.SUSPEND.text]:
+                if event == Button.KNOWN.text:
+                    cls._controller.mark_known(index)
+                elif event == Button.SUSPEND.text:
+                    cls._controller.mark_suspended(index)
+                card, index = cls._next_card()
 
             if not cls._card_front:
                 for button in cls._RESPONSE_BUTTONS:
                     if event == button.text or event == cls._RESPONSE_BUTTONS[button]:
-                        deck = cls._record_response(deck, index, button.response_score)
-                        deck = cls._update_review_dates(deck, index, button.response_score)
-                        card, index = cls._next_card(deck)
+                        cls._controller.record_response(index, button.response_score)
+                        card, index = cls._next_card()
 
             for sentence_index, sentence in enumerate([IterText.SENTENCE_ONE, IterText.SENTENCE_TWO]):
                 if sentence.key in event:
@@ -183,22 +159,20 @@ class ReviewView:
                         cls._window.Element(Text.GLOSSARY.key).update(gloss)
 
     @classmethod
-    def _next_card(cls, deck):
-        card, index = cls._load_card(deck)
+    def _next_card(cls):
+        card, index = cls._load_card()
         if card is not None and index is not None:
             cls._set_state_front(card)
         else:
             cls._set_state_finished()
-            cls._update_deck(deck)
+            cls._controller.update_deck()
 
         return card, index
 
     @classmethod
-    def _load_card(cls, deck):
+    def _load_card(cls):
         try:
-            cards = deck[deck[cls._STATE] == 0]
-            index = cards.index.tolist()[0]
-            card = cards.iloc[0]
+            card, index = cls._controller.load_card()
         except IndexError:
             card = None
             index = None
@@ -356,49 +330,10 @@ class ReviewView:
             for definition in gloss:
                 if definition != cls._NO_ENTRY:
                     str_gloss += definition[cls._CARD_PART] + '\n' + definition[cls._CARD_GLOSS] + '\n\n'
-
             str_gloss = str_gloss.replace(cls._SUBSTITUTE, cls._APOSTROPHE)
         else:
             str_gloss = cls._NO_ENTRY
         return str_gloss
-
-    @classmethod
-    def _record_response(cls, deck, index, response_score):
-        deck.loc[index, cls._STATE] = 1
-
-        current_score = deck[cls._SCORE][index]
-        deck.loc[index, cls._SCORE] = cls._adjust_score(response_score, current_score)
-        return deck
-
-    @staticmethod
-    def _adjust_score(response_score, current_score):
-        updated_score = round(current_score + (0.1 - (3 - response_score) * (0.1 + (3 - response_score) * 0.06)), 3)
-        if updated_score < 1.3:
-            updated_score = 1.3
-        return updated_score
-
-    @classmethod
-    def _update_review_dates(cls, deck, index, response_score):
-        if str(deck[cls._LAST_REVIEW][index]) == '0':
-            interval = 1
-        else:
-            next_review = datetime.datetime.strptime(str(deck.loc[index, cls._NEXT_REVIEW]), '%Y-%m-%d')
-            last_review = datetime.datetime.strptime(str(deck.loc[index, cls._LAST_REVIEW]), '%Y-%m-%d')
-            interval = next_review - last_review
-            if interval.days < 1:
-                interval = 1
-            else:
-                interval = interval.days
-
-        if response_score == 0:
-            new_interval = 1
-        else:
-            new_interval = round(interval * deck[cls._SCORE][index])
-
-        deck.loc[index, cls._LAST_REVIEW] = datetime.date.today()
-        deck.loc[index, cls._NEXT_REVIEW] = deck.loc[index, cls._LAST_REVIEW] + datetime.timedelta(days=new_interval)
-        deck.loc[index, cls._STATUS] = cls._REVIEW
-        return deck
 
     @classmethod
     def _set_state_finished(cls):
@@ -417,12 +352,6 @@ class ReviewView:
 
         IterText.SENTENCE_ONE.clear(cls._window)
         IterText.SENTENCE_TWO.clear(cls._window)
-
-    @classmethod
-    def _update_deck(cls, deck):
-        for index in deck.index.tolist():
-            deck.loc[index, cls._STATE] = 0
-        cls._controller.update_deck(deck)
 
 
 if __name__ == '__main__':

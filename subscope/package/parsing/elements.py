@@ -124,3 +124,16 @@ class Image(Enum):
 
     def create(self):
         return sg.Image(key=self.key, visible=self.visible, background_color=self.background_colour)
+
+
+class Combo(Enum):
+    DECK_SELECTION = ('DECK_SELECTION', (15, 1), True, True)
+
+    def __init__(self, key, size, enable_events, read_only):
+        self.key = key
+        self.size = size
+        self.enable_events = enable_events
+        self.read_only = read_only
+
+    def create(self, options):
+        return sg.Combo(options, key=self.key, enable_events=self.enable_events, readonly=self.read_only)
