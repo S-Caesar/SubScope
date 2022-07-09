@@ -4,6 +4,7 @@ from playsound import playsound
 from PIL import Image
 import io
 from datetime import datetime, date, timedelta
+import ast
 
 from subscope.package.options.options import Options
 from subscope.package.database.database import Database
@@ -27,12 +28,24 @@ class ReviewControl:
     _AUDIO = 'Audio Clip'
     _IMAGE = 'image'
     _SOURCE = 'Source'
+    _TEXT = 'text'
+    _READING = 'reading'
+    _CARD_PART = 'pos'
+    _SUFFIX = 'suffix'
+    _CARD_GLOSS = 'gloss'
+    _NO_ENTRY = 'No Entry'
+
+    # I use this character in place of string apostrophes when dealing with the Ichiran output
+    _SUBSTITUTE = '^'
+    _APOSTROPHE = '\''
 
     deck_name = None
     deck = None
     card = None
     card_index = None
     _audio = None
+
+    sentences_word_entries = [pd.DataFrame([]), pd.DataFrame([])]
 
     @staticmethod
     def deck_list():
@@ -85,26 +98,96 @@ class ReviewControl:
     def remaining_cards(self):
         return len(self.deck.index)
 
-    @classmethod
-    def get_sentences(cls, source, episode, line_number):
+    def get_sentence_data(self):
+        source = self.card.source
+        episode = self.card.episode
+        line_number = self.card.line_number
+
         sentences = Database.sentence_from_line_number(source, episode, line_number)
-        return sentences
+        sentences_word_entries = Database.word_entries_from_line_number(source, episode, line_number)
+
+        self.sentences_word_entries = [pd.DataFrame([]), pd.DataFrame([])]
+        for index, entries in enumerate(sentences_word_entries):
+            if len(entries) != 0 and self._TEXT in entries.columns:
+                self.sentences_word_entries[index] = self._order_words_to_match_sentence(sentences[index], entries)
+        return self.sentences_word_entries
 
     @classmethod
-    def get_sentence_data(cls, source, episode, line_number):
-        sentence_data = Database.sentence_data_from_line_number(source, episode, line_number)
-        if len(sentence_data) == 1:
-            sentence_data.append('')
-        return sentence_data
+    def _order_words_to_match_sentence(cls, sentence, entries):
+        ordered_sentence = []
+        word_list = entries[cls._TEXT].tolist()
+        while len(sentence) > 0:
+            added = False
+            for index, word in enumerate(word_list):
+                if sentence[:len(word)] == word:
+                    ordered_sentence.append(word)
+                    sentence = sentence[len(word):]
+                    del word_list[index]
+                    added = True
+                    break
+
+            if not added:
+                ordered_sentence.append(sentence[0])
+                if len(sentence) > 1:
+                    sentence = sentence[1:]
+                else:
+                    break
+
+        for word in ordered_sentence:
+            target_index = entries[(entries[cls._TEXT] == word)].index.tolist()
+            if len(target_index) != 0:
+                if len(target_index) > 1:
+                    target_index = [target_index[0]]
+                index = entries.index.tolist()
+                index.pop(target_index[0])
+                entries = entries.reindex(index + target_index)
+            else:
+                entries = pd.concat([entries, pd.DataFrame([word], columns=[cls._TEXT])])
+            entries = entries.reset_index(drop=True)
+
+        return entries.fillna(cls._NO_ENTRY)
+
+    def retrieve_entry(self, clicked_word, sentence_index):
+        sentences_word_entries = self.sentences_word_entries[sentence_index]
+        word_data = sentences_word_entries[sentences_word_entries[self._TEXT] == clicked_word]
+        reading = word_data[self._READING].tolist()[0]
+        gloss = word_data[self._CARD_GLOSS].tolist()[0]
+        gloss = self._format_json_glossary(gloss)
+        if gloss == self._NO_ENTRY and self._SUFFIX in word_data:
+            gloss = str(word_data[self._SUFFIX].to_list()[0])
+
+        entry = {self._READING: reading,
+                 self._CARD_GLOSS: gloss}
+
+        return entry
 
     @classmethod
-    def load_screenshot(cls, source, screenshot):
-        image_file_path = Options.subtitles_folder_path() + '/' + source + '/' + cls._IMAGE + '/' + screenshot
+    def _format_json_glossary(cls, gloss):
+        if cls._NO_ENTRY not in gloss:
+            gloss = ast.literal_eval(gloss[1:-1])
+            if cls._CARD_PART in gloss:
+                gloss = [gloss]
+
+            str_gloss = ''
+            for definition in gloss:
+                if definition != cls._NO_ENTRY:
+                    str_gloss += definition[cls._CARD_PART] + '\n' + definition[cls._CARD_GLOSS] + '\n\n'
+            str_gloss = str_gloss.replace(cls._SUBSTITUTE, cls._APOSTROPHE)
+        else:
+            str_gloss = cls._NO_ENTRY
+        return str_gloss
+
+    def load_screenshot(self):
+        source = self.card.source
+        screenshot = self.card.screenshot
+
+        image_file_path = Options.subtitles_folder_path() + '/' + source + '/' + self._IMAGE + '/' + screenshot
         image = Image.open(image_file_path)
         image.thumbnail((475, 475))
         bio = io.BytesIO()
         image.save(bio, format='PNG')
-        return bio
+        image = bio.getvalue()
+        return image
 
     def play_audio(self):
         source = self.card.source

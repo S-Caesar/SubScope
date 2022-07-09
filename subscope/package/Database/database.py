@@ -163,28 +163,23 @@ class Database:
 
         sentences = []
         for line in [line_number-1, line_number, line_number+1]:
-            try:
-                sentence = str(all_lines[all_lines[0] == line][1].reset_index(drop=True)[0])
-                sentences.append(sentence)
-            except KeyError:
-                continue
+            sentence = all_lines[all_lines[0] == line][1].reset_index(drop=True)
+            if len(sentence) != 0:
+                sentences.append(sentence[0])
 
         return sentences
 
     @classmethod
-    def sentence_data_from_line_number(cls, source, episode, line_number):
+    def word_entries_from_line_number(cls, source, episode, line_number):
         filepath = os.path.join(cls._START + '/' + source + '/' + cls._TEXT_FOLDER + '/' + episode + cls._ANALYSED_FILE)
         data_table = pd.read_csv(filepath, sep='\t')
 
         sentence_data = []
         for line in [line_number-1, line_number, line_number+1]:
-            try:
-                data = data_table[data_table[cls._LINE_NUMBER] == line]
-                if len(data.index.tolist()) != 0:
-                    data = data.reset_index(drop=True)
-                    sentence_data.append(data)
-            except KeyError:
-                continue
+            data = data_table[data_table[cls._LINE_NUMBER] == line]
+            if len(data.index.tolist()) != 0:
+                data = data.reset_index(drop=True)
+                sentence_data.append(data)
 
         return sentence_data
 

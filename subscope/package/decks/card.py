@@ -1,5 +1,6 @@
 import random
 import datetime
+import ast
 from enum import Enum
 
 from subscope.package.database.database import Database
@@ -25,7 +26,10 @@ class CardHeading(Enum):
 
 
 class Card:
-    # TODO: I'll probably need to use a Builder so I can create cards either from a word, or a Deck entry
+    _CARD_PART = 'pos'
+    _CARD_GLOSS = 'gloss'
+    _CARD_INFO = 'info'
+
     def __init__(self, word=None, deck_entry=None):
         self.word = word
         self._deck_entry = deck_entry
@@ -64,9 +68,6 @@ class Card:
         self._next_review = datetime.date.today()
         self._status = 'New'
 
-        # TODO: Use this to decode the 'gloss' entry to a tuple of dictionaries with 'pos' and 'gloss' keys
-        # gloss = ast.literal_eval(word_entry['gloss'][1:-1])
-
     def _create_from_deck_entry(self, deck_entry):
         self.review_state = deck_entry[CardHeading.REVIEW_STATE.text]
         self.source = deck_entry[CardHeading.SOURCE.text]
@@ -80,6 +81,22 @@ class Card:
         self.last_review = deck_entry[CardHeading.LAST_REVIEW.text]
         self.next_review = deck_entry[CardHeading.NEXT_REVIEW.text]
         self.status = deck_entry[CardHeading.STATUS.text]
+
+    def split_glossary(self):
+        gloss = ast.literal_eval(self.gloss[1:-1])
+        # TODO: Provide all definitions, instead of just one - maybe with arrow buttons to change display
+        if self._CARD_PART not in gloss:
+            gloss = gloss[0]
+
+        for item in [self._CARD_PART, self._CARD_GLOSS, self._CARD_INFO]:
+            if item not in gloss:
+                gloss[item] = ''
+        return gloss
+
+    @property
+    def part_of_speech(self):
+        gloss = self.split_glossary()
+        return gloss[self._CARD_PART]
 
 
 if __name__ == '__main__':
