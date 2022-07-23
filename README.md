@@ -2,6 +2,9 @@
 SubScope is a Python application to help with learning Japanese by creating flashcards from video and audio materials.
 The aim of the app is to support learning of Japanese by using native content which is broken down into frequently occuring words, to make it more approachable.
 
+<p align="center">
+	<img src="images/card_review.gif">
+
 # Features
 - Parse Japanese subtitle files into individual words with glossary information using the Ichitan parser (https://github.com/tshatrov/ichiran)
 - Retime subtitle files to match to audio
