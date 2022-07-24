@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 import random
 
-from subscope.package.general.file_handling import FileHandling as fh
+from subscope.package.utilities.file_handling import FileHandling as fh
 
 
 class Database:
@@ -214,7 +214,3 @@ class Database:
                 break
 
         return screenshot
-
-
-if __name__ == '__main__':
-    Database.sentence_data_from_line_number('SteinsGate', 'STEINS;GATE.S01E01.JA', 23)

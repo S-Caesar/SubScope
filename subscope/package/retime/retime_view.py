@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 from subscope.package.retime.retime_control import RetimeControl
-from subscope.package.general.file_handling import FileHandling as fh
+from subscope.package.utilities.file_handling import FileHandling as fh
 
 
 class Text(Enum):

@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 from enum import Enum
 
 from subscope.package.parsing.analysis_control import AnalysisControl
-from subscope.package.general.file_handling import FileHandling as fh
+from subscope.package.utilities.file_handling import FileHandling as fh
 
 
 class Text(Enum):

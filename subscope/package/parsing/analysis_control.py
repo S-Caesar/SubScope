@@ -5,7 +5,7 @@ import time
 from multiprocessing import Pool
 import tqdm
 
-from subscope.package.general.file_handling import FileHandling as fh
+from subscope.package.utilities.file_handling import FileHandling as fh
 from subscope.package.parsing.ichiran import Ichiran
 from subscope.package.database.database import Database as db
 
