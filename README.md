@@ -6,7 +6,7 @@ The aim of the app is to support learning of Japanese by using native content wh
 	<img src="images/card_review.gif">
 
 # Features
-- Parse Japanese subtitle files into individual words with glossary information using the Ichitan parser (https://github.com/tshatrov/ichiran)
+- Parse Japanese subtitle files into individual words with glossary information using the Ichiran parser (https://github.com/tshatrov/ichiran)
 - Retime subtitle files to match to audio
 - Generate flash cards from video and subtitle files
   - Creates a deck of flashcards based on the selected content, and a required comprehension percentage
