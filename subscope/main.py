@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
+from subscope.initialise.initialise_control import InitialiseControl
 from subscope.main_view import MainView
-from subscope.initialise.initialise_view import InitialiseView
 
 
 def main():
 
     # Show the progress of initialisation
-    initialise = InitialiseView()
-    initialise.show()
+    controller = InitialiseControl()
+    controller.run()
     
     # Show the main menu
     main_view = MainView()
