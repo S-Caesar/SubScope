@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from subscope.package.main_view import MainView
-from subscope.package.initialise.initialise_view import InitialiseView
+from subscope.main_view import MainView
+from subscope.initialise.initialise_view import InitialiseView
 
 
 def main():
