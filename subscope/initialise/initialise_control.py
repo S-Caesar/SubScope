@@ -1,6 +1,7 @@
 import threading
 from enum import Enum
 
+from subscope.initialise.initialise_state import InitialiseState
 from subscope.initialise.initialise_view import InitialiseView
 from subscope.options.options import Options
 from subscope.database.database import Database
@@ -12,11 +13,13 @@ class InitialiseControl:
     _COMPLETE = "Complete"
 
     def __init__(self):
-        self._initialisation_progress = InitialisationProgress
-        self._initialisation_state = self._NOT_STARTED
-        self._view = InitialiseView(
+        self._state = InitialiseState(
             theme=Options.main_theme(),
-            initialisation_progress=self._initialisation_progress
+            initialisation_progress=self._NOT_STARTED,
+            initialisation_steps=InitialisationSteps
+        )
+        self._view = InitialiseView(
+            state=self._state
         )
 
     def run(self):
@@ -24,42 +27,40 @@ class InitialiseControl:
             event = self._view.show()
             if event is None:
                 break
-            else:
-                self._handle(event)
 
-            if self._initialisation_state == self._NOT_STARTED:
-                self._initialisation_state = self._IN_PROGRESS
-                threading.Thread(target=self._initialise).start()
-            elif self._initialisation_state == self._COMPLETE:
-                self._view.close()
+            else:
+                self._check_and_run_initialisation()
+                self._handle(event)
 
     def _handle(self, event):
         pass
 
+    def _check_and_run_initialisation(self):
+        if self._state.initialisation_progress == self._NOT_STARTED:
+            self._state.initialisation_progress = self._IN_PROGRESS
+            self._view.refresh_ui(self._state)
+            threading.Thread(target=self._initialise).start()
+        elif self._state.initialisation_progress == self._COMPLETE:
+            self._view.close()
+
     def _initialise(self):
-        self._initialise_packages()
         self._check_or_create_settings_file()
         self._check_or_create_database()
-        self._initialisation_state = self._COMPLETE
-
-    def _initialise_packages(self):
-        # TODO not sure what I was originally intending for this to do, but it has never done anything
-        self._initialisation_progress.INITIALISE_PACKAGES.complete = True
-        self._view.update_progress(self._initialisation_progress)
+        self._state.initialisation_progress = self._COMPLETE
+        self._view.refresh_ui(self._state)
 
     def _check_or_create_settings_file(self):
         Options.main_options()
-        self._initialisation_progress.CHECK_SETTINGS.complete = True
-        self._view.update_progress(self._initialisation_progress)
+        self._state.initialisation_steps.CHECK_SETTINGS.complete = True
+        self._view.refresh_ui(self._state)
 
     def _check_or_create_database(self):
         Database.create_database()
-        self._initialisation_progress.CHECK_DATABASE.complete = True
-        self._view.update_progress(self._initialisation_progress)
+        self._state.initialisation_steps.CHECK_DATABASE.complete = True
+        self._view.refresh_ui(self._state)
 
 
-class InitialisationProgress(Enum):
-    INITIALISE_PACKAGES = ("Setting up packages", "-INITIALISE_PACKAGES-", False)
+class InitialisationSteps(Enum):
     CHECK_SETTINGS = ("Checking settings file", "-CHECK_SETTINGS-", False)
     CHECK_DATABASE = ("Checking database", "-CHECK_DATABASE-", False)
 
