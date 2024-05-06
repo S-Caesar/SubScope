@@ -12,8 +12,8 @@ def main():
         Nav.IMPORT: None,
         Nav.DECKS: None,
         Nav.REVIEW: None,
-        Nav.OPTIONS: None,
-        Nav.SETUP: None
+        Nav.SETTINGS: None,
+        Nav.HELP: None
     }
 
     nav_target = Nav.INITIALISE

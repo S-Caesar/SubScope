@@ -6,5 +6,5 @@ class Nav:
     IMPORT = "Import"
     DECKS = "Decks"
     REVIEW = "Review"
-    OPTIONS = "Options"
-    SETUP = "Setup"
+    SETTINGS = "Settings"
+    HELP = "Help"

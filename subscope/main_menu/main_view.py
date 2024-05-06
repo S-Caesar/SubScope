@@ -14,23 +14,93 @@ class MainView:
 
     @property
     def _layout(self):
-        column = []
-        offset = 0
-        for button in Buttons:
-            if offset != button.row:
-                column.append([sg.Text("="*30)])
-                offset += 1
+        button_width = 10
+        button_height = 1
+        button_text_size = 16
 
-            # If a row has been created, append to it, otherwise create one
-            try:
-                column[button.row + offset].append(button.create())
-            except IndexError:
-                column.append([sg.Button(button.text)])
+        title = [
+            [
+                sg.Text(
+                    text="SubScope",
+                    font="Any 18"
+                )
+            ]
+        ]
 
-        layout = []
-        for row in column:
-            layout.append([sg.Column([row], justification="centre")])
+        subtitles = [
+            [
+                sg.Button(
+                    button_text=Buttons.RETIME.text,
+                    key=Buttons.RETIME.destination,
+                    size=(button_width, button_height * 3),
+                    font=f"Any {button_text_size}"
+                )
+            ],
+            [
+                sg.Button(
+                    button_text=Buttons.ANALYSE.text,
+                    key=Buttons.ANALYSE.destination,
+                    size=(button_width, button_height * 3),
+                    font=f"Any {button_text_size}"
+                )
+            ]
+        ]
 
+        review_cards_and_settings = [
+            [
+                sg.Button(
+                    button_text=Buttons.REVIEW.text,
+                    key=Buttons.REVIEW.destination,
+                    size=(button_width * 2, button_height * 5),
+                    font=f"Any {button_text_size}"
+                )
+            ],
+            [
+                sg.Button(
+                    button_text=Buttons.SETTINGS.text,
+                    key=Buttons.SETTINGS.destination,
+                    size=(button_width, button_height),
+                    font=f"Any {button_text_size}"
+                ),
+                sg.Button(
+                    button_text=Buttons.HELP.text,
+                    key=Buttons.HELP.destination,
+                    size=(button_width, button_height),
+                    font=f"Any {button_text_size}"
+                )
+            ]
+        ]
+
+        manage_decks = [
+            [
+                sg.Button(
+                    button_text=Buttons.DECKS.text,
+                    key=Buttons.DECKS.destination,
+                    size=(button_width, button_height * 3),
+                    font=f"Any {button_text_size}"
+                ),
+            ],
+            [
+                sg.Button(
+                    button_text=Buttons.IMPORT.text,
+                    key=Buttons.IMPORT.destination,
+                    size=(button_width, button_height * 3),
+                    font=f"Any {button_text_size}"
+                )
+            ]
+        ]
+
+        layout = [
+            [
+                sg.Column(title, element_justification="centre")
+            ],
+            [
+                sg.Column(subtitles, element_justification="centre"),
+                sg.Column(review_cards_and_settings, element_justification="centre"),
+                sg.Column(manage_decks, element_justification="centre"),
+            ]
+        ]
+        layout = [[sg.Column(layout, element_justification="centre")]]
         return layout
 
     def _create_window(self):
@@ -46,30 +116,29 @@ class MainView:
             self._window.Close()
 
         for button in Buttons:
-            if event == button.text:
+            if event == button.destination:
                 event = MainEvents.Navigate(
                     destination=button.destination
                 )
-
         return event
 
 
 class Buttons(Enum):
-    RETIME = ("Retime Subtitles", Nav.RETIME, 0)
-    ANALYSE = ("Analyse Subtitles", Nav.ANALYSE, 0)
-    IMPORT = ("Import Known Words", Nav.IMPORT, 1)
-    DECKS = ("Manage Decks", Nav.DECKS, 1)
-    REVIEW = ("Review Cards", Nav.REVIEW, 2)
-    OPTIONS = ("Change Settings", Nav.OPTIONS, 3)
-    SETUP = ("Help", Nav.SETUP, 4)
+    RETIME = ("Retime Subtitles", Nav.RETIME)
+    ANALYSE = ("Analyse Subtitles", Nav.ANALYSE)
+    IMPORT = ("Import Known Words", Nav.IMPORT)
+    DECKS = ("Manage Decks", Nav.DECKS)
+    REVIEW = ("Review Cards", Nav.REVIEW)
+    SETTINGS = ("Settings", Nav.SETTINGS)
+    HELP = ("Help", Nav.HELP)
 
-    def __init__(self, text, destination, row):
+    def __init__(self, text, destination):
         self.text = text
         self.destination = destination
-        self.row = row
 
-    def create(self):
-        button = sg.Button(
-            button_text=self.text,
-        )
-        return button
+
+if __name__ == "__main__":
+    from subscope.main_menu.main_state import MainState
+    test_state = MainState(theme=sg.theme())
+    view = MainView(test_state)
+    view.show()
