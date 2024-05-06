@@ -1,4 +1,4 @@
-from subscope.utilities.event import Event
+from subscope.shared.event import Event
 
 
 class MainEvents:
