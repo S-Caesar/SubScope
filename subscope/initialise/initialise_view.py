@@ -4,7 +4,7 @@ from subscope.initialise.initialise_events import InitialiseEvents
 
 
 class InitialiseView:
-    _NAME = 'Initialisation'
+    _NAME = "Initialisation"
     _TIMEOUT = 100  # ms
 
     def __init__(self, state):

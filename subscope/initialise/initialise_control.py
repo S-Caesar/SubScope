@@ -3,6 +3,7 @@ from enum import Enum
 
 from subscope.initialise.initialise_state import InitialiseState
 from subscope.initialise.initialise_view import InitialiseView
+from subscope.nav import Nav
 from subscope.options.options import Options
 from subscope.database.database import Database
 
@@ -31,6 +32,8 @@ class InitialiseControl:
             else:
                 self._check_and_run_initialisation()
                 self._handle(event)
+
+        return Nav.MAIN_MENU
 
     def _handle(self, event):
         pass

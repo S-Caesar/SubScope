@@ -1,0 +1,10 @@
+class Nav:
+    INITIALISE = "Initialise"
+    MAIN_MENU = "Main Menu"
+    RETIME = "Retime"
+    ANALYSE = "Analyse"
+    IMPORT = "Import"
+    DECKS = "Decks"
+    REVIEW = "Review"
+    OPTIONS = "Options"
+    SETUP = "Setup"
