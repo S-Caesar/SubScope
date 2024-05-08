@@ -21,12 +21,11 @@ class MainControl:
                 break
 
             elif event.name == MainEvents.Navigate.name:
+                self._view.close()
                 return event.destination
 
             else:
                 self._handle(event)
-
-        return None
 
     def _handle(self, event):
         pass

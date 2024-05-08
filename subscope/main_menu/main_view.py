@@ -113,7 +113,7 @@ class MainView:
     def show(self):
         event, values = self._window.Read()
         if event is None:
-            self._window.Close()
+            self.close()
 
         for button in Buttons:
             if event == button.destination:
@@ -121,6 +121,9 @@ class MainView:
                     destination=button.destination
                 )
         return event
+
+    def close(self):
+        self._window.Close()
 
 
 class Buttons(Enum):

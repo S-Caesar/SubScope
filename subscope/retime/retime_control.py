@@ -1,13 +1,50 @@
-# -*- coding: utf-8 -*-
-
 from datetime import datetime
 
+from subscope.options.options import Options
+from subscope.retime.retime_events import RetimeEvents
+from subscope.retime.retime_state import RetimeState
+from subscope.retime.retime_view import RetimeView
+
+
 class RetimeControl:
-    
     _DIVIDER = ' --> '
+
+    def __init__(self):
+        self._state = RetimeState(
+            theme=Options.main_theme()
+        )
+        self._view = RetimeView(
+            state=self._state.copy()
+        )
+
+    def run(self):
+        while True:
+            event = self._view.show()
+            if event is None:
+                break
+
+            elif event.name == RetimeEvents.Navigate.name:
+                self._view.close()
+                return event.destination
+
+            elif event.name is RetimeEvents.UpdateState.name:
+                self._state = event.state
+
+            elif event.name == RetimeEvents.ReopenWindow.name:
+                self._view.close()
+                self._view = RetimeView(
+                    state=self._state
+                )
+
+            else:
+                self._handle(event)
+
+    def _handle(self, event):
+        if event.name == RetimeEvents.RetimeSubs.name:
+            for file in event.selected_files:
+                self._retime(event.folder + '/' + file, event.time_offset)
     
-    def retime(self, path, offset):
-        
+    def _retime(self, path, offset):
         file = open(path, 'r', encoding='utf8').read()
         lines = file.split('\n')
         
@@ -18,7 +55,7 @@ class RetimeControl:
                 for idx, stamp in enumerate(line):
                     stamp = stamp.split(':')
                     
-                    #Convert to seconds and add the offset
+                    # Convert to seconds and add the offset
                     stamp = float(stamp[0])*3600 \
                           + float(stamp[1])*60 \
                           + float(stamp[2].replace(',', '.'))

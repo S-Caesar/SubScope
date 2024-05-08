@@ -1,84 +1,20 @@
-# -*- coding: utf-8 -*-
-
 import PySimpleGUI as sg
 from enum import Enum
 import os
 from datetime import datetime
 
-from subscope.retime.retime_control import RetimeControl
+from subscope.nav import Nav
+from subscope.retime.retime_events import RetimeEvents
 from subscope.utilities.file_handling import FileHandling as fh
 
 
-class Text(Enum):
-
-    FOLDER   = ('Select a folder containing subtitle files.', None,    None      )
-    SUBTITLE = ('Subtitle Files',                             None,    None      )
-    OFFSET   = ('Time offset (seconds):',                     None,    None      )
-    STATUS   = ('Status:',                                    None,    None      )
-    MESSAGE  = ('Awaiting user selection',                    (20, 1), '-STATUS-')
-
-    def __init__(self, text, size, key):
-        self.text = text
-        self.size = size
-        self.key = key
-
-    def create(self):
-        if self.size is None:
-            text = sg.Text(self.text, key=self.key)
-        else:
-            text = sg.Text(self.text, size=self.size, key=self.key)
-        return text
-
-
-class Input(Enum):
-
-    BROWSE = ('',     (37, 1), True, '-BROWSE-')
-    OFFSET = ('-2.0', (10, 1), True, '-OFFSET-')
-
-    def __init__(self, default, size, events, key):
-        self.default = default
-        self.size = size
-        self.events = events
-        self.key = key
-
-    def create(self):
-        input_box = sg.In(default_text=self.default, size=self.size, enable_events=self.events, key=self.key)
-        return input_box
-
-
-# TODO: look into using a builder pattern to generalise the Buttons class    
-class Buttons(Enum):
-
-    UPDATE   = ('Update Files', True)
-    SELECT   = ('Select All',   True)
-    DESELECT = ('Deselect All', True)
-    BACK     = ('Back',         True)
-
-    def __init__(self, text, events):
-        self.text = text
-        self.events = events
-
-    def create(self):
-        button = sg.Button(self.text, enable_events=self.events)
-        return button
-
-
-class Checklist:
-
-    def __init__(self, checklist, default):
-        self.checklist = checklist
-        self.default = default
-
-    def create(self):
-        checklist = [[sg.Checkbox(item, default=self.default, key=item)] for item in self.checklist]
-        return checklist
-
-
 class RetimeView:
-
     _NAME = 'Retime Subtitles'
     _START = os.getcwd() + '/user/subtitles'
-    _TIMEOUT = 100
+
+    def __init__(self, state):
+        self._state = state
+        self._window = self._create_window(self._state.files)
 
     def _layout(self, files):
         if files is None:
@@ -109,54 +45,142 @@ class RetimeView:
 
         return layout
 
-    def _window(self, files=None):
-        window = sg.Window(self._NAME,
-                           layout=self._layout(files))
+    def _create_window(self, files):
+        window = sg.Window(
+            title=self._NAME,
+            layout=self._layout(files)
+        )
         return window
 
     def show(self):
-        files = []
-        folder = ''
-        control = RetimeControl()
-        window = self._window()
-        while True:
-            event, values = window.Read(timeout=self._TIMEOUT)
-            if event in [None, 'Back']:
-                break
+        event, values = self._window.Read()
+        print(event)
+        if event is None:
+            self.close()
+            event = RetimeEvents.Navigate(Nav.MAIN_MENU)
 
-            # Browse for a folder, then update file list
-            if event == Input.BROWSE.key:
-                folder = values[Input.BROWSE.key]
-                if folder:
-                    files = fh.get_files(folder, '.srt')
+        # Browse for a folder, then update file list
+        elif event.name == RetimeEvents.BrowseFiles.name:
+            self._state.folder = values[Input.BROWSE.key]
+            if self._state.folder:
+                self._state.files = fh.get_files(self._state.folder, '.srt')
 
-                # Update the window with the contents of the selected folder
-                if files:
-                    window.Close()
-                    window = self._window(files)
+            # Update the window with the contents of the selected folder
+            if self._state.files:
+                self._window.write_event_value(
+                    RetimeEvents.UpdateState(
+                        state=self._state.copy()
+                    ),
+                    None
+                )
+                self._window.write_event_value(RetimeEvents.ReopenWindow, None)
 
-            # Select / deselect all files
-            switch = {Buttons.SELECT.text: True,
-                      Buttons.DESELECT.text: False}
-            if event in switch.keys():
-                for file in files:
-                    window.Element(file).Update(value=switch[event])
+        elif event.name == RetimeEvents.SelectAllFiles.name:
+            self._select_all_files(True)
 
-            # Adjust all selected files by the input offset
-            if event == Buttons.UPDATE.text:
-                offset = float(values[Input.OFFSET.key])
+        elif event.name == RetimeEvents.DeselectAllFiles.name:
+            self._select_all_files(False)
 
-                selected_files = [file for file in files if values[file]]
-                for file in selected_files:
-                    control.retime(folder + '/' + file, offset)
+        # Adjust all selected files by the input offset
+        elif event.name == RetimeEvents.RetimeSubs.name:
+            offset = float(values[_Keys.OFFSET])
+            selected_files = [file for file in self._state.files if values[file]]
 
-                time_now = str(datetime.now()).split(' ')
-                time_now = str(time_now[1])
-                message = str(len(selected_files)) + ' file(s) updated (' + time_now[:8] + ')'
-                window.Element(Text.MESSAGE.key).Update(value=message)
+            event = RetimeEvents.RetimeSubs(
+                folder=self._state.folder,
+                selected_files=selected_files,
+                time_offset=offset
+            )
 
-        window.Close()
+            time_now = str(datetime.now()).split(' ')
+            time_now = str(time_now[1])
+            message = str(len(selected_files)) + ' file(s) updated (' + time_now[:8] + ')'
+            self._window.Element(Text.MESSAGE.key).Update(value=message)
+
+        return event
+
+    def _select_all_files(self, select_all):
+        for file in self._state.files:
+            self._window.Element(file).Update(value=select_all)
+
+    def refresh_ui(self, state):
+        self._window.write_event_value(RetimeEvents.RefreshUI, state)
+
+    def _refresh_ui(self):
+        pass
+
+    def _reopen_window(self):
+        self._window.write_event_value(RetimeEvents.ReopenWindow, None)
+
+    def close(self):
+        self._window.close()
 
 
-if __name__ == '__main__':
-    RetimeView().show()
+class Text(Enum):
+
+    FOLDER = ('Select a folder containing subtitle files.', None, None)
+    SUBTITLE = ('Subtitle Files', None,    None)
+    OFFSET = ('Time offset (seconds):', None, None)
+    STATUS = ('Status:', None, None)
+    MESSAGE = ('Awaiting user selection', (20, 1), '-STATUS-')
+
+    def __init__(self, text, size, key):
+        self.text = text
+        self.size = size
+        self.key = key
+
+    def create(self):
+        if self.size is None:
+            text = sg.Text(self.text, key=self.key)
+        else:
+            text = sg.Text(self.text, size=self.size, key=self.key)
+        return text
+
+
+class _Keys:
+    OFFSET = RetimeEvents.OffsetInputChanged
+
+
+class Input(Enum):
+
+    BROWSE = ('',     (37, 1), True, RetimeEvents.BrowseFiles)
+    OFFSET = ('-2.0', (10, 1), True, RetimeEvents.OffsetInputChanged)
+
+    def __init__(self, default, size, events, key):
+        self.default = default
+        self.size = size
+        self.events = events
+        self.key = key
+
+    def create(self):
+        input_box = sg.In(default_text=self.default, size=self.size, enable_events=self.events, key=self.key)
+        return input_box
+
+
+# TODO: look into using a builder pattern to generalise the Buttons class
+class Buttons(Enum):
+
+    UPDATE = ('Update Files', True, RetimeEvents.RetimeSubs)
+    SELECT = ('Select All', True, RetimeEvents.SelectAllFiles)
+    DESELECT = ('Deselect All', True, RetimeEvents.DeselectAllFiles)
+    BACK = ('Back', True, RetimeEvents.Navigate(Nav.MAIN_MENU))
+
+    def __init__(self, text, events, key):
+        self.text = text
+        self.events = events
+        self.key = key
+
+    def create(self):
+        button = sg.Button(self.text, enable_events=self.events, key=self.key)
+        return button
+
+
+class Checklist:
+
+    def __init__(self, checklist, default):
+        self.checklist = checklist
+        self.default = default
+
+    def create(self):
+        checklist = [[sg.Checkbox(item, default=self.default, key=item)] for item in self.checklist]
+        return checklist
