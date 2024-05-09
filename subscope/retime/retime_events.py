@@ -14,9 +14,6 @@ class RetimeEvents(Event):
         def __init__(self, destination):
             self.destination = destination
 
-    class RefreshUI(Event):
-        name = "Update State"
-
     class BrowseFiles(Event):
         name = "Browse Files"
 
@@ -29,16 +26,14 @@ class RetimeEvents(Event):
     class OffsetInputChanged(Event):
         name = "Offset Input Changed"
 
+    class UpdateDisplayMessage(Event):
+        name = "Update Display Message"
+
     class ReopenWindow(Event):
         name = "Reopen Window"
 
     class RetimeSubs(Event):
         name = "Retime Subs"
-
-        def __init__(self, folder, selected_files, time_offset):
-            self.folder = folder
-            self.selected_files = selected_files
-            self.time_offset = time_offset
 
     class CloseWindow(Event):
         name = "Close Window"

@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 
 from subscope.options.options import Options
@@ -14,7 +15,7 @@ class RetimeControl:
             theme=Options.main_theme()
         )
         self._view = RetimeView(
-            state=self._state.copy()
+            state=copy.copy(self._state)
         )
 
     def run(self):
@@ -41,8 +42,8 @@ class RetimeControl:
 
     def _handle(self, event):
         if event.name == RetimeEvents.RetimeSubs.name:
-            for file in event.selected_files:
-                self._retime(event.folder + '/' + file, event.time_offset)
+            for file in self._state.selected_files:
+                self._retime(self._state.folder + '/' + file, self._state.offset)
     
     def _retime(self, path, offset):
         file = open(path, 'r', encoding='utf8').read()
