@@ -11,14 +11,13 @@ from subscope.utilities.file_handling import FileHandling as fh
 class AnalyseView:
     _NAME = 'Analyse Subtitles'
     _START_DIR = Settings.subtitles_folder_path()
-
-    stats_display = [['Number:' + ' ' * 22,
-                      'Unknown:' + ' ' * 20,
-                      'Comprehension (%):' + ' ' * 4,
-                      'Number:' + ' ' * 22,
-                      'Unknown:' + ' ' * 20],
-                     ['-', '-', '-', '-', '-'],
-                     ['-aWORDS-', '-aUNKNOWN-', '-COMP-', '-uWORDS-', '-uUNKNOWN-']]
+    _STATS_MSG = [
+        "Total Words:" + " " * 18,
+        "Total Unknown Words:" + " " * 4,
+        "Comprehension (%):" + " " * 7,
+        "Total Words:" + " " * 18,
+        "Total Unknown Words:" + " " * 4
+    ]
 
     def __init__(self, state):
         self._state = state
@@ -80,13 +79,23 @@ class AnalyseView:
                     font=("any", 10, "bold")
                 )
             ],
-            *[
-                [
-                    sg.Text(
-                        text=self.stats_display[0][i] + str(self.stats_display[1][i]),
-                        size=(30, 1),
-                        key=self.stats_display[2][i])]
-                for i in range(0, 3)
+            [
+                sg.Text(
+                    text=self._STATS_MSG[0] + str(self._state.stats.total_words),
+                    key=_Keys.TOTAL_WORDS
+                )
+            ],
+            [
+                sg.Text(
+                    text=self._STATS_MSG[1] + str(self._state.stats.total_unknown),
+                    key=_Keys.TOTAL_UNKNOWN
+                )
+            ],
+            [
+                sg.Text(
+                    text=self._STATS_MSG[2] + str(self._state.stats.comprehension),
+                    key=_Keys.COMPREHENSION
+                )
             ],
             [sg.Text("")],
             [
@@ -95,15 +104,18 @@ class AnalyseView:
                     font=("any", 10, "bold")
                 )
             ],
-            *[
-                [
-                    sg.Text(
-                        text=self.stats_display[0][i] + str(self.stats_display[1][i]),
-                        size=(30, 1),
-                        key=self.stats_display[2][i])
-                ]
-                for i in range(3, 5)
-            ]
+            [
+                sg.Text(
+                    text=self._STATS_MSG[3] + str(self._state.stats.total_unique),
+                    key=_Keys.TOTAL_UNIQUE
+                )
+            ],
+            [
+                sg.Text(
+                    text=self._STATS_MSG[4] + str(self._state.stats.unique_unknown),
+                    key=_Keys.UNIQUE_UNKNOWN
+                )
+            ],
         ]
 
         buttons_column = [
@@ -152,6 +164,8 @@ class AnalyseView:
 
         elif event.name == AnalyseEvents.BrowseFiles.name:
             folder = values[AnalyseEvents.BrowseFiles]
+            # TODO due to taking copies of state and updating in two places, the message won't update correctly
+            self._update_display_message(_STATUS.PRESS_ANALYSE)
             self._browse_for_folder_and_set_files(folder)
 
         elif event.name == AnalyseEvents.SelectAllFiles.name:
@@ -174,9 +188,21 @@ class AnalyseView:
 
         elif event.name == AnalyseEvents.UpdateStatsDisplay.name:
             stats = event.stats
-            if stats:
-                for x in range(len(self.stats_display[0])):
-                    self._window.Element(self.stats_display[2][x]).update(self.stats_display[0][x] + str(stats[x]))
+            self._window.Element(_Keys.TOTAL_WORDS).update(
+                self._STATS_MSG[0] + str(stats.total_words)
+            )
+            self._window.Element(_Keys.TOTAL_UNKNOWN).update(
+                self._STATS_MSG[1] + str(stats.total_unknown)
+            )
+            self._window.Element(_Keys.COMPREHENSION).update(
+                self._STATS_MSG[2] + str(stats.comprehension)
+            )
+            self._window.Element(_Keys.TOTAL_UNIQUE).update(
+                self._STATS_MSG[3] + str(stats.total_unique)
+            )
+            self._window.Element(_Keys.UNIQUE_UNKNOWN).update(
+                self._STATS_MSG[4] + str(stats.unique_unknown)
+            )
             self._update_display_message(_STATUS.ALL_FILES_ANALYSED)
 
         return event
@@ -198,7 +224,6 @@ class AnalyseView:
         if state.folder:
             state.files = fh.get_files(state.folder, ".srt")
             self._update_state(state)
-            self._update_display_message(_STATUS.PRESS_ANALYSE)
             self._window.write_event_value(AnalyseEvents.ReopenWindow, None)
 
     def _select_all_files(self):
@@ -222,6 +247,11 @@ class AnalyseView:
 
 
 class _Keys:
+    TOTAL_WORDS = "-TOTAL_WORDS-"
+    TOTAL_UNKNOWN = "-TOTAL_UNKNOWN-"
+    COMPREHENSION = "-COMPREHENSION-"
+    TOTAL_UNIQUE = "-TOTAL_UNIQUE-"
+    UNIQUE_UNKNOWN = "-UNIQUE_UNKNOWN-"
     STATUS = "-STATUS-"
 
 

@@ -6,6 +6,7 @@ import time
 from multiprocessing import Pool
 import tqdm
 
+from subscope.analyse.Stats import Stats
 from subscope.analyse.analyse_events import AnalyseEvents
 from subscope.analyse.analyse_state import AnalyseState
 from subscope.analyse.analyse_view import AnalyseView
@@ -38,7 +39,6 @@ class AnalyseControl:
 
             elif event.name is AnalyseEvents.UpdateState.name:
                 self._state = event.state
-                print(self._state.message)
 
             elif event.name == AnalyseEvents.ReopenWindow.name:
                 self._view.close()
@@ -178,11 +178,13 @@ class AnalyseControl:
 
         comprehension = round(((number_of_words - number_of_unknown_words) / number_of_words) * 100)
 
-        stats = [number_of_words,
-                 number_of_unknown_words,
-                 comprehension,
-                 number_of_unique_words,
-                 number_of_unknown_unique_words]
+        stats = Stats(
+            total_words=number_of_words,
+            total_unknown=number_of_unknown_words,
+            comprehension=comprehension,
+            total_unique=number_of_unique_words,
+            unique_unknown=number_of_unknown_unique_words
+        )
 
         return stats
 
