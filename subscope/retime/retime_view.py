@@ -63,10 +63,12 @@ class RetimeView:
             [
                 sg.Text(
                     text="Status:"
-                ),
+                )
+            ],
+            [
                 sg.Text(
                     text="Awaiting user selection",
-                    size=(20, 1),
+                    size=(35, 12),
                     key=_Keys.STATE
                 )
             ]
@@ -131,7 +133,8 @@ class RetimeView:
             event = RetimeEvents.Navigate(Nav.MAIN_MENU)
 
         elif event.name == RetimeEvents.BrowseFiles.name:
-            self._browse_for_folder_and_set_files(values)
+            folder = values[RetimeEvents.BrowseFiles]
+            self._browse_for_folder_and_set_files(folder)
 
         elif event.name == RetimeEvents.SelectAllFiles.name:
             self._select_all_files()
@@ -141,15 +144,22 @@ class RetimeView:
 
         elif event.name == RetimeEvents.RetimeSubs.name:
             state = copy.copy(self._state)
-            state.offset = float(values[RetimeEvents.OffsetInputChanged])
-            state.selected_files = self._get_selected_files(values)
+            offset = float(values[RetimeEvents.OffsetInputChanged])
+            state.selected_files = [file for file in state.files if values[file]]
+            event = RetimeEvents.RetimeSubs(
+                offset=offset,
+                selected_files=state.selected_files
+            )
             self._update_state(state)
-            self._window.write_event_value(RetimeEvents.UpdateDisplayMessage, None)
+            self._display_files_analysed_message(state.selected_files)
 
         elif event.name == RetimeEvents.UpdateDisplayMessage.name:
-            self._update_display_message(values)
+            self._update_display_message(event.message)
 
         return event
+
+    def write_event(self, event):
+        self._window.write_event_value(event, None)
 
     def _update_state(self, state):
         self._window.write_event_value(
@@ -159,12 +169,9 @@ class RetimeView:
             None
         )
 
-    def _get_selected_files(self, values):
-        return [file for file in self._state.files if values[file]]
-
-    def _browse_for_folder_and_set_files(self, values):
+    def _browse_for_folder_and_set_files(self, folder):
         state = copy.copy(self._state)
-        state.folder = values[RetimeEvents.BrowseFiles]
+        state.folder = folder
         if state.folder:
             state.files = fh.get_files(state.folder, ".srt")
             self._update_state(state)
@@ -180,15 +187,20 @@ class RetimeView:
         for file in self._state.files:
             self._window.Element(file).Update(value=select_all)
 
-    def _update_display_message(self, values):
-        time_now = str(datetime.now()).split(" ")
-        time_now = str(time_now[1])
-        selected_files = len(self._get_selected_files(values))
-        message = f"{selected_files} file(s) updated ({time_now[:8]})"
+    def _display_files_analysed_message(self, selected_files):
+        time_now = self._get_time_now()
+        message = f"{len(selected_files)} file(s) updated ({time_now[:8]})"
+        self._update_display_message(message)
+
+    def _update_display_message(self, message):
         self._window.Element(_Keys.STATE).Update(value=message)
 
-    def _reopen_window(self):
-        self._window.write_event_value(RetimeEvents.ReopenWindow, None)
+    @staticmethod
+    def _get_time_now():
+        time_now = str(datetime.now()).split(" ")
+        time_now = str(time_now[1])
+        time_now = time_now[:8]
+        return time_now
 
     def close(self):
         self._window.close()

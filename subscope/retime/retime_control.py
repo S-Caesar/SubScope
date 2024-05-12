@@ -42,36 +42,63 @@ class RetimeControl:
 
     def _handle(self, event):
         if event.name == RetimeEvents.RetimeSubs.name:
-            for file in self._state.selected_files:
-                self._retime(self._state.folder + '/' + file, self._state.offset)
+            self._retime_files(event.selected_files, event.offset)
+
+    def _retime_files(self, selected_files, offset):
+        timestamp_errors = []
+        for file in selected_files:
+            filepath = self._state.folder + '/' + file
+            timestamp_error = self._retime_file(filepath, offset)
+            if timestamp_error:
+                timestamp_errors.append(file)
+
+        if len(timestamp_errors) > 0:
+            timestamp_errors = "\n".join(timestamp_errors)
+            message = f"Some files were not updated as the offset would make a timestamp negative: {timestamp_errors}."
+            self._view.write_event(
+                RetimeEvents.UpdateDisplayMessage(
+                    message=message
+                )
+            )
     
-    def _retime(self, path, offset):
-        file = open(path, 'r', encoding='utf8').read()
-        lines = file.split('\n')
-        
-        for lineNo, line in enumerate(lines):
+    def _retime_file(self, filepath, offset):
+        lines = self._read_file_to_list(filepath)
+        for line_number, line in enumerate(lines):
             if self._DIVIDER in line:
                 line = line.split(self._DIVIDER)
-                
-                for idx, stamp in enumerate(line):
-                    stamp = stamp.split(':')
-                    
-                    # Convert to seconds and add the offset
-                    stamp = float(stamp[0])*3600 \
-                          + float(stamp[1])*60 \
-                          + float(stamp[2].replace(',', '.'))
-                    stamp += offset
-                    
-                    # TODO: Display error on UI
-                    if stamp < 0:
-                        print('Timestamp not updated. Offset would make a timestamp negative')
-                        return
-                        
+                for idx, timestamp in enumerate(line):
+                    seconds = self._convert_timestamp_to_seconds(timestamp)
+                    seconds += offset
+                    if seconds < 0:
+                        return True
+
                     else:
-                        # Convert back to timestamp format
-                        line[idx] = datetime.fromtimestamp(stamp).strftime('%H:%M:%S,%f')[:-3]
-                        
-                lines[lineNo] = self._DIVIDER.join(line)
-            
+                        timestamp = self._convert_seconds_to_timestamp(seconds)
+                        line[idx] = timestamp
+
+                lines[line_number] = self._DIVIDER.join(line)
+        self._write_list_to_file(lines, filepath)
+
+    @staticmethod
+    def _read_file_to_list(filepath):
+        file = open(filepath, 'r', encoding='utf8').read()
+        lines = file.split('\n')
+        return lines
+
+    @staticmethod
+    def _write_list_to_file(lines, filepath):
         file = '\n'.join(lines)
-        open(path, 'w', encoding='utf8').write(file)
+        open(filepath, 'w', encoding='utf8').write(file)
+
+    @staticmethod
+    def _convert_timestamp_to_seconds(timestamp):
+        timestamp = timestamp.split(':')
+        seconds = float(timestamp[0]) * 3600 \
+                  + float(timestamp[1]) * 60 \
+                  + float(timestamp[2].replace(',', '.'))
+        return seconds
+
+    @staticmethod
+    def _convert_seconds_to_timestamp(seconds):
+        timestamp = datetime.fromtimestamp(seconds).strftime('%H:%M:%S,%f')[:-3]
+        return timestamp
