@@ -61,7 +61,7 @@ class AnalysisControl:
         for file_no, subs_only_file in enumerate(subs_only):
             # Read in the subtitle file
             input_file = input_folder + '/' + subs_only_to_input_file[subs_only_file]
-            input_lines = pd.read_csv(input_file, skip_blank_lines=False, header=None).fillna('')
+            input_lines = pd.read_csv(input_file, skip_blank_lines=False, header=None, decimal=",").fillna('')
             input_lines = input_lines[0].to_list()
 
             # Remove any characters not in the whitelist
