@@ -1,3 +1,4 @@
+import copy
 import os
 import pandas as pd
 import re
@@ -5,27 +6,66 @@ import time
 from multiprocessing import Pool
 import tqdm
 
+from subscope.analyse.analyse_events import AnalyseEvents
+from subscope.analyse.analyse_state import AnalyseState
+from subscope.analyse.analyse_view import AnalyseView
+from subscope.settings.settings import Settings
 from subscope.utilities.file_handling import FileHandling as fh
 from subscope.analyse.ichiran import Ichiran
 from subscope.database.database import Database as db
 
 
 class AnalyseControl:
-    _WHITELIST = re.compile('[\u4e00-\u9fff\u3040-\u309F\u30A0-\u30FF]', re.UNICODE)
+    _WHITELIST = re.compile("[\u4e00-\u9fff\u3040-\u309F\u30A0-\u30FF]", re.UNICODE)
+
+    def __init__(self):
+        self._state = AnalyseState(
+            theme=Settings.main_theme()
+        )
+        self._view = AnalyseView(
+            state=copy.copy(self._state)
+        )
 
     def run(self):
-        pass
+        while True:
+            event = self._view.show()
+            if event is None:
+                break
 
-    def analyse_subtitles(self, input_folder, files):
+            elif event.name == AnalyseEvents.Navigate.name:
+                self._view.close()
+                return event.destination
+
+            elif event.name is AnalyseEvents.UpdateState.name:
+                self._state = event.state
+                print(self._state.message)
+
+            elif event.name == AnalyseEvents.ReopenWindow.name:
+                self._view.close()
+                self._view = AnalyseView(
+                    state=self._state
+                )
+
+            else:
+                self._handle(event)
+
+    def _handle(self, event):
+        if event.name == AnalyseEvents.AnalyseSubtitles.name:
+            state = copy.copy(self._state)
+            state.stats = self._analyse_subtitles(event.selected_files)
+            self._view.write_event(AnalyseEvents.UpdateState(state))
+            self._view.write_event(AnalyseEvents.UpdateStatsDisplay(state.stats))
+
+    def _analyse_subtitles(self, files):
         # Create an output folder if it doesn't exist
-        output_folder = input_folder + '/text'
+        output_folder = self._state.folder + '/text'
         try:
             os.mkdir(output_folder)
         except FileExistsError:
             pass
 
         # TODO: currently stripping of text is based on .srt files; add support for other types (e.g. .ass)
-        self._analyse_files(input_folder, output_folder, files)
+        self._analyse_files(self._state.folder, output_folder, files)
 
         output_table = pd.DataFrame()
         files = fh.rename_files(files, '_data_table', '.txt')
@@ -63,8 +103,8 @@ class AnalyseControl:
         for file_no, subs_only_file in enumerate(subs_only):
             # Read in the subtitle file
             input_file = input_folder + '/' + subs_only_to_input_file[subs_only_file]
-            input_lines = pd.read_csv(input_file, skip_blank_lines=False, header=None, decimal=",").fillna('')
-            input_lines = input_lines[0].to_list()
+            full_input = open(input_file, "r", encoding="utf8").read()
+            input_lines = full_input.split("\n")
 
             # Remove any characters not in the whitelist
             output_file = output_folder + '/' + subs_only_file
@@ -98,6 +138,7 @@ class AnalyseControl:
 
             passed_time = time.time() - start_time
             est_time = round((passed_time / (file_no+1)) * (len(subs_only) - file_no+1) / 60, 1)
+            # TODO after each file, write an event to the queue to update the UI status
             print('Files Complete:', file_no + 1, '/', len(subs_only))
             print('Estimated time remaining:', est_time, 'minutes')
         print('All Files Analysed. Batch Complete!')
@@ -162,12 +203,3 @@ class AnalyseControl:
             del difference['_merge']
 
         return difference
-
-
-if __name__ == '__main__':
-    os.chdir('/subscope')
-    _main_folder = 'C:/Users/Steph/OneDrive/App/SubScope/subscope/user/subtitles/SteinsGate'
-    _main_files = fh.get_files(_main_folder, '.srt')
-    _main_files = _main_files[:2]
-    print(_main_files)
-    AnalyseControl().analyse_subtitles(_main_folder, _main_files)

@@ -1,81 +1,16 @@
-import os
-import PySimpleGUI as sg
-from enum import Enum
+import copy
 
-from subscope.analyse.analyse_control import AnalyseControl
+import PySimpleGUI as sg
+
+from subscope.analyse.analyse_events import AnalyseEvents
+from subscope.nav import Nav
+from subscope.settings.settings import Settings
 from subscope.utilities.file_handling import FileHandling as fh
 
 
-class Text(Enum):
-
-    FOLDER = ('Select a folder containing subtitle files.', None, None, None)
-    SUBTITLE = ('Subtitle Files', ('any', 10, 'bold'), None, None)
-    STATUS = ('Status:', ('any', 10, 'bold'), None, None)
-    MESSAGE = ('', None, (30, 2), '-STATUS-')
-    ALL_WORDS = ('All Words', ('any', 10, 'bold'), None, None)
-    UNIQUE_WORDS = ('Unique Words', ('any', 10, 'bold'), None, None)
-
-    def __init__(self, text, font, size, key):
-        self.text = text
-        self.font = font
-        self.size = size
-        self.key = key
-
-    def create(self):
-        if self.size is None:
-            text = sg.Text(self.text, font=self.font, key=self.key)
-        else:
-            text = sg.Text(self.text, font=self.font, size=self.size, key=self.key)
-        return text
-
-
-class Input(Enum):
-
-    BROWSE = ('', (37, 1), True, '-BROWSE-')
-
-    def __init__(self, default, size, events, key):
-        self.default = default
-        self.size = size
-        self.events = events
-        self.key = key
-
-    def create(self):
-        input_box = sg.In(default_text=self.default, size=self.size, enable_events=self.events, key=self.key)
-        return input_box
-
-
-class Buttons(Enum):
-
-    ANALYSE = ('Analyse Files', True)
-    SELECT = ('Select All', True)
-    DESELECT = ('Deselect All', True)
-    BACK = ('Back', True)
-
-    def __init__(self, text, events):
-        self.text = text
-        self.events = events
-
-    def create(self):
-        button = sg.Button(self.text, enable_events=self.events)
-        return button
-
-
-class Checklist:
-
-    def __init__(self, checklist, default):
-        self.checklist = checklist
-        self.default = default
-
-    def create(self):
-        checklist = [[sg.Checkbox(item, default=self.default, key=item)] for item in self.checklist]
-        return checklist
-
-
 class AnalyseView:
-
     _NAME = 'Analyse Subtitles'
-    _START = os.getcwd() + '/user/subtitles'
-    _TIMEOUT = 100
+    _START_DIR = Settings.subtitles_folder_path()
 
     stats_display = [['Number:' + ' ' * 22,
                       'Unknown:' + ' ' * 20,
@@ -85,108 +20,213 @@ class AnalyseView:
                      ['-', '-', '-', '-', '-'],
                      ['-aWORDS-', '-aUNKNOWN-', '-COMP-', '-uWORDS-', '-uUNKNOWN-']]
 
-    def _layout(self, files):
+    def __init__(self, state):
+        self._state = state
+        self._window = self._create_window()
 
-        if files is None:
-            files = []
+    def _layout(self):
+        folder_column = [
+            [
+                sg.Text(
+                    text="Select a folder containing subtitle files."
+                )
+            ],
+            [
+                sg.In(
+                    default_text=self._state.folder,
+                    size=(37, 1),
+                    enable_events=True,
+                    key=AnalyseEvents.BrowseFiles
+                ),
+                sg.FolderBrowse(
+                    initial_folder=self._START_DIR
+                )
+            ]
+        ]
 
-        folder_column = [[Text.FOLDER.create()],
-                         [Input.BROWSE.create(),
-                          sg.FolderBrowse(initial_folder=self._START)]]
+        subs_column = [
+            [
+                sg.Text(
+                    text="Subtitle Files"
+                )
+            ],
+            *[[sg.Checkbox(file, default=True, key=file)] for file in self._state.files]
+        ]
 
-        subtitle_column = [[Text.SUBTITLE.create()],
-                           *Checklist(files, True).create()]
+        statistics_column = [
+            [
+                sg.Button(
+                    button_text="Analyse",
+                    key=AnalyseEvents.AnalyseSubtitles
+                )
+            ],
+            [sg.Text("")],
+            [
+                sg.Text(
+                    text="Status:"
+                )
+            ],
+            [
+                sg.Text(
+                    text=self._state.message or _STATUS.PRESS_BROWSE,
+                    size=(30, 2),
+                    key=_Keys.STATUS
+                )
+            ],
+            [sg.Text("")],
+            [
+                sg.Text(
+                    text="All Words",
+                    font=("any", 10, "bold")
+                )
+            ],
+            *[
+                [
+                    sg.Text(
+                        text=self.stats_display[0][i] + str(self.stats_display[1][i]),
+                        size=(30, 1),
+                        key=self.stats_display[2][i])]
+                for i in range(0, 3)
+            ],
+            [sg.Text("")],
+            [
+                sg.Text(
+                    text="Unique Words",
+                    font=("any", 10, "bold")
+                )
+            ],
+            *[
+                [
+                    sg.Text(
+                        text=self.stats_display[0][i] + str(self.stats_display[1][i]),
+                        size=(30, 1),
+                        key=self.stats_display[2][i])
+                ]
+                for i in range(3, 5)
+            ]
+        ]
 
-        statistics_column = [[Buttons.ANALYSE.create()],
-                             [sg.Text('')],
-                             [Text.STATUS.create()],
-                             [Text.MESSAGE.create()],
-                             [sg.Text('')],
-
-                             [Text.ALL_WORDS.create()],
-                             *[[sg.Text(self.stats_display[0][i] + str(self.stats_display[1][i]),
-                                        size=(30, 1),
-                                        key=self.stats_display[2][i])]
-                               for i in range(0, 3)],
-                             [sg.Text('')],
-
-                             [Text.UNIQUE_WORDS.create()],
-                             *[[sg.Text(self.stats_display[0][i] + str(self.stats_display[1][i]),
-                                        size=(30, 1),
-                                        key=self.stats_display[2][i])]
-                               for i in range(3, 5)]]
-
-        buttons_column = [[Buttons.SELECT.create(),
-                           Buttons.DESELECT.create(),
-                           Buttons.BACK.create()]]
+        buttons_column = [
+            [
+                sg.Button(
+                    button_text="Select All",
+                    key=AnalyseEvents.SelectAllFiles
+                ),
+                sg.Button(
+                    button_text="Deselect All",
+                    key=AnalyseEvents.DeselectAllFiles
+                ),
+                sg.Button(
+                    button_text="Back",
+                    key=AnalyseEvents.Navigate(Nav.MAIN_MENU)
+                )
+            ]
+        ]
 
         layout = [[sg.Column(folder_column, size=(335, 60))],
-                  [sg.Column(subtitle_column, size=(300, 300), scrollable=True, vertical_scroll_only=True),
+                  [sg.Column(
+                      layout=subs_column,
+                      size=(300, 350),
+                      scrollable=True,
+                      vertical_scroll_only=True,
+                      vertical_alignment="top"
+                  ),
                    sg.VSeperator(),
                    sg.Column(statistics_column)],
                   [sg.Column(buttons_column)]]
 
         return layout
 
-    def _window(self, files=None):
-        window = sg.Window(self._NAME,
-                           layout=self._layout(files))
+    def _create_window(self):
+        window = sg.Window(
+            title=self._NAME,
+            layout=self._layout()
+        )
         return window
 
     def show(self):
+        event, values = self._window.Read()
+        if event is None:
+            self.close()
+            event = AnalyseEvents.Navigate(Nav.MAIN_MENU)
 
-        # TODO: Implement this better so it isn't just dumped at the start of the 'show' function
-        completed_files = 0
-        total_files = 0
-        analysis_time = 0
+        elif event.name == AnalyseEvents.BrowseFiles.name:
+            folder = values[AnalyseEvents.BrowseFiles]
+            self._browse_for_folder_and_set_files(folder)
 
-        statuses = ['Press \'Browse\' to select a location \nwith subtitles for analysis',
-                    'Press \'Analyse Files\' once subtitle \nfiles are selected on the left',
-                    ('Analysing file ', completed_files, ' / ', total_files, '(Approximately ', analysis_time,
-                     'minutes remaining)'),
-                    'Updating the database',
-                    'All selected files analysed']
+        elif event.name == AnalyseEvents.SelectAllFiles.name:
+            self._select_all_files()
 
-        files = []
-        folder = ''
-        status = 0
-        controller = AnalyseControl()
-        window = self._window()
-        while True:
-            event, values = window.Read(timeout=self._TIMEOUT)
-            window.Element(Text.MESSAGE.key).update(statuses[status])
-            if event in [None, 'Back']:
-                window.Close()
-                break
+        elif event.name == AnalyseEvents.DeselectAllFiles.name:
+            self._deselect_all_files()
 
-            # Browse for a folder, then update file list
-            if event == Input.BROWSE.key:
-                folder = values[Input.BROWSE.key]
-                if folder:
-                    files = fh.get_files(folder, '.srt')
+        elif event.name == AnalyseEvents.AnalyseSubtitles.name:
+            state = copy.copy(self._state)
+            state.selected_files = [file for file in state.files if values[file]]
+            self._update_state(state)
+            if state.selected_files:
+                event = AnalyseEvents.AnalyseSubtitles(
+                    selected_files=state.selected_files
+                )
 
-                # Update the window with the contents of the selected folder
-                if files:
-                    window.Close()
-                    window = self._window(files)
-                    status = 1
+        elif event.name == AnalyseEvents.UpdateDisplayMessage.name:
+            self._update_display_message(event.message)
 
-            # Select / deselect all files
-            switch = {Buttons.SELECT.text: True,
-                      Buttons.DESELECT.text: False}
-            if event in switch.keys():
-                for file in files:
-                    window.Element(file).Update(value=switch[event])
+        elif event.name == AnalyseEvents.UpdateStatsDisplay.name:
+            stats = event.stats
+            if stats:
+                for x in range(len(self.stats_display[0])):
+                    self._window.Element(self.stats_display[2][x]).update(self.stats_display[0][x] + str(stats[x]))
+            self._update_display_message(_STATUS.ALL_FILES_ANALYSED)
 
-            if event == Buttons.ANALYSE.text:
-                selected_files = [file for file in files if values[file]]
-                if selected_files:
-                    stats = controller.analyse_subtitles(folder, selected_files)
-                    if stats:
-                        for x in range(len(self.stats_display[0])):
-                            window.Element(self.stats_display[2][x]).update(self.stats_display[0][x] + str(stats[x]))
-                    status = 4
+        return event
+
+    def write_event(self, event):
+        self._window.write_event_value(event, None)
+
+    def _update_state(self, state):
+        self._window.write_event_value(
+            AnalyseEvents.UpdateState(
+                state=state
+            ),
+            None
+        )
+
+    def _browse_for_folder_and_set_files(self, folder):
+        state = copy.copy(self._state)
+        state.folder = folder
+        if state.folder:
+            state.files = fh.get_files(state.folder, ".srt")
+            self._update_state(state)
+            self._update_display_message(_STATUS.PRESS_ANALYSE)
+            self._window.write_event_value(AnalyseEvents.ReopenWindow, None)
+
+    def _select_all_files(self):
+        self._select_or_deselect_all_files(True)
+
+    def _deselect_all_files(self):
+        self._select_or_deselect_all_files(False)
+
+    def _select_or_deselect_all_files(self, select_all):
+        for file in self._state.files:
+            self._window.Element(file).Update(value=select_all)
+
+    def _update_display_message(self, message):
+        state = copy.copy(self._state)
+        state.message = message
+        self._update_state(state)
+        self._window.Element(_Keys.STATUS).Update(value=message)
+
+    def close(self):
+        self._window.close()
 
 
-if __name__ == '__main__':
-    AnalyseView().show()
+class _Keys:
+    STATUS = "-STATUS-"
+
+
+class _STATUS:
+    PRESS_BROWSE = "Press 'Browse' to select a location with subtitles for analysis"
+    PRESS_ANALYSE = "Press 'Analyse Files' once subtitle files are selected on the left"
+    UPDATING_DATABASE = "Updating the database"
+    ALL_FILES_ANALYSED = "All selected files analysed"
