@@ -6,13 +6,15 @@ from multiprocessing import Pool
 import tqdm
 
 from subscope.utilities.file_handling import FileHandling as fh
-from subscope.parsing.ichiran import Ichiran
+from subscope.analyse.ichiran import Ichiran
 from subscope.database.database import Database as db
 
 
-class AnalysisControl:
-
+class AnalyseControl:
     _WHITELIST = re.compile('[\u4e00-\u9fff\u3040-\u309F\u30A0-\u30FF]', re.UNICODE)
+
+    def run(self):
+        pass
 
     def analyse_subtitles(self, input_folder, files):
         # Create an output folder if it doesn't exist
@@ -168,4 +170,4 @@ if __name__ == '__main__':
     _main_files = fh.get_files(_main_folder, '.srt')
     _main_files = _main_files[:2]
     print(_main_files)
-    AnalysisControl().analyse_subtitles(_main_folder, _main_files)
+    AnalyseControl().analyse_subtitles(_main_folder, _main_files)

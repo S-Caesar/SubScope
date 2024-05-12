@@ -1,4 +1,4 @@
-from subscope.parsing.ichiran import Ichiran
+from subscope.analyse.ichiran import Ichiran
 from subscope.database.database import Database
 
 

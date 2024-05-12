@@ -2,7 +2,7 @@ import os
 import PySimpleGUI as sg
 from enum import Enum
 
-from subscope.parsing.analysis_control import AnalysisControl
+from subscope.analyse.analyse_control import AnalyseControl
 from subscope.utilities.file_handling import FileHandling as fh
 
 
@@ -71,7 +71,7 @@ class Checklist:
         return checklist
 
 
-class AnalysisView:
+class AnalyseView:
 
     _NAME = 'Analyse Subtitles'
     _START = os.getcwd() + '/user/subtitles'
@@ -150,7 +150,7 @@ class AnalysisView:
         files = []
         folder = ''
         status = 0
-        controller = AnalysisControl()
+        controller = AnalyseControl()
         window = self._window()
         while True:
             event, values = window.Read(timeout=self._TIMEOUT)
@@ -189,4 +189,4 @@ class AnalysisView:
 
 
 if __name__ == '__main__':
-    AnalysisView().show()
+    AnalyseView().show()

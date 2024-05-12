@@ -1,7 +1,7 @@
 import json
 import subprocess
 
-from subscope.parsing.word import Word
+from subscope.analyse.word import Word
 from subscope.settings.settings import Settings
 
 

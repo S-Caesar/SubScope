@@ -3,7 +3,7 @@ import ast
 
 from subscope.review.review_control import ReviewControl
 from subscope.settings.settings import Settings
-from subscope.parsing.elements import Text, IterText, Button, Image, Combo
+from subscope.analyse.elements import Text, IterText, Button, Image, Combo
 
 
 class ReviewView:
