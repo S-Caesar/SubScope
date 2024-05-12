@@ -1,6 +1,6 @@
 import os
 
-from subscope.options.options import Options
+from subscope.settings.settings import Settings
 from subscope.decks.deck import Deck
 from subscope.database.database import Database
 
@@ -9,15 +9,15 @@ class DecksControl:
 
     @staticmethod
     def deck_list():
-        return Options.deck_list()
+        return Settings.deck_list()
 
     @staticmethod
     def formats_list():
-        return list(Options.card_formats().keys())
+        return list(Settings.card_formats().keys())
 
     @staticmethod
     def subtitles_list():
-        subtitles_path = Options.subtitles_folder_path()
+        subtitles_path = Settings.subtitles_folder_path()
         subtitle_list = [item for item in os.listdir(subtitles_path)
                          if os.path.isdir(os.path.join(subtitles_path, item))]
         return subtitle_list
@@ -28,9 +28,9 @@ class DecksControl:
 
     @staticmethod
     def delete_deck(deck_name):
-        deck_folder = Options.deck_folder_path()
+        deck_folder = Settings.deck_folder_path()
         os.remove(deck_folder + '/' + deck_name + '.txt')
-        Options.remove_deck_from_settings(deck_name)
+        Settings.remove_deck_from_settings(deck_name)
 
     @staticmethod
     def get_word_data():

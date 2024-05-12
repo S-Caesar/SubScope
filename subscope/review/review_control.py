@@ -6,7 +6,7 @@ import io
 from datetime import datetime, date, timedelta
 import ast
 
-from subscope.options.options import Options
+from subscope.settings.settings import Settings
 from subscope.database.database import Database
 from subscope.decks.card import Card
 
@@ -49,18 +49,18 @@ class ReviewControl:
 
     @staticmethod
     def deck_list():
-        return Options.deck_list()
+        return Settings.deck_list()
 
     def load_deck(self, deck_name):
         self.deck_name = deck_name
-        deck_path = Options.deck_folder_path() + '/' + self.deck_name + '.txt'
+        deck_path = Settings.deck_folder_path() + '/' + self.deck_name + '.txt'
         deck = pd.read_csv(deck_path, sep='\t')
         deck = deck.sort_values(by=self._NEXT_REVIEW)
         selected_cards = self._select_cards(deck)
         self.deck = selected_cards
 
     def _select_cards(self, deck):
-        deck_settings = Options.deck_settings()[self.deck_name]
+        deck_settings = Settings.deck_settings()[self.deck_name]
 
         # TODO: Remove columns based on format settings
         card_format = deck_settings[self._REVIEW_LIMIT]
@@ -181,7 +181,7 @@ class ReviewControl:
         source = self.card.source
         screenshot = self.card.screenshot
 
-        image_file_path = Options.subtitles_folder_path() + '/' + source + '/' + self._IMAGE + '/' + screenshot
+        image_file_path = Settings.subtitles_folder_path() + '/' + source + '/' + self._IMAGE + '/' + screenshot
         image = Image.open(image_file_path)
         image.thumbnail((475, 475))
         bio = io.BytesIO()
@@ -193,7 +193,7 @@ class ReviewControl:
         source = self.card.source
         audio_file = self.card.audio_clip
         self.stop_audio()
-        audio_file_path = Options.subtitles_folder_path() + '/' + source + '/' + self._AUDIO_FOLDER + '/' + audio_file
+        audio_file_path = Settings.subtitles_folder_path() + '/' + source + '/' + self._AUDIO_FOLDER + '/' + audio_file
         self._audio = multiprocessing.Process(target=playsound, args=(audio_file_path,))
         self._audio.start()
 
@@ -232,7 +232,7 @@ class ReviewControl:
         self.deck.loc[self.card_index, self._STATUS] = self._REVIEW
 
     def update_deck(self):
-        deck_path = Options.deck_folder_path() + '/' + self.deck_name + '.txt'
+        deck_path = Settings.deck_folder_path() + '/' + self.deck_name + '.txt'
         full_deck = pd.read_csv(deck_path, sep='\t')
         for index in self.deck.index.tolist():
             self.deck.loc[index, self._STATE] = 0

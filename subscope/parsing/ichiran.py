@@ -2,7 +2,7 @@ import json
 import subprocess
 
 from subscope.parsing.word import Word
-from subscope.options.options import Options
+from subscope.settings.settings import Settings
 
 
 class Ichiran:
@@ -39,7 +39,7 @@ class Ichiran:
 
     @staticmethod
     def _parse_line(line):
-        path = Options.ichiran_path()
+        path = Settings.ichiran_path()
         console_output = subprocess.check_output('ichiran-cli -f ' + line, shell=True, cwd=path)
         json_output = json.loads(console_output)
         json_output = json.dumps(json_output)

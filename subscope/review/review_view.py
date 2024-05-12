@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 import ast
 
 from subscope.review.review_control import ReviewControl
-from subscope.options.options import Options
+from subscope.settings.settings import Settings
 from subscope.parsing.elements import Text, IterText, Button, Image, Combo
 
 
@@ -212,7 +212,7 @@ class ReviewView:
     @classmethod
     def _text_colour_for_part_of_speech(cls, gloss_json):
         text_colour = cls._WHITE
-        if Options.srs_colouring() == 'On':
+        if Settings.srs_colouring() == 'On':
             if gloss_json != cls._NO_ENTRY:
                 gloss = ast.literal_eval(gloss_json)
                 if cls._CARD_PART in gloss:

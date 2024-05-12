@@ -1,7 +1,7 @@
 import copy
 from datetime import datetime
 
-from subscope.options.options import Options
+from subscope.settings.settings import Settings
 from subscope.retime.retime_events import RetimeEvents
 from subscope.retime.retime_state import RetimeState
 from subscope.retime.retime_view import RetimeView
@@ -12,7 +12,7 @@ class RetimeControl:
 
     def __init__(self):
         self._state = RetimeState(
-            theme=Options.main_theme()
+            theme=Settings.main_theme()
         )
         self._view = RetimeView(
             state=copy.copy(self._state)

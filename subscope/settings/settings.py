@@ -38,7 +38,7 @@ class Decks(Enum):
         self.default = default
 
 
-class Options:
+class Settings:
 
     _SETTINGS_PATH = str(Path(__file__).parent.parent) + '/user/settings'
     _SETTINGS_FILE = 'settings.json'
@@ -178,7 +178,7 @@ class Options:
         return cls._read_settings_file()[cls._CARD_FORMATS]
 
     @classmethod
-    def _write_settings_file(cls, settings):
+    def write_settings_file(cls, settings):
         output_file = cls._SETTINGS_PATH + '/' + cls._SETTINGS_FILE
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(settings, f, ensure_ascii=False, indent=4)
@@ -193,14 +193,14 @@ class Options:
         settings[cls._DECK_SETTINGS][deck_name] = {Decks.FORMAT.key: card_format,
                                                    Decks.NEW_LIMIT.key: new_limit,
                                                    Decks.REVIEW_LIMIT.key: review_limit}
-        cls._write_settings_file(settings)
+        cls.write_settings_file(settings)
 
     @classmethod
     def remove_deck_from_settings(cls, deck_name):
         settings = cls._read_settings_file()
         del settings[cls._DECK_SETTINGS][deck_name]
-        cls._write_settings_file(settings)
+        cls.write_settings_file(settings)
 
 
 if __name__ == '__main__':
-    Options.add_deck_to_settings('Test', '10', '50', 'Default')
+    Settings.add_deck_to_settings('Test', '10', '50', 'Default')

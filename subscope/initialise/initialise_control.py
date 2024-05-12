@@ -4,7 +4,7 @@ from enum import Enum
 from subscope.initialise.initialise_state import InitialiseState
 from subscope.initialise.initialise_view import InitialiseView
 from subscope.nav import Nav
-from subscope.options.options import Options
+from subscope.settings.settings import Settings
 from subscope.database.database import Database
 
 
@@ -15,7 +15,7 @@ class InitialiseControl:
 
     def __init__(self):
         self._state = InitialiseState(
-            theme=Options.main_theme(),
+            theme=Settings.main_theme(),
             initialisation_progress=self._NOT_STARTED,
             initialisation_steps=InitialisationSteps
         )
@@ -53,7 +53,7 @@ class InitialiseControl:
         self._view.refresh_ui(self._state)
 
     def _check_or_create_settings_file(self):
-        Options.main_options()
+        Settings.main_options()
         self._state.initialisation_steps.CHECK_SETTINGS.complete = True
         self._view.refresh_ui(self._state)
 

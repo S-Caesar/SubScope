@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from enum import Enum
 
-from subscope.options.options_control import OptionsControl
+from subscope.settings.settings_control import SettingsControl
 
 
 class Buttons(Enum):
@@ -17,10 +17,10 @@ class Buttons(Enum):
         return sg.Button(self.text, enable_events=self.events)
 
 
-class OptionsView:
+class SettingsView:
 
     _NAME = 'Options'
-    _OPTION_GROUPS = OptionsControl().main_option_groups()
+    _OPTION_GROUPS = SettingsControl().main_option_groups()
     # TODO: these will need to be different for different themes...
     _TEXT_BUTTON_COLOURS = ['SteelBlue1'] + ['SteelBlue']*(len(_OPTION_GROUPS)-1)
     _THEMES = ['BlueMono', 'Dark2', 'DarkBlue14', 'DarkGrey4', 'DarkGrey5', 'DarkRed',
@@ -35,7 +35,7 @@ class OptionsView:
     _SEP = '>'
 
     def _layout(self, options):
-        # Main options column
+        # Main settings column
         main_options = [[sg.Text(option,
                                  enable_events=True,
                                  size=(11, 1),
@@ -60,7 +60,7 @@ class OptionsView:
                                        readonly=True),
                                  sg.FolderBrowse(initial_folder=sub_options[sub_option])])
 
-        # Theme option, dropdown with options
+        # Theme option, dropdown with settings
         option_group = self._OPTION_GROUPS[1]
         sub_options = options[option_group]
         option_keys = list(sub_options.keys())
@@ -126,8 +126,8 @@ class OptionsView:
         return window
 
     def show(self):
-        options = OptionsControl().main_options()
-        controller = OptionsControl()
+        options = SettingsControl().main_options()
+        controller = SettingsControl()
         window = self._window(options)
         while True:
             event, values = window.Read()
@@ -135,7 +135,7 @@ class OptionsView:
                 window.close()
                 break
 
-            # Change the section shown when one of the main options is selected
+            # Change the section shown when one of the main settings is selected
             sections = {self._OPTION_GROUPS[0]: self._PATHS_WINDOW,
                         self._OPTION_GROUPS[1]: self._THEMES_WINDOW,
                         self._OPTION_GROUPS[2]: self._DECKS_WINDOW,

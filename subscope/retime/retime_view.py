@@ -3,14 +3,14 @@ import PySimpleGUI as sg
 from datetime import datetime
 
 from subscope.nav import Nav
-from subscope.options.options import Options
+from subscope.settings.settings import Settings
 from subscope.retime.retime_events import RetimeEvents
 from subscope.utilities.file_handling import FileHandling as fh
 
 
 class RetimeView:
     _NAME = 'Retime Subtitles'
-    _START_DIR = Options.subtitles_folder_path()
+    _START_DIR = Settings.subtitles_folder_path()
 
     def __init__(self, state):
         self._state = state

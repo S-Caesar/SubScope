@@ -4,7 +4,7 @@ from pathlib import Path
 
 from subscope.decks.card import Card, CardHeading
 from subscope.database.database import Database
-from subscope.options.options import Options
+from subscope.settings.settings import Settings
 
 
 class Deck:
@@ -72,12 +72,12 @@ class Deck:
 
     @staticmethod
     def _write_deck_to_file(deck_name, deck):
-        deck_folder = Options.deck_folder_path()
+        deck_folder = Settings.deck_folder_path()
         deck.to_csv(deck_folder + '/' + deck_name + '.txt', sep='\t', index=None)
 
     @staticmethod
     def _add_deck_to_settings_file(deck_name, new_limit, review_limit, card_format):
-        Options.add_deck_to_settings(deck_name, new_limit, review_limit, card_format)
+        Settings.add_deck_to_settings(deck_name, new_limit, review_limit, card_format)
 
     @classmethod
     def add_cards(cls, deck_name, words):
@@ -92,7 +92,7 @@ class Deck:
 
     @staticmethod
     def read_deck(deck):
-        deck_folder = Options.deck_folder_path()
+        deck_folder = Settings.deck_folder_path()
         deck = pd.read_csv(deck_folder + '/' + deck + '.txt', sep='\t')
         return deck
 
