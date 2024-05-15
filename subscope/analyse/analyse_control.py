@@ -18,6 +18,11 @@ from subscope.database.database import Database as db
 
 class AnalyseControl:
     _WHITELIST = re.compile("[\u4e00-\u9fff\u3040-\u309F\u30A0-\u30FF]", re.UNICODE)
+    _DATA_TABLE_SUFFIX = "_data_table"
+    _SUBS_ONLY_SUFFIX = "_subs_only"
+    _ANALYSED_OUTPUT_FOLDER_NAME = "text"
+    _TEXT_FILE_TYPE = ".txt"
+    _TAB_SEPERATOR = "\t"
 
     def __init__(self):
         self._state = AnalyseState(
@@ -52,28 +57,34 @@ class AnalyseControl:
     def _handle(self, event):
         if event.name == AnalyseEvents.AnalyseSubtitles.name:
             state = copy.copy(self._state)
-            state.stats = self._analyse_subtitles(event.selected_files)
+            state.stats = self._analyse_subtitle_files(event.selected_files)
             self._view.write_event(AnalyseEvents.UpdateState(state))
             self._view.write_event(AnalyseEvents.UpdateStatsDisplay(state.stats))
 
-    def _analyse_subtitles(self, files):
-        # Create an output folder if it doesn't exist
-        output_folder = self._state.folder + '/text'
-        try:
-            os.mkdir(output_folder)
-        except FileExistsError:
-            pass
-
-        # TODO: currently stripping of text is based on .srt files; add support for other types (e.g. .ass)
+    def _analyse_subtitle_files(self, files):
+        output_folder = self._get_or_create_output_folder()
         self._analyse_files(self._state.folder, output_folder, files)
+        output_data_table = self._read_data_table_files_to_dataframe(output_folder, files)
+        stats = self._analyse_data_table(output_data_table)
+        return stats
 
+    def _get_or_create_output_folder(self):
+        output_folder = os.path.join(self._state.folder, self._ANALYSED_OUTPUT_FOLDER_NAME)
+        if not os.path.isdir(output_folder):
+            os.mkdir(output_folder)
+        return output_folder
+
+    def _read_data_table_files_to_dataframe(self, output_folder, files):
         output_table = pd.DataFrame()
-        files = fh.rename_files(files, '_data_table', '.txt')
+        files = fh.rename_files(files, self._DATA_TABLE_SUFFIX, self._TEXT_FILE_TYPE)
         for file in files:
             if file in os.listdir(output_folder):
-                data_table = pd.read_csv(output_folder + '/' + file, sep='\t').fillna(0)
+                filepath = os.path.join(output_folder, file)
+                data_table = pd.read_csv(filepath, sep=self._TAB_SEPERATOR).fillna(0)
                 output_table = output_table.append(data_table)
+        return output_table
 
+    def _analyse_data_table(self, output_table):
         stats = []
         if not output_table.empty:
             output_table.reset_index(drop=True)
@@ -85,6 +96,7 @@ class AnalyseControl:
         return stats
 
     def _analyse_files(self, input_folder, output_folder, input_files):
+        # TODO: currently stripping of text is based on .srt files; add support for other types (e.g. .ass)
         subs_only = fh.rename_files(input_files, '_subs_only', '.txt')
         data_table = fh.rename_files(input_files, '_data_table', '.txt')
         subs_only_to_input_file = dict(zip(subs_only, input_files))
