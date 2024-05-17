@@ -8,7 +8,7 @@ from subscope.settings.settings import Settings
 class Ichiran:
 
     @staticmethod
-    def convert_line_to_table_rows(line, line_no, debug=False):
+    def convert_line_to_table_rows(line_no, line, debug=False):
         json_output = Ichiran._parse_line(line)
         entries = []
         for entry in json_output[0][0][0]:

@@ -32,7 +32,7 @@ class AnalyseView:
             ],
             [
                 sg.In(
-                    default_text=self._state.folder,
+                    default_text=self._state.input_folder,
                     size=(37, 1),
                     enable_events=True,
                     key=AnalyseEvents.BrowseFiles
@@ -220,9 +220,9 @@ class AnalyseView:
 
     def _browse_for_folder_and_set_files(self, folder):
         state = copy.copy(self._state)
-        state.folder = folder
-        if state.folder:
-            state.files = fh.get_files(state.folder, ".srt")
+        state.input_folder = folder
+        if state.input_folder:
+            state.files = fh.get_files(state.input_folder, ".srt")
             self._update_state(state)
             self._window.write_event_value(AnalyseEvents.ReopenWindow, None)
 

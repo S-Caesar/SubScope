@@ -38,6 +38,7 @@ class Database:
 
     @classmethod
     def populate_database(cls, overwrite=False):
+        # TODO: Make it possible to specify the source to update / add so it doesn't go through all folders every time
         """
         Go through each of the subtitle folders, and update the database with the analysed files
         """

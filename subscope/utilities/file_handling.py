@@ -25,20 +25,22 @@ class FileHandling:
         
         return folder_list
 
-    @staticmethod
-    def rename_files(files, append, extension=''):
+    def rename_files(self, files, append, extension=""):
         # Add text to the end of a file name. Optionally, change the file extension.
-        if type(files) == str:
-            files = [files]
-
         renamed_files = []
         for file in files:
-            file_name = file.split('.')
-            file_name[-2] = file_name[-2] + append
-            
-            if extension != '':
-                if '.' in extension:
-                    extension = extension.replace('.', '')
-                file_name[-1] = extension
-            renamed_files.append('.'.join(file_name))
+            renamed_file = self.rename_file(file, append, extension=extension)
+            renamed_files.append(renamed_file)
         return renamed_files
+
+    @staticmethod
+    def rename_file(file, append, extension=""):
+        file_name = file.split(".")
+        file_name[-2] = file_name[-2] + append
+
+        if extension != "":
+            if "." in extension:
+                extension = extension.replace(".", "")
+            file_name[-1] = extension
+        renamed_file = ".".join(file_name)
+        return renamed_file
