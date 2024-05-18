@@ -193,6 +193,8 @@ class AnalyseView:
                 event = AnalyseEvents.AnalyseSubtitles(
                     selected_files=selected_files
                 )
+            else:
+                event = AnalyseEvents.Pass
 
         elif event.name == AnalyseEvents.UpdateDisplayMessage.name:
             self._update_display_message(event.message)

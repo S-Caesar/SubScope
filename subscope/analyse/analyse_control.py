@@ -42,6 +42,9 @@ class AnalyseControl:
             if event is None:
                 break
 
+            elif event.name == AnalyseEvents.Pass.name:
+                pass
+
             elif event.name == AnalyseEvents.Navigate.name:
                 self._view.close()
                 return event.destination

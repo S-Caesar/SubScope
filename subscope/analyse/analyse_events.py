@@ -14,6 +14,9 @@ class AnalyseEvents(Event):
         def __init__(self, destination):
             self.destination = destination
 
+    class Pass(Event):
+        name = "Pass"
+
     class BrowseFiles(Event):
         name = "Browse Files"
 
