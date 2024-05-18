@@ -1,5 +1,3 @@
-import copy
-
 import PySimpleGUI as sg
 
 from subscope.analyse.analyse_events import AnalyseEvents
@@ -9,18 +7,12 @@ from subscope.utilities.file_handling import FileHandling as fh
 
 
 class AnalyseView:
-    _NAME = 'Analyse Subtitles'
+    _NAME = "Analyse Subtitles"
     _START_DIR = Settings.subtitles_folder_path()
-    _STATS_MSG = [
-        "Total Words:" + " " * 18,
-        "Total Unknown Words:" + " " * 4,
-        "Comprehension (%):" + " " * 7,
-        "Total Words:" + " " * 18,
-        "Total Unknown Words:" + " " * 4
-    ]
+    _STATS_DISPLAY_WIDTH = 17
 
     def __init__(self, state):
-        self._state = state
+        self._local_state = state
         self._window = self._create_window()
 
     def _layout(self):
@@ -32,7 +24,7 @@ class AnalyseView:
             ],
             [
                 sg.In(
-                    default_text=self._state.input_folder,
+                    default_text=self._local_state.input_folder,
                     size=(37, 1),
                     enable_events=True,
                     key=AnalyseEvents.BrowseFiles
@@ -49,7 +41,7 @@ class AnalyseView:
                     text="Subtitle Files"
                 )
             ],
-            *[[sg.Checkbox(file, default=True, key=file)] for file in self._state.files]
+            *[[sg.Checkbox(file, default=True, key=file)] for file in self._local_state.files]
         ]
 
         statistics_column = [
@@ -67,7 +59,7 @@ class AnalyseView:
             ],
             [
                 sg.Text(
-                    text=self._state.message or _STATUS.PRESS_BROWSE,
+                    text=self._local_state.message or _STATUS.PRESS_BROWSE,
                     size=(30, 2),
                     key=_Keys.STATUS
                 )
@@ -81,19 +73,31 @@ class AnalyseView:
             ],
             [
                 sg.Text(
-                    text=self._STATS_MSG[0] + str(self._state.stats.total_words),
+                    text="Total Words:",
+                    size=(self._STATS_DISPLAY_WIDTH, 1)
+                ),
+                sg.Text(
+                    text=str(self._local_state.stats.total_words),
                     key=_Keys.TOTAL_WORDS
                 )
             ],
             [
                 sg.Text(
-                    text=self._STATS_MSG[1] + str(self._state.stats.total_unknown),
+                    text="Total Unknown Words:",
+                    size=(self._STATS_DISPLAY_WIDTH, 1)
+                ),
+                sg.Text(
+                    text=str(self._local_state.stats.total_unknown),
                     key=_Keys.TOTAL_UNKNOWN
                 )
             ],
             [
                 sg.Text(
-                    text=self._STATS_MSG[2] + str(self._state.stats.comprehension),
+                    text="Comprehension (%):",
+                    size=(self._STATS_DISPLAY_WIDTH, 1)
+                ),
+                sg.Text(
+                    text=str(self._local_state.stats.comprehension),
                     key=_Keys.COMPREHENSION
                 )
             ],
@@ -106,13 +110,21 @@ class AnalyseView:
             ],
             [
                 sg.Text(
-                    text=self._STATS_MSG[3] + str(self._state.stats.total_unique),
+                    text="Total Words:",
+                    size=(self._STATS_DISPLAY_WIDTH, 1)
+                ),
+                sg.Text(
+                    text=str(self._local_state.stats.total_unique),
                     key=_Keys.TOTAL_UNIQUE
                 )
             ],
             [
                 sg.Text(
-                    text=self._STATS_MSG[4] + str(self._state.stats.unique_unknown),
+                    text="Total Unknown Words:",
+                    size=(self._STATS_DISPLAY_WIDTH, 1)
+                ),
+                sg.Text(
+                    text=str(self._local_state.stats.unique_unknown),
                     key=_Keys.UNIQUE_UNKNOWN
                 )
             ],
@@ -163,10 +175,9 @@ class AnalyseView:
             event = AnalyseEvents.Navigate(Nav.MAIN_MENU)
 
         elif event.name == AnalyseEvents.BrowseFiles.name:
-            folder = values[AnalyseEvents.BrowseFiles]
-            # TODO due to taking copies of state and updating in two places, the message won't update correctly
+            input_folder = values[AnalyseEvents.BrowseFiles]
             self._update_display_message(_STATUS.PRESS_ANALYSE)
-            self._browse_for_folder_and_set_files(folder)
+            self._browse_for_folder_and_set_files(input_folder)
 
         elif event.name == AnalyseEvents.SelectAllFiles.name:
             self._select_all_files()
@@ -175,12 +186,12 @@ class AnalyseView:
             self._deselect_all_files()
 
         elif event.name == AnalyseEvents.AnalyseSubtitles.name:
-            state = copy.copy(self._state)
-            state.selected_files = [file for file in state.files if values[file]]
-            self._update_state(state)
-            if state.selected_files:
+            selected_files = [file for file in self._local_state.files if values[file]]
+            self._local_state.selected_files = selected_files
+            self._update_state(self._local_state)
+            if selected_files:
                 event = AnalyseEvents.AnalyseSubtitles(
-                    selected_files=state.selected_files
+                    selected_files=selected_files
                 )
 
         elif event.name == AnalyseEvents.UpdateDisplayMessage.name:
@@ -189,19 +200,19 @@ class AnalyseView:
         elif event.name == AnalyseEvents.UpdateStatsDisplay.name:
             stats = event.stats
             self._window.Element(_Keys.TOTAL_WORDS).update(
-                self._STATS_MSG[0] + str(stats.total_words)
+                str(stats.total_words)
             )
             self._window.Element(_Keys.TOTAL_UNKNOWN).update(
-                self._STATS_MSG[1] + str(stats.total_unknown)
+                str(stats.total_unknown)
             )
             self._window.Element(_Keys.COMPREHENSION).update(
-                self._STATS_MSG[2] + str(stats.comprehension)
+                str(stats.comprehension)
             )
             self._window.Element(_Keys.TOTAL_UNIQUE).update(
-                self._STATS_MSG[3] + str(stats.total_unique)
+                str(stats.total_unique)
             )
             self._window.Element(_Keys.UNIQUE_UNKNOWN).update(
-                self._STATS_MSG[4] + str(stats.unique_unknown)
+                str(stats.unique_unknown)
             )
             self._update_display_message(_STATUS.ALL_FILES_ANALYSED)
 
@@ -218,12 +229,11 @@ class AnalyseView:
             None
         )
 
-    def _browse_for_folder_and_set_files(self, folder):
-        state = copy.copy(self._state)
-        state.input_folder = folder
-        if state.input_folder:
-            state.files = fh.get_files(state.input_folder, ".srt")
-            self._update_state(state)
+    def _browse_for_folder_and_set_files(self, input_folder):
+        self._local_state.input_folder = input_folder
+        if input_folder:
+            self._local_state.files = fh.get_files(input_folder, ".srt")
+            self._update_state(self._local_state)
             self._window.write_event_value(AnalyseEvents.ReopenWindow, None)
 
     def _select_all_files(self):
@@ -233,13 +243,12 @@ class AnalyseView:
         self._select_or_deselect_all_files(False)
 
     def _select_or_deselect_all_files(self, select_all):
-        for file in self._state.files:
+        for file in self._local_state.files:
             self._window.Element(file).Update(value=select_all)
 
     def _update_display_message(self, message):
-        state = copy.copy(self._state)
-        state.message = message
-        self._update_state(state)
+        self._local_state.message = message
+        self._update_state(self._local_state)
         self._window.Element(_Keys.STATUS).Update(value=message)
 
     def close(self):

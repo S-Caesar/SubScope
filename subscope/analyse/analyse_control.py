@@ -1,5 +1,7 @@
 import copy
 import os
+import threading
+
 import pandas as pd
 import re
 import time
@@ -58,12 +60,13 @@ class AnalyseControl:
 
     def _handle(self, event):
         if event.name == AnalyseEvents.AnalyseSubtitles.name:
-            state = copy.copy(self._state)
-            state.stats = self._analyse_subtitle_files(event.selected_files)
-            self._view.write_event(AnalyseEvents.UpdateState(state))
-            self._view.write_event(AnalyseEvents.UpdateStatsDisplay(state.stats))
+            self._state.stats = Stats()
+            threading.Thread(
+                target=self._analyse_subtitle_files,
+                args=[event.selected_files, self._state.stats]
+            ).start()
 
-    def _analyse_subtitle_files(self, input_filenames):
+    def _analyse_subtitle_files(self, input_filenames, stats):
         start_time = time.time()
         output_folder = self._get_or_create_output_folder()
         for file_no, input_filename in enumerate(input_filenames):
@@ -74,13 +77,12 @@ class AnalyseControl:
 
             passed_time = time.time() - start_time
             est_time = round((passed_time / (file_no + 1)) * (len(input_filenames) - file_no + 1) / 60, 1)
-            # TODO after each file, write an event to the queue to update the UI status
-            print("Files Complete:", file_no + 1, "/", len(input_filenames))
-            print("Estimated time remaining:", est_time, "minutes")
-        print("All Files Analysed. Batch Complete!")
+            files_complete = f"Files Complete :{file_no + 1} / {len(input_filenames)}"
+            time_remaining = f"Estimated time remaining: {est_time} minutes"
+            self._view.write_event(AnalyseEvents.UpdateDisplayMessage(f"{files_complete}\n{time_remaining}"))
+
         output_data_table = self._read_data_table_files_to_dataframe(output_folder, input_filenames)
-        stats = self._analyse_data_table(output_data_table)
-        return stats
+        self._analyse_data_table(output_data_table, stats)
 
     def _get_or_create_output_folder(self):
         output_folder = os.path.join(self._state.input_folder, self._ANALYSED_OUTPUT_FOLDER_NAME)
@@ -89,7 +91,6 @@ class AnalyseControl:
         return output_folder
 
     def _create_subs_only_file(self, input_filename, output_folder, subs_only_filename):
-        # TODO: currently stripping of text is based on .srt files; add support for other types (e.g. .ass)
         if subs_only_filename not in os.listdir(output_folder):
             input_filepath = os.path.join(self._state.input_folder, input_filename)
             subs_only_filepath = os.path.join(output_folder, subs_only_filename)
@@ -159,15 +160,13 @@ class AnalyseControl:
         output_table = pd.concat(output_tables)
         return output_table
 
-    def _analyse_data_table(self, output_table):
-        stats = []
+    def _analyse_data_table(self, output_table, stats):
         if not output_table.empty:
             output_table.reset_index(drop=True)
-            stats = self._analyse_words(output_table)
+            self._analyse_words(output_table, stats)
             db.populate_database()
-        return stats
 
-    def _analyse_words(self, data_table):
+    def _analyse_words(self, data_table, stats):
         # Remove any words that don't have a definition
         data_table = data_table[data_table.gloss != 0]
         number_of_words = len(data_table)
@@ -192,15 +191,13 @@ class AnalyseControl:
 
         comprehension = round(((number_of_words - number_of_unknown_words) / number_of_words) * 100)
 
-        stats = Stats(
-            total_words=number_of_words,
-            total_unknown=number_of_unknown_words,
-            comprehension=comprehension,
-            total_unique=number_of_unique_words,
-            unique_unknown=number_of_unknown_unique_words
-        )
+        stats.total_words = number_of_words
+        stats.total_unknown = number_of_unknown_words
+        stats.comprehension = comprehension
+        stats.total_unique = number_of_unique_words
+        stats.unique_unknown = number_of_unknown_unique_words
 
-        return stats
+        self._view.write_event(AnalyseEvents.UpdateStatsDisplay(stats))
 
     @staticmethod
     def _dataframe_difference(df_1, df_2, column=None, drop_merge=True):
