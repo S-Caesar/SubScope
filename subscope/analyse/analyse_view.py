@@ -46,6 +46,13 @@ class AnalyseView:
 
         statistics_column = [
             [
+                sg.Checkbox(
+                    text="Attempt to detect proper nouns",
+                    key=_Keys.DETECT_NAMES,
+                    default=True
+                )
+            ],
+            [
                 sg.Button(
                     button_text="Analyse",
                     key=AnalyseEvents.AnalyseSubtitles
@@ -191,7 +198,8 @@ class AnalyseView:
             self._update_state(self._local_state)
             if selected_files:
                 event = AnalyseEvents.AnalyseSubtitles(
-                    selected_files=selected_files
+                    selected_files=selected_files,
+                    detect_names=values[_Keys.DETECT_NAMES]
                 )
             else:
                 event = AnalyseEvents.Pass
@@ -264,6 +272,7 @@ class _Keys:
     TOTAL_UNIQUE = "-TOTAL_UNIQUE-"
     UNIQUE_UNKNOWN = "-UNIQUE_UNKNOWN-"
     STATUS = "-STATUS-"
+    DETECT_NAMES = "-DETECT_NAMES-"
 
 
 class _STATUS:

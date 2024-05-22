@@ -16,12 +16,13 @@ class ParseFile:
     _SUBS_ONLY_SUFFIX = "_subs_only"
     _DATA_TABLE_SUFFIX = "_data_table"
 
-    def __init__(self, input_filename, input_folder, output_folder):
+    def __init__(self, input_filename, input_folder, output_folder, character_names):
         self._input_filename = input_filename
         self._input_folder = input_folder
         self._output_folder = output_folder
         self._subs_only_filename = fh.rename_file(input_filename, self._SUBS_ONLY_SUFFIX, FileExt.TXT)
         self._data_table_filename = fh.rename_file(input_filename, self._DATA_TABLE_SUFFIX, FileExt.TXT)
+        self._character_names = character_names
 
         self._create_subs_only_file()
         self._create_data_table_file()
@@ -67,7 +68,7 @@ class ParseFile:
             indexed_lines = []
             for line in subs_only_lines:
                 line_no, line = line.split(Sep.TAB)
-                indexed_lines.append([int(line_no), line])
+                indexed_lines.append([int(line_no), line, self._character_names])
 
             word_list = self._parse_lines(indexed_lines)
             data_table = pd.DataFrame(

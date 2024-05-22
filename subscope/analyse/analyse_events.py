@@ -29,8 +29,9 @@ class AnalyseEvents(Event):
     class AnalyseSubtitles(Event):
         name = "Analyse Subtitles"
 
-        def __init__(self, selected_files):
+        def __init__(self, selected_files, detect_names):
             self.selected_files = selected_files
+            self.detect_names = detect_names
 
     class ReopenWindow(Event):
         name = "Reopen Window"
